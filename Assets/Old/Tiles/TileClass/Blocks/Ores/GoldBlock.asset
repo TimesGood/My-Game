@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47fda87e71488c34eb429cb936bec8d6, type: 3}
+  m_Name: GoldBlock
+  m_EditorClassIdentifier: 
+  tile: {fileID: 11400000, guid: 4b6d167c9b278c4428b387af1ea32c6a, type: 2}
+  layer: 2
+  blockId: 0
+  isIlluminated: 0
+  lightLevel: 0
+  lightColor: {r: 0, g: 0, b: 0, a: 0}
+  <oreRarity>k__BackingField: 0
+  <oreRadius>k__BackingField: 0
+  <minY>k__BackingField: 0
+  <maxY>k__BackingField: 0
+  <offset>k__BackingField: 0
+  noise: {fileID: 11400000, guid: 96b6c66516733014586e2dbaaa8ac449, type: 2}

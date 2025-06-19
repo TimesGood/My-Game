@@ -1,0 +1,53 @@
+#pragma kernel CSMain
+
+#include "Include/Noise.hlsl"
+
+RWTexture2D<float4> NoiseTexture;
+RWStructuredBuffer<int> CurveData;
+float Frequency;
+float Threshold;
+int Seed;
+bool IsBinary;
+float HeightMult;
+float HeightAdd;
+int Octaves;
+float Persistence;
+float Lacunarity;
+float WarpIntensity;
+float PeakSharpness;
+float Offset;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float totalHeight = 0;
+    float freqTmp = Frequency;
+    float amplitude = 1;
+    float maxHeight = 0;
+    float2 uv = id.xy ;
+    
+    float warpX = float(
+        uv.x + snoise(float2(uv.x * 0.1f + Seed, Seed)) * WarpIntensity
+    );
+    for(int i = 0; i < Octaves; i++) {
+
+        float noiseValue = snoise(float2(warpX, 0) * freqTmp + float2(Seed, Seed));
+
+        if (i == Octaves - 1)
+        {
+            noiseValue = pow(abs(noiseValue), PeakSharpness);
+        }
+        
+        totalHeight += noiseValue * amplitude;
+        maxHeight += amplitude;
+        amplitude *= Persistence;
+        freqTmp *= Lacunarity;
+    }
+
+    
+    float normalizedHeight = totalHeight / maxHeight;
+    int yPos = floor(normalizedHeight * HeightMult + HeightAdd);
+
+    NoiseTexture[uint2(id.x, yPos)] = float4(1,1,1,1);
+    CurveData[id.x] = yPos;
+}

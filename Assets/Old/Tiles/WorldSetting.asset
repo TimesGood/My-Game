@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb2234cc2161109478862ff8036762c1, type: 3}
+  m_Name: WorldSetting
+  m_EditorClassIdentifier: 
+  <seed>k__BackingField: -532
+  <chunkSize>k__BackingField: {x: 40, y: 30}
+  <chunkScale>k__BackingField: 16
+  <heightAddition>k__BackingField: 100
+  <heightMulti>k__BackingField: 60
+  <heightScale>k__BackingField: 0.01
+  <caveThreshold>k__BackingField: 0.5
+  <caveScale>k__BackingField: 0.05
+  <plantsThreshold>k__BackingField: 0.5
+  <plantsFrequncy>k__BackingField: 0.2
+  <treeThreshold>k__BackingField: 0.7
+  <treeFrequncy>k__BackingField: 0.33
+  <ores>k__BackingField:
+  - {fileID: 11400000, guid: acee65c48accda74f8f3f2ebb3dcf195, type: 2}
+  - {fileID: 11400000, guid: b81c0753d9a3a4345b0dded6b11e32e1, type: 2}
+  <biomes>k__BackingField:
+  - {fileID: 11400000, guid: 7b94052e116a53f4b8a7f4df73e1be01, type: 2}

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b49b4b8c973ed14292b625d0319469a, type: 3}
+  m_Name: CorruptLand
+  m_EditorClassIdentifier: 
+  <heightAddition>k__BackingField: 100
+  <heightMulti>k__BackingField: 60
+  <caveThreshold>k__BackingField: 0.391
+  <caveScale>k__BackingField: 0.045
+  <plantsThreshold>k__BackingField: 0.431
+  <plantsFrequncy>k__BackingField: 0.33
+  <treeThreshold>k__BackingField: 0.203
+  <treeFrequncy>k__BackingField: 0.098
+  <treeHeight>k__BackingField: {x: 6, y: 16}
+  <heightScale>k__BackingField: 0.01
+  <ores>k__BackingField:
+  - {fileID: 11400000, guid: acee65c48accda74f8f3f2ebb3dcf195, type: 2}
+  - {fileID: 11400000, guid: b81c0753d9a3a4345b0dded6b11e32e1, type: 2}
+  <tileAtlas>k__BackingField: {fileID: 11400000, guid: 9dc87f2729f63314fa041afa31f4e2ae, type: 2}

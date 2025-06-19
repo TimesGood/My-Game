@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd1161a878312aa41ab92a66caacb21b, type: 3}
+  m_Name: DesertOutLine
+  m_EditorClassIdentifier: 
+  _noiseTexture: {fileID: 0}
+  noiseWidth: 1000
+  noiseHeight: 1000
+  seed: -9367
+  openGPU: 0
+  isBinary: 1
+  vertexCount: 100
+  offset: {x: 0, y: 250}
+  fillPolygon: 1
+  limitType: 1
+  circleRadius: 500
+  circleRange: 0.8
+  ellipseRadius: 250
+  ellipseRange: 0.001
+  ellipseScale: {x: 1, y: 0.5}
+  edgeBias: 0
+  rectSize: {x: 333, y: 300}
+  rectRange: 0.9
+  leftLower: {x: 0, y: 0}
+  rightUpper: {x: 1973, y: 2000}
+  bezierStrength: 0.049
+  bezierSegments: 6
+  useBezierCurves: 0
+  perlinFrequency: 0.02
+  perlinAmplitude: 50
+  perlinSegments: 1
+  usePerlinCurves: 1
+  octaves: 4
+  persistence: 0.3
+  lacunarity: 10

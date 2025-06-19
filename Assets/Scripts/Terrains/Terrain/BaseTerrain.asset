@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3555e644addabf64eaa4a71ef8ef735f, type: 3}
+  m_Name: BaseTerrain
+  m_EditorClassIdentifier: 
+  terrain: {fileID: 11400000, guid: 811bd5b0e3c1eaf45a0889b6b4367857, type: 2}
+  caveNoise: {fileID: 11400000, guid: bb869961a4ef6fb458a73c85d9805e02, type: 2}
+  dirtNoise: {fileID: 11400000, guid: 2ffea54ae9345444eb8f970e725ec5e7, type: 2}
+  dirtClass: {fileID: 11400000, guid: ef2b46ed50cce49469606978ea1fbea6, type: 2}
+  stoneNoise: {fileID: 11400000, guid: 40c5f70aa9019224ca9fd670e31ca439, type: 2}
+  stoneClass: {fileID: 11400000, guid: ea7c6f3bacb8d344284e14c8709e33d8, type: 2}
+  grassTile: {fileID: 11400000, guid: d17025596157bbf43b0c12608c058574, type: 2}

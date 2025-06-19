@@ -1,0 +1,70 @@
+#pragma kernel RasterizePolygon
+#pragma kernel Rotate
+#pragma prefer_hlslcc gles
+#pragma exclude_renderers d3d11_9x
+#pragma target 5.0
+uint VertexCount;
+
+RWStructuredBuffer<float2> PathPoints;
+RWTexture2D<float4> Result;
+
+
+
+[numthreads(8,8,1)]
+void RasterizePolygon (uint3 id : SV_DispatchThreadID) {
+    float2 pixelPos = id.xy;
+    uint inside = 0;
+
+    [loop] for(uint i=0; i < VertexCount; i++){
+        float2 p1 = PathPoints[i];
+        float2 p2 = PathPoints[(i+1)%VertexCount];
+
+
+        if ((p1.y > pixelPos.y) != (p2.y > pixelPos.y)) {
+            float intersectX = (pixelPos.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
+            if (pixelPos.x < intersectX) inside++;
+        }
+    }
+
+    if (inside % 2 == 1) {
+        Result[id.xy] = float4(1,1,1,1);
+    }
+}
+
+Texture2D<float4> SourceTexture;
+SamplerState samplerSourceTexture;
+
+float2 TextureSize;
+float2 Offset;
+float RotationAngle;
+float2 Pivot = float2(0.5, 0.5); 
+float4 BackgroundColor = float4(0,0,0,0);
+
+void CalculateDerivatives(float2 uv, out float2 dx, out float2 dy) {
+    float2 uv_right = uv + float2(1.0/TextureSize.x, 0);
+    float2 uv_up = uv + float2(0, 1.0/TextureSize.y);
+    
+    dx = uv_right - uv;
+    dy = uv_up - uv;
+}
+
+[numthreads(8,8,1)]
+void Rotate (uint3 id : SV_DispatchThreadID) {
+    float2 uv = (float2)id.xy;
+    float2 normalizedUV = uv / TextureSize;
+
+    float cosTheta = cos(RotationAngle);
+    float sinTheta = sin(RotationAngle);
+
+    float2 centeredUV = normalizedUV - Pivot;
+
+    float2 rotatedUV;
+    rotatedUV.x = centeredUV.x * cosTheta - centeredUV.y * sinTheta;
+    rotatedUV.y = centeredUV.x * sinTheta + centeredUV.y * cosTheta;
+
+    float2 finalUV = rotatedUV + Pivot + TextureSize;
+
+
+    Result[id.xy] = SourceTexture.SampleLevel(samplerSourceTexture, finalUV, 1);
+}
+

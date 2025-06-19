@@ -1,0 +1,54 @@
+#pragma kernel PerlinDistort
+#include "Assets/Resources/Shader/Include/Noise.hlsl"
+
+RWTexture2D<float4> Result;
+Texture2D<float4> SourceTexture;
+SamplerState samplerSourceTexture;
+
+float2 TextureSize;
+float Frequency;
+float Amplitude;
+int Octaves;
+float Persistence;
+float Lacunarity;
+
+float fractal_brownian_motion(float2 uv) {
+
+    float total = 0.0;
+    float frequency = Frequency;
+    float amplitude = Amplitude;
+    float max_amplitude = 0.0;
+    
+    for(int i = 0; i < Octaves; i++) {
+        total += snoise(uv * frequency) * amplitude;
+        max_amplitude += amplitude;
+        frequency *= Lacunarity;
+        amplitude *= Persistence;
+    }
+    
+    return total / max_amplitude;
+}
+
+[numthreads(8,8,1)]
+void PerlinDistort (uint3 id : SV_DispatchThreadID) {
+    float2 uv = id.xy;
+    float2 normalizedUV = uv / TextureSize;
+    
+
+    float4 original = SourceTexture.SampleLevel(samplerSourceTexture, normalizedUV, 0);
+    float edge = length(original.rgb - SourceTexture.SampleLevel(samplerSourceTexture, normalizedUV, 3).rgb);
+    
+
+    float noise = fractal_brownian_motion(uv);
+
+    float2 displacement = float2(
+        fractal_brownian_motion(uv + float2(123.4, 567.8)),
+        fractal_brownian_motion(uv - float2(987.6, 543.2))
+    );
+
+    float2 distortedUV = normalizedUV + displacement * Amplitude * edge * 0.1;
+
+    float4 distorted = SourceTexture.SampleLevel(samplerSourceTexture, distortedUV, 0);
+    Result[id.xy] = lerp(original, distorted, saturate(edge * 10.0));
+}
+

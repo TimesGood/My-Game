@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ecdd371aa2b46484fb81a973ad660742, type: 3}
+  m_Name: BaseAtlas
+  m_EditorClassIdentifier: 
+  <grassBlock>k__BackingField: {fileID: 11400000, guid: d17025596157bbf43b0c12608c058574, type: 2}
+  <dirtBlock>k__BackingField: {fileID: 11400000, guid: ef2b46ed50cce49469606978ea1fbea6, type: 2}
+  <dirtWall>k__BackingField: {fileID: 11400000, guid: 5b25f7427ffafc7468e2169eb113886f, type: 2}
+  <stoneBlock>k__BackingField: {fileID: 11400000, guid: ea7c6f3bacb8d344284e14c8709e33d8, type: 2}
+  <stoneWall>k__BackingField: {fileID: 11400000, guid: a613d59ff9cd85b45a7db7d6a6228ed6, type: 2}
+  <plants>k__BackingField: {fileID: 11400000, guid: 6716859b4ed4df249b36f5777808b837, type: 2}
+  <tree>k__BackingField: {fileID: 11400000, guid: af6be816e7e29384bafc13a5948ddf9f, type: 2}
+  <leaf>k__BackingField: {fileID: 11400000, guid: 8286b0e583f5de946a2cb3f48a42e086, type: 2}
+  <coal>k__BackingField: {fileID: 11400000, guid: acee65c48accda74f8f3f2ebb3dcf195, type: 2}
+  <iron>k__BackingField: {fileID: 11400000, guid: b81c0753d9a3a4345b0dded6b11e32e1, type: 2}
+  <gold>k__BackingField: {fileID: 11400000, guid: a3964655559cb0a47bd9f7bf8d9a77e7, type: 2}
+  <diamond>k__BackingField: {fileID: 11400000, guid: dc83dedd09670734c88264fd716fce5c, type: 2}

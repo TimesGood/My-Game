@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd1161a878312aa41ab92a66caacb21b, type: 3}
+  m_Name: RainforestOutLine
+  m_EditorClassIdentifier: 
+  _noiseTexture: {fileID: 0}
+  resultTexture: {fileID: 0}
+  noiseWidth: 2000
+  noiseHeight: 2000
+  seed: 2100
+  openGPU: 0
+  isBinary: 1
+  vertexCount: 5
+  offset: {x: 0, y: 0}
+  fillPolygon: 1
+  limitType: 1
+  circleRadius: 150
+  circleRange: 0.656
+  ellipseRadius: 500
+  ellipseRange: 0.8
+  ellipseScale: {x: 1, y: 2}
+  edgeBias: 0.7
+  rectSize: {x: 1000, y: 1500}
+  rectRange: 0.73
+  leftLower: {x: 0, y: 0}
+  rightUpper: {x: 1973, y: 2000}
+  bezierStrength: 0.3
+  bezierSegments: 15
+  useBezierCurves: 0
+  perlinFrequency: 0.006
+  perlinAmplitude: 100
+  perlinSegments: 1
+  usePerlinCurves: 1
+  octaves: 3
+  persistence: 0.3
+  lacunarity: 4

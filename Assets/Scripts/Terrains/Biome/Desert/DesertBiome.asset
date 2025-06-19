@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76ef7d0d581bd514591c6f7c2738f73f, type: 3}
+  m_Name: DesertBiome
+  m_EditorClassIdentifier: 
+  <terrain>k__BackingField: {fileID: 11400000, guid: 332db99bc5664b64ebb40673abcd31e5, type: 2}
+  <outLine>k__BackingField: {fileID: 11400000, guid: b7050965724b9c3428789e4ad6cb0213, type: 2}
+  <specialOutLine>k__BackingField: {fileID: 0}
+  <cave>k__BackingField: {fileID: 11400000, guid: bca4264c61200404d99eb25306d24762, type: 2}
+  <ores>k__BackingField: []
+  <grassBlock>k__BackingField: {fileID: 11400000, guid: 11f7b95590725634797897e561ad0f30, type: 2}
+  <dirtBlock>k__BackingField: {fileID: 11400000, guid: e98764201539d5248853175806141f84, type: 2}
+  <dirtWall>k__BackingField: {fileID: 0}
+  <stoneBlock>k__BackingField: {fileID: 11400000, guid: 1384fcaa98d68df47aadf2d5aad755b2, type: 2}
+  <stoneWall>k__BackingField: {fileID: 0}
+  <plants>k__BackingField: {fileID: 0}
+  <tree>k__BackingField: {fileID: 11400000, guid: af6be816e7e29384bafc13a5948ddf9f, type: 2}
+  <leaf>k__BackingField: {fileID: 11400000, guid: 8286b0e583f5de946a2cb3f48a42e086, type: 2}

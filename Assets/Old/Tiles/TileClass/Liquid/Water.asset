@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69641715b5233a240af50e3f3d63bd02, type: 3}
+  m_Name: Water
+  m_EditorClassIdentifier: 
+  tile: {fileID: 11400000, guid: 1b0d6831cdf288548a711666e3c133ea, type: 2}
+  layer: 3
+  blockId: 22
+  isIlluminated: 0
+  lightLevel: 0
+  lightColor: {r: 0, g: 0, b: 0, a: 0}
+  <flowSpeed>k__BackingField: 0.05
+  <tiles>k__BackingField:
+  - {fileID: 11400000, guid: 1c1a9295510aede4986b96531c1690ea, type: 2}
+  - {fileID: 11400000, guid: 45faed14ce51a01419b9860eedcc85d7, type: 2}
+  - {fileID: 11400000, guid: 715ac07f412c9da45ab96ef2a1b85085, type: 2}
+  - {fileID: 11400000, guid: 55f6ab95fd890664fb0a94af5b614555, type: 2}
+  - {fileID: 11400000, guid: fb9753cfcd2709b498b5f1377301b6df, type: 2}
+  - {fileID: 11400000, guid: 1b0d6831cdf288548a711666e3c133ea, type: 2}
+  <minVolume>k__BackingField: 0.0005

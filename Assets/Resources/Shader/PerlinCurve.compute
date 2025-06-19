@@ -1,0 +1,26 @@
+#pragma kernel CSMain
+
+#include "Include/Noise.hlsl"
+
+RWTexture2D<float4> NoiseTexture;
+RWStructuredBuffer<int> CurveData;
+float Frequency;
+float Threshold;
+int Seed;
+bool IsBinary;
+float HeightMult;
+float HeightAdd;
+float Offset;
+
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float2 uv = float2(id.x, 0) * Frequency + float2(Seed, Seed) + float2(Offset, Offset);
+    float noiseValue = snoise(uv);
+    float y = noiseValue * HeightMult + HeightAdd;
+
+    int floorY = (int)floor(y);
+    NoiseTexture[uint2(id.x, floorY)] = float4(1,1,1,1);
+    CurveData[id.x] = floorY;
+}
