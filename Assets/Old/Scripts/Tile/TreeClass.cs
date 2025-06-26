@@ -61,31 +61,31 @@ public class TreeClass : TileClass
                         //转世界空间
                         int worldX = gridX - originPoint.x + x;
                         int worldY = gridY - originPoint.y + y;
-                        TileClass isAddon = WorldGeneration.Instance.GetTileData(Layers.Addons, worldX, worldY + 1);
-                        if (isAddon != null) WorldGeneration.Instance.SetTileData(null, Layers.Addons, worldX, worldY + 1);
-                        WorldGeneration.Instance.SetTileData(null, Layers.Ground, worldX, worldY);
+                        TileClass isAddon = WorldGeneration.Instance.GetTileClass(Layers.Addons, worldX, worldY + 1);
+                        if (isAddon != null) WorldGeneration.Instance.SetTileClass(null, Layers.Addons, worldX, worldY + 1);
+                        WorldGeneration.Instance.SetTileClass(null, Layers.Ground, worldX, worldY);
                     }
                 }
             }
 
-            WorldGeneration.Instance.SetTileData(this, this.layer, x, y);
+            WorldGeneration.Instance.SetTileClass(this, this.layer, x, y);
             return;
         }
         //组合树
         for (int ny = y; ny < y + h; ny++) {
-            WorldGeneration.Instance.SetTileData(this, this.layer, x, ny);
+            WorldGeneration.Instance.SetTileClass(this, this.layer, x, ny);
             //生成树桩
             if (ny == y) {
                 //左侧树桩
                 if (Random.Range(0, 100) < 30) {
-                    if (x > 0 && WorldGeneration.Instance.GetTileData(Layers.Ground, x - 1, ny - 1) != null && WorldGeneration.Instance.GetTileData(Layers.Ground, x - 1, ny) == null) {
-                        WorldGeneration.Instance.SetTileData(this, this.layer, x - 1, ny);
+                    if (x > 0 && WorldGeneration.Instance.GetTileClass(Layers.Ground, x - 1, ny - 1) != null && WorldGeneration.Instance.GetTileClass(Layers.Ground, x - 1, ny) == null) {
+                        WorldGeneration.Instance.SetTileClass(this, this.layer, x - 1, ny);
                     }
                 }
                 //右侧树桩
                 if (Random.Range(0, 100) < 30) {
-                    if (WorldGeneration.Instance.GetTileData(Layers.Ground, x + 1, ny - 1) != null && WorldGeneration.Instance.GetTileData(Layers.Ground, x + 1, ny) == null) {
-                        WorldGeneration.Instance.SetTileData(this, this.layer, x + 1, ny);
+                    if (WorldGeneration.Instance.GetTileClass(Layers.Ground, x + 1, ny - 1) != null && WorldGeneration.Instance.GetTileClass(Layers.Ground, x + 1, ny) == null) {
+                        WorldGeneration.Instance.SetTileClass(this, this.layer, x + 1, ny);
                     }
                 }
 
@@ -93,14 +93,14 @@ public class TreeClass : TileClass
             //生成树杈
             else if (ny >= y + 2 && ny <= y + h - 3) {
                 if (bCounts < maxBranches && Random.Range(0, 100) < 40) {
-                    if (x > 0 && WorldGeneration.Instance.GetTileData(Layers.Ground, x - 1, ny) == null && WorldGeneration.Instance.GetTileData(Layers.Addons, x - 1, ny - 1) != this) {
-                        WorldGeneration.Instance.SetTileData(leaf, leaf.layer, x - 1, ny);
+                    if (x > 0 && WorldGeneration.Instance.GetTileClass(Layers.Ground, x - 1, ny) == null && WorldGeneration.Instance.GetTileClass(Layers.Addons, x - 1, ny - 1) != this) {
+                        WorldGeneration.Instance.SetTileClass(leaf, leaf.layer, x - 1, ny);
                         bCounts++;
                     }
                 }
                 if (bCounts < maxBranches && Random.Range(0, 100) < 40) {
-                    if (WorldGeneration.Instance.GetTileData(Layers.Ground, x + 1, ny) == null && WorldGeneration.Instance.GetTileData(Layers.Addons, x + 1, ny - 1) != this) {
-                        WorldGeneration.Instance.SetTileData(leaf, leaf.layer, x + 1, ny);
+                    if (WorldGeneration.Instance.GetTileClass(Layers.Ground, x + 1, ny) == null && WorldGeneration.Instance.GetTileClass(Layers.Addons, x + 1, ny - 1) != this) {
+                        WorldGeneration.Instance.SetTileClass(leaf, leaf.layer, x + 1, ny);
                         bCounts++;
                     }
                 }

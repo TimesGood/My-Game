@@ -43,7 +43,7 @@ public class LightHandler : Singleton<LightHandler>
                 {
                     lightValue = world.GetLightValue(x, y);
                 }
-                else if (world.GetTileData(Layers.Background, x, y) == null && world.GetTileData(Layers.Ground, x, y) == null)
+                else if (world.GetTileClass(Layers.Background, x, y) == null && world.GetTileClass(Layers.Ground, x, y) == null)
                 {
                     lightValue = sunlight;
                 }
@@ -58,7 +58,7 @@ public class LightHandler : Singleton<LightHandler>
                     lightValue = Mathf.Max(lightValues[x, ny1], lightValues[x, ny2], lightValues[nx1, y], lightValues[nx2, y]);
 
                     //π‚’’»Òºı
-                    if (world.GetTileData(Layers.Ground, x, y) == null)
+                    if (world.GetTileClass(Layers.Ground, x, y) == null)
                     {
                         lightValue -= 1f;
                     }
@@ -87,7 +87,7 @@ public class LightHandler : Singleton<LightHandler>
                 {
                     lightValue = world.GetLightValue(x, y);
                 }
-                else if (world.GetTileData(Layers.Background, x, y) == null && world.GetTileData(Layers.Ground, x, y) == null)
+                else if (world.GetTileClass(Layers.Background, x, y) == null && world.GetTileClass(Layers.Ground, x, y) == null)
                 {
                     lightValue = sunlight;
                 }
@@ -102,7 +102,7 @@ public class LightHandler : Singleton<LightHandler>
                     lightValue = Mathf.Max(lightValues[x, ny1], lightValues[x, ny2], lightValues[nx1, y], lightValues[nx2, y]);
 
                     //π‚’’»Òºı
-                    if (world.GetTileData(Layers.Ground, x, y) == null)
+                    if (world.GetTileClass(Layers.Ground, x, y) == null)
                     {
                         lightValue -= 1f;
                     }

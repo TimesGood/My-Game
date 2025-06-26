@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TreeEditor;
@@ -9,8 +10,9 @@ using UnityEngine.Tilemaps;
 public class ChunkHandler : Singleton<ChunkHandler> {
 
     public WorldGeneration world;
+    public float loadRadius = 3f;//加载范围
 
-    public int chunkCount = 20; //X和Y轴区块刻度
+    public int chunkCount = 20; //X和Y轴区块数量
     public int chunkXCount;     //X轴区块数
     public int chunkYCount;     //Y轴区块数
     public int chunkXSize;      //X轴每区块像素大小
@@ -19,11 +21,18 @@ public class ChunkHandler : Singleton<ChunkHandler> {
     public Camera renderCamera;
     public float padding = 2f;   // 视口外缓冲区块数
     private ChunkData[,] chunks;
-    private List<ChunkData> activeChunks = new List<ChunkData>();
+    private Dictionary<Vector2Int, ChunkData> loadedChunks = new Dictionary<Vector2Int, ChunkData>();//储存已加载的区块
+    private HashSet<Vector2Int> unloadingChunks = new HashSet<Vector2Int>(); // 跟踪正在卸载的区块
+    private Vector2Int lastLoadedChunk = new Vector2Int(int.MinValue, int.MinValue);
 
+    private Coroutine loadingCoroutine;
 
-    private void Update() {
-        UpdateVisibleChunks();
+    // 添加区块状态枚举
+    public enum ChunkState {
+        Unloaded,
+        Loading,
+        Loaded,
+        Unloading
     }
 
 
@@ -31,8 +40,18 @@ public class ChunkHandler : Singleton<ChunkHandler> {
         public Vector2Int coord;//区块坐标
         public Vector3Int[] tilePos;//区块瓦片坐标
         public int[] tileIDs;//瓦片Id
-        public bool isLoaded;//是否已加载渲染
+        public ChunkState state = ChunkState.Unloaded;
         public Bounds bounds;//区块范围盒
+    }
+
+    private void Update() {
+        Vector2Int currentChunk = WorldToChunkCoord(renderCamera.transform.position);
+
+        if (currentChunk != lastLoadedChunk || Time.frameCount % 10 == 0) //每10帧强制检查
+        {
+            LoadChunksAroundCamera();
+            lastLoadedChunk = currentChunk;
+        }
     }
 
 
@@ -80,7 +99,7 @@ public class ChunkHandler : Singleton<ChunkHandler> {
 
 
 
-    // 计算摄像机边界
+    // 获取摄像机矩阵
     public Bounds GetCameraBounds() {
         Vector3[] frustumCorners = new Vector3[4];
         renderCamera.CalculateFrustumCorners(
@@ -103,63 +122,123 @@ public class ChunkHandler : Singleton<ChunkHandler> {
 
         // 扩展边界范围
         bounds.Expand(padding * chunkXSize);
-        
+
         return bounds;
+    }
+    private void LoadChunksAroundCamera() {
+
+        if (loadingCoroutine != null) {
+            StopCoroutine(loadingCoroutine);
+        }
+
+        loadingCoroutine = StartCoroutine(UpdateVisibleChunks());
     }
 
     // 更新可见分块
-    private void UpdateVisibleChunks() {
-        Bounds camBounds = GetCameraBounds();
-        //List<ChunkData> newActiveChunks = new List<ChunkData>();
+    private IEnumerator UpdateVisibleChunks() {
 
-        // 遍历所有分块
-        for (int x = 0; x < chunkXCount; x++) {
-            for (int y = 0; y < chunkYCount; y++) {
-                if (chunks[x, y].bounds.Intersects(camBounds)) {
-                    if (!chunks[x, y].isLoaded) {
-                        StartCoroutine(LoadChunkAsync(chunks[x, y]));
-                    }
-                    //newActiveChunks.Add(chunks[x, y]);
-                } else {
-                    if (chunks[x, y].isLoaded) {
-                        StartCoroutine(UnloadChunk(chunks[x, y]));
-                    }
-                }
+        Vector2Int centerChunk = WorldToChunkCoord(renderCamera.transform.position);
+        List<Vector2Int> chunksToLoad = new List<Vector2Int>();
+
+        //以圆形进行渲染
+        int radius = Mathf.CeilToInt(loadRadius);
+        for (int y = -radius; y <= radius; y++) {
+            for (int x = -radius; x <= radius; x++) {
+                Vector2Int chunkID = centerChunk + new Vector2Int(x, y);
+
+                if (Vector2Int.Distance(centerChunk, chunkID) > loadRadius)
+                    continue;
+
+                if (chunkID.x < 0 || chunkID.x >= chunkXCount ||
+                    chunkID.y < 0 || chunkID.y >= chunkYCount)
+                    continue;
+
+                chunksToLoad.Add(chunkID);
             }
         }
-        // 更新活动分块列表
-        //activeChunks = newActiveChunks;
+
+        // 按距离排序，先加载最近的
+        chunksToLoad.Sort((a, b) =>
+            Vector2Int.Distance(centerChunk, a).CompareTo(Vector2Int.Distance(centerChunk, b)));
+
+        //以摄像机矩形进行渲染
+        //Bounds bounds = GetCameraBounds();
+        //for (int y = (int)bounds.min.y; y <= bounds.max.y; y++) {
+        //    for (int x = (int)bounds.min.x; x <= bounds.max.x; x++) {
+        //        Vector2Int chunkID = GetChunkIndex(x, y);
+
+        //        if (chunkID.x < 0 || chunkID.x >= chunkXCount ||
+        //            chunkID.y < 0 || chunkID.y >= chunkYCount)
+        //            continue;
+
+        //        chunksToLoad.Add(chunkID);
+
+        //    }
+        //}
+
+        // 卸载不在视野内的区块
+        List<Vector2Int> toUnload = new List<Vector2Int>();
+        foreach (var kvp in loadedChunks) {
+            if (!chunksToLoad.Contains(kvp.Key) &&
+                kvp.Value.state == ChunkState.Loaded) {
+                toUnload.Add(kvp.Key);
+            }
+        }
+        
+        // 开始卸载
+        foreach (var chunkID in toUnload) {
+            if (unloadingChunks.Contains(chunkID)) continue;
+
+            StartCoroutine(UnloadChunk(loadedChunks[chunkID]));
+            unloadingChunks.Add(chunkID);
+        }
+        //int processed = 0;
+        // 加载新区块
+        foreach (var chunkID in chunksToLoad) {
+            ChunkData chunk = chunks[chunkID.x, chunkID.y];
+
+            if (chunk.state == ChunkState.Unloaded &&
+                !unloadingChunks.Contains(chunkID)) {
+                ////防止加载协程太多造成卡顿
+                //if (processed++ % 5 == 0)
+                //    yield return null;
+                StartCoroutine(LoadChunkAsync(chunk));
+            }
+        }
+        yield return null;
     }
 
-    
     //使用SetTilesBlock批量设置区块
     // 异步加载分块
     IEnumerator LoadChunkAsync(ChunkData chunk) {
-        //List<Vector3Int>[] positionsByLayer = new List<Vector3Int>[4];//每层瓦片坐标
-        List<TileBase>[] tilesByLayer = new List<TileBase>[4];//每层瓦片集
-        for (int i = 0; i < 4; i++) {
-            //positionsByLayer[i] = new List<Vector3Int>();
-            tilesByLayer[i] = new List<TileBase>();
+        // 如果区块正在卸载，等待卸载完成
+        while (unloadingChunks.Contains(chunk.coord)) {
+            yield return null;
         }
-        for (int i = 0; i < 4; i++) {
-            //液体由LiquidHandler渲染，跳过
-            if (i == (int)Layers.Liquid) continue;
-            foreach (Vector3Int tilePos in chunk.tilePos) {
-                TileClass tileClass = world.tileDatas[i, tilePos.x, tilePos.y];
-                
 
-                tilesByLayer[i].Add(tileClass?.tile);
-                //positionsByLayer[i].Add(tilePos);
+        chunk.state = ChunkState.Loading;
+
+        Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
+        foreach (Layers layer in layers) {
+            if (layer == Layers.Liquid) continue;
+
+            List<TileBase> tileBases = new List<TileBase>();
+            foreach (Vector3Int tilePos in chunk.tilePos) {
+                TileClass tileClass = world.GetTileClass(layer, tilePos.x, tilePos.y);
+                tileBases.Add(tileClass?.tile);
             }
 
             BoundsInt bound = ToBoundsInt(chunk.bounds);
-            world.tilemaps[i].SetTilesBlock(bound, tilesByLayer[i].ToArray());
-
-            tilesByLayer[i].Clear();
-            //positionsByLayer[i].Clear();
-            yield return null; // 每设置一层暂停一帧
+            world.tilemaps[(int)layer].SetTilesBlock(bound, tileBases.ToArray());
+            yield return null;
         }
-        chunk.isLoaded = true;
+
+        chunk.state = ChunkState.Loaded;
+
+        // 确保只添加一次
+        if (!loadedChunks.ContainsKey(chunk.coord)) {
+            loadedChunks.Add(chunk.coord, chunk);
+        }
     }
     //转为Int包围盒
     private BoundsInt ToBoundsInt(Bounds bounds) {
@@ -168,13 +247,24 @@ public class ChunkHandler : Singleton<ChunkHandler> {
         return new BoundsInt(min, size);
     }
     // 卸载分块
-    IEnumerator UnloadChunk(ChunkData chunk) {
-        for (int i = 0; i < 4; i++) {
-            BoundsInt bound = ToBoundsInt(chunk.bounds);
-            world.tilemaps[i].SetTilesBlock(bound, new TileBase[bound.size.x * bound.size.y]);
-            yield return null; // 每设置一层暂停一帧
+    private IEnumerator UnloadChunk(ChunkData chunk) {
+        // 如果区块正在加载，等待加载完成
+        while (chunk.state == ChunkState.Loading) {
+            yield return null;
         }
-        chunk.isLoaded = false;
+
+        chunk.state = ChunkState.Unloading;
+
+        Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
+        foreach (Layers layer in layers) {
+            BoundsInt bound = ToBoundsInt(chunk.bounds);
+            world.tilemaps[(int)layer].SetTilesBlock(bound, new TileBase[bound.size.x * bound.size.y]);
+            yield return null;
+        }
+
+        chunk.state = ChunkState.Unloaded;
+        loadedChunks.Remove(chunk.coord);
+        unloadingChunks.Remove(chunk.coord);
     }
 
 
@@ -185,14 +275,20 @@ public class ChunkHandler : Singleton<ChunkHandler> {
 
         for (int chunkXIndex = 0; chunkXIndex < chunkXCount; chunkXIndex++) {
             for (int chunkYIndex = 0; chunkYIndex < chunkYCount; chunkYIndex++) {
-                
+
                 StartCoroutine(LoadChunkAsync(chunks[chunkXIndex, chunkYIndex]));
                 yield return null; // 每设置一区块暂停一帧 
             }
         }
     }
 
-
+    //世界坐标转区块索引
+    private Vector2Int WorldToChunkCoord(Vector3 worldPos) {
+        return new Vector2Int(
+            Mathf.FloorToInt(worldPos.x / chunkXSize),
+            Mathf.FloorToInt(worldPos.y / chunkYSize)
+        );
+    }
     //获取实际坐标的所在区块索引
     public Vector2Int GetChunkIndex(int x, int y) {
         //利用向下取整获取区块索引
@@ -208,5 +304,8 @@ public class ChunkHandler : Singleton<ChunkHandler> {
         return new Vector3Int(x, y);
     }
 
+    public ChunkData[,] GetChunkDatas() {
+        return chunks;
+    }
 
 }

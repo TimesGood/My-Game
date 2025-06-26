@@ -43,7 +43,7 @@ public class MapSaveManager : Singleton<MapSaveManager> {
         }
 
 
-        int[,,] tileDatas = new int[4, world.worldWidth, world.worldHeight];
+        long[,,] tileDatas = new long[4, world.worldWidth, world.worldHeight];
         gameData = new MapData(chunkDatas, tileDatas);
     }
 

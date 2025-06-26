@@ -34,8 +34,9 @@ namespace UnityEditor
 
                     BrushCell cell = cells[GetCellIndexWrapAround(pos.x, pos.y, pos.z)];
                     if (cell.tile is CustomTile) {
-                        int id = ((CustomTile)cell.tile).blockId;
-                        TileClass tileClass = WorldGeneration.Instance.tileClassBases[id];
+                        long id = ((CustomTile)cell.tile).blockId;
+                        TileClass tileClass = WorldGeneration.Instance.GetTileClass(id);
+
                         if (tileClass is LiquidClass) {
                             
                             WorldGeneration.Instance.PlaceLiquidTile((LiquidClass)tileClass, pos.x, pos.y, 1);
@@ -115,8 +116,8 @@ namespace UnityEditor
                     //Vector3 cellCenter = GetCellWorldCenter(gridLayout, pos);
                     // 获取瓦片
                     TileBase tile = tilemap.GetTile(pos);
-                    int layer = GetLayerByName(brushTarget.name);
-                    TileClass tileClass = WorldGeneration.Instance.tileDatas[layer, pos.x, pos.y];
+                    Layers layer = GetLayerByName(brushTarget.name);
+                    TileClass tileClass = WorldGeneration.Instance.GetTileClass(layer, pos.x, pos.y);
                     if (tileClass is LiquidClass) {
                         float volume = LiquidHandler.Instance.liquidVolume[pos.x, pos.y];
                         Handles.Label(new Vector3(pos.x, pos.y + 1), volume.ToString());
@@ -146,16 +147,16 @@ namespace UnityEditor
             return new Vector3Int((int)cellCenter.x, (int)cellCenter.y, 0);
         }
         //查找瓦片对应瓦片地图
-        private int GetLayerByName(string name) {
+        private Layers GetLayerByName(string name) {
             switch (name) {
                 case "Addons":
-                    return 0;
+                    return Layers.Addons;
                 case "BackGround":
-                    return 1;
+                    return Layers.Background;
                 case "Ground":
-                    return 2;
+                    return Layers.Ground;
                 case "Liquid":
-                    return 3;
+                    return Layers.Liquid;
                 default:
                     throw new System.Exception("异常，找不到瓦片地图");
             }

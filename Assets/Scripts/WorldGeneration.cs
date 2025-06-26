@@ -1,18 +1,19 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
-//世界生成管理器
 public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
 {
     public int seed;//世界种子
     public int worldWidth = 200;//世界宽度
     public int worldHeight = 100;//世界高度
 
-
+    
     public Tilemap[] tilemaps;//瓦片地图集
-    public TileClass[,,] tileDatas;//地图瓦片数据
+    private long[,,] tileIds;//瓦片对应位置Id
 
     public int baseHeight => (int)(worldHeight * 0.7);//地形基准高度
     public int[] surfaceHeights { get; set; }//地形高度数据
@@ -21,8 +22,71 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
     public BaseTerrain baseTerrain;
     public BiomeTerrain biomeTerrain;
 
-    public List<TileClass> tileClassBases;//瓦片注册集
+    //初始化方法
+    private static bool _isInitialized;
 
+    // 瓦片注册表
+    public static class TileRegistry {
+        private static Dictionary<long, TileClass> tileDictionary = new Dictionary<long, TileClass>();
+        private static Dictionary<TileClass, long> reverseLookup = new Dictionary<TileClass, long>();
+
+        public static long RegisterTile(TileClass tile) {
+            if (tile == null) return 0;
+
+            if (reverseLookup.TryGetValue(tile, out long id)) {
+                return id;
+            }
+
+            tileDictionary.Add(tile.blockId, tile);
+            reverseLookup.Add(tile, tile.blockId);
+            return tile.blockId;
+        }
+
+        public static TileClass GetTile(long id) {
+            if (id == 0) return null;
+            return tileDictionary.TryGetValue(id, out var tile) ? tile : null;
+        }
+
+        public static void ClearRegistry() {
+            tileDictionary.Clear();
+            reverseLookup.Clear();
+        }
+    }
+
+
+    //初始化时执行，获取瓦片资产数据
+    [RuntimeInitializeOnLoadMethod]
+    private static void Initialize() {
+        if (_isInitialized) return;
+        TileRegistry.ClearRegistry();
+
+        //TileClass[] allTiles = Resources.LoadAll<TileClass>("Tiles");
+        //注册瓦片资产
+        //查找目录中的装备数据，返回的是GUID
+        string[] assetNames = AssetDatabase.FindAssets("", new[] { "Assets/Old/Tiles" });
+        int i = 0;
+        foreach (string SOName in assetNames) {
+            var SOpath = AssetDatabase.GUIDToAssetPath(SOName);//GUID转为物件实际项目路径
+            var itemData = AssetDatabase.LoadAssetAtPath<TileClass>(SOpath);//根据路径读取指定物件
+            if (itemData == null) continue;
+            TileRegistry.RegisterTile(itemData);
+            i++;
+
+        }
+
+        _isInitialized = true;
+        Debug.Log($"已注册 {i} 个图块");
+    }
+
+    //根据瓦片Id获取瓦片资产
+    public TileClass GetTileClass(long id) {
+
+        TileClass tileClass = TileRegistry.GetTile(id);
+        if (tileClass != null) return tileClass;
+
+        Debug.LogWarning($"找不到 ID: {id} 对应的图块");
+        return null;
+    }
 
     private void Start() {
         InitWorld();
@@ -46,7 +110,8 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
         for (int x = 0; x < worldWidth; x++) {
             surfaceHeights[x] = baseHeight;
         }
-        tileDatas = new TileClass[4, worldWidth, worldHeight];
+        //tileDatas = new TileClass[4, worldWidth, worldHeight];
+        tileIds = new long[Enum.GetValues(typeof(Layers)).Length, worldWidth, worldHeight];
         LiquidHandler.Instance.Init();
         ChunkHandler.Instance.InitChunk();
     }
@@ -103,43 +168,56 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
     #region 瓦片处理
     //放置方块
     public void PlaceTile(TileClass tileClass, int x, int y) {
-        SetTileData(tileClass, tileClass.layer, x, y);
-        tilemaps[(int)tileClass.layer].SetTile(new Vector3Int(x, y), tileClass.tile);
+        if (SetTileClass(tileClass, tileClass.layer, x, y))
+            tilemaps[(int)tileClass.layer].SetTile(new Vector3Int(x, y), tileClass.tile);
+
     }
 
     //批量放置方块
     public void PlaceTiles(Layers layer, List<Vector3Int> pos, List<TileClass> tileClasss) {
-        TileBase[] tileBases = SetTileDatas(layer, pos, tileClasss);
+        TileBase[] tileBases = SetTileClasses(layer, pos, tileClasss);
         if (tileBases == null) return;
         tilemaps[(int)layer].SetTiles(pos.ToArray(), tileBases);
     }
+    public void PlaceLiquidTile(LiquidClass tileClass, int x, int y, float volume) {
+        if (!CheckWorldBound(x, y)) return;
 
-    //设置瓦片数据
-    public bool SetTileData(TileClass tileClass, Layers layer, int x, int y) {
-        if (!CheckWorldBound(x, y)) return false;
-        if (Layers.Ground == layer && tileDatas[(int)Layers.Addons, x, y] != null) return false;//植物区块不允许放置地面瓦片
-        tileDatas[(int)layer, x, y] = tileClass;
-        //液体瓦片处理
-        if (tileClass is LiquidClass) {
-            LiquidHandler.Instance.liquidVolume[x, y] = 1;
-            LiquidHandler.Instance.MarkForUpdate((LiquidClass) tileClass, x, y);
+        if (tileClass != null) {
+            SetLiquidTileClass(tileClass, Layers.Liquid, x, y, volume);
+            //根据液体不同体积设置不同瓦片
+            TileBase tile = tileClass.GetTileToVolume(LiquidHandler.Instance.liquidVolume[x, y]);
+            tilemaps[(int)Layers.Liquid].SetTile(new Vector3Int(x, y), tile);
         }
-        
+    }
+    //设置瓦片数据
+    public bool SetTileClass(TileClass tileClass, Layers layer, int x, int y) {
+        if (!CheckWorldBound(x, y)) return false;
+        tileIds[(int)layer, x, y] = tileClass == null ? 0 : tileClass.blockId;
         return true;
     }
+
+    //设置液体瓦片数据
+    public bool SetLiquidTileClass(LiquidClass liquidClass, Layers layer, int x, int y, float volume) {
+        if (!SetTileClass(liquidClass, layer, x, y)) return false;
+        float curVolume = liquidClass == null ? 0 : volume;
+        LiquidHandler.Instance.liquidVolume[x, y] += curVolume;
+        LiquidHandler.Instance.MarkForUpdate(liquidClass, new Vector2Int(x, y));
+        return true;
+
+    }
     //批量设置瓦片数据
-    public TileBase[] SetTileDatas(Layers layer, List<Vector3Int> pos, List<TileClass> tileClasss) {
+    public TileBase[] SetTileClasses(Layers layer, List<Vector3Int> pos, List<TileClass> tileClasss) {
         if (pos.Count != tileClasss.Count) return null;
         List<TileBase> tileBases = new List<TileBase>();
         bool result = false;
         for (int i = 0; i < pos.Count; i++) {
             Vector3Int p = pos[i];
             TileClass tileClass = tileClasss[i];
-            result = SetTileData(tileClass, layer, p.x, p.y);
+            result = SetTileClass(tileClass, layer, p.x, p.y);
             //失败一个回滚
             if (result) {
                 for (int j = i; j <= i; j--) {
-                    SetTileData(null, layer, p.x, p.y);
+                    SetTileClass(null, layer, p.x, p.y);
                 }
                 return null;
             }
@@ -149,17 +227,17 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
         return tileBases.ToArray();
     }
     //获取指定位置瓦片
-    public TileClass GetTileData(Layers layer, int x, int y) {
+    public TileClass GetTileClass(Layers layer, int x, int y) {
         if (!CheckWorldBound(x, y)) return null;
-
-        return tileDatas[(int)layer, x, y];
+        long tileId = tileIds[(int)layer, x, y];
+        TileClass tileClass = TileRegistry.GetTile(tileId);
+        return tileClass;
     }
 
     //消除瓦片
     public void Erase(Layers layer, int x, int y) {
-        if (!CheckWorldBound(x, y)) return;
-        TileClass targetTile = tileDatas[(int)layer, x, y];
-        SetTileData(null, layer, x, y);
+        TileClass targetTile = GetTileClass(layer, x, y);
+        SetTileClass(null, layer, x, y);
         tilemaps[(int)layer].SetTile(new Vector3Int(x, y), null);
         //自发光瓦片处理
         //if (tileDatas[layer, x, y] != null && tileDatas[layer, x, y].isIlluminated) {
@@ -170,20 +248,16 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
         //液体瓦片处理
         if (layer == Layers.Liquid) {
             LiquidHandler.Instance.liquidVolume[x, y] = 0;
-            //标记周围更新
-            LiquidHandler.Instance.MarkForUpdate((LiquidClass)targetTile, x - 1, y);
-            LiquidHandler.Instance.MarkForUpdate((LiquidClass)targetTile, x + 1, y);
-            LiquidHandler.Instance.MarkForUpdate((LiquidClass)targetTile, x, y + 1);
-            LiquidHandler.Instance.MarkForUpdate((LiquidClass)targetTile, x, y - 1);
-
-            //LiquidHandler.Instance.updates.Remove(new Vector2Int(x, y));
+            Vector2Int pos = new Vector2Int(x, y);
+            //标记更新
+            LiquidHandler.Instance.MarkForUpdate((LiquidClass)targetTile, pos + Vector2Int.up);
         }
     }
     //批量消除瓦片
     public void Erases(List<Vector3Int> pos, Layers layer) {
         foreach (var item in pos) {
 
-            SetTileData(null, layer, item.x, item.y);
+            SetTileClass(null, layer, item.x, item.y);
             //液体瓦片处理
             if (layer == Layers.Liquid) {
                 LiquidHandler.Instance.liquidVolume[item.x, item.y] = 0;
@@ -203,34 +277,16 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
     //获取指定位置亮度级别
     public float GetLightValue(int x, int y) {
         float lightValue = 0;
-        for (int i = 0; i < tileDatas.GetLength(0); i++) {
-            if (tileDatas[i, x, y] == null) continue;
-            if (tileDatas[i, x, y].lightLevel > lightValue)
-                lightValue = tileDatas[i, x, y].lightLevel;
+        for (int i = 0; i < tileIds.GetLength(0); i++) {
+            //TODO：这里强转不知道有没有问题
+            Layers layer = (Layers)Enum.ToObject(typeof(Layers), i);
+            TileClass tileClass = GetTileClass(layer, x, y);
+            if (tileClass.lightLevel > lightValue)
+                lightValue = tileClass.lightLevel;
         }
         return lightValue;
     }
 
-    //
-    // 摘要:
-    //     放置液体方块
-    //
-    // 参数:
-    //   vlaue:
-    //     放置该方块时的水体积
-    public void PlaceLiquidTile(LiquidClass tileClass, int x, int y, float volume) {
-        if (!CheckWorldBound(x, y)) return;
-
-        if (tileClass != null) {
-            Vector2Int tilePos = new Vector2Int(x, y);
-            LiquidHandler.Instance.MarkForUpdate(tileClass, x, y);
-            LiquidHandler.Instance.liquidVolume[x, y] += volume;
-            SetTileData(tileClass, Layers.Liquid, x, y);
-            //根据液体不同体积设置不同瓦片
-            TileBase tile = tileClass.GetTile(LiquidHandler.Instance.liquidVolume[x, y]);
-            tilemaps[(int)Layers.Liquid].SetTile(new Vector3Int(x, y), tile);
-        }
-    }
     #endregion
 
 
@@ -240,23 +296,16 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
 
     //获取资产库中的所有装备数据
     [ContextMenu("填充物品数据")]
-    private void FillUpTileClassBase() => tileClassBases = GetTileClassBase();
+    private void GetTileClassBase() {
 
-    private List<TileClass> GetTileClassBase() {
-        List<TileClass> tileClassBases = new List<TileClass>();
         //查找目录中的装备数据，返回的是GUID
         string[] assetNames = AssetDatabase.FindAssets("", new[] { "Assets/Old/Tiles" });
-        int id = 0;
         foreach (string SOName in assetNames) {
             var SOpath = AssetDatabase.GUIDToAssetPath(SOName);//GUID转为物件实际项目路径
             var itemData = AssetDatabase.LoadAssetAtPath<TileClass>(SOpath);//根据路径读取指定物件
             if (itemData == null) continue;
-            itemData.blockId = id;
-            tileClassBases.Add(itemData);
-            id++;
+            //if (tileDictionary.ContainsKey(itemData.blockId)) continue;
         }
-
-        return tileClassBases;
     }
 
 #endif
@@ -265,27 +314,23 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
 
     //地图加载与保存
     public void LoadData(MapData data) {
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < tileIds.GetLength(0); i++) {
             for (int x = 0; x < worldWidth; x++) {
                 for (int y = 0; y < worldHeight; y++) {
-                    int tileBlockId = data.tileDatas[i, x, y];
-                    if (tileBlockId == -1) continue;
-                    TileClass tileClass = tileClassBases[tileBlockId];
-                    tileDatas[i, x, y] = tileClass;
+                    long tileBlockId = data.tileDatas[i, x, y];
+                    tileIds[i, x, y] = tileBlockId;
                 }
             }
         }
-
-
     }
 
     public void SaveData(ref MapData data) {
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < tileIds.GetLength(0); i++) {
             //分区块保存
             for (int x = 0; x < worldWidth; x++) {
                 for (int y = 0; y < worldHeight; y++) {
-                    TileClass tileClass = tileDatas[i, x, y];
-                    data.tileDatas[i, x, y] = tileClass == null ? -1 : tileClass.blockId;
+                    long tileId = tileIds[i, x, y];
+                    data.tileDatas[i, x, y] = tileId;
                 }
             }
         }

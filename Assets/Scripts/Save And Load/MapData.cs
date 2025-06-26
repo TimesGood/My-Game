@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using MessagePack;
 using UnityEngine;
 
+//地图数据
+
 [MessagePackObject]
 public class MapData {
 
@@ -11,10 +13,10 @@ public class MapData {
     public int[,][,,] chunkDatas;
 
     [Key(1)]
-    public int[,,] tileDatas;//瓦片坐标
+    public long[,,] tileDatas;//瓦片Id
     
 
-    public MapData(int[,][,,] chunkDatas, int[,,] tileDatas) {
+    public MapData(int[,][,,] chunkDatas, long[,,] tileDatas) {
         this.chunkDatas = chunkDatas;
         this.tileDatas = tileDatas;
     }

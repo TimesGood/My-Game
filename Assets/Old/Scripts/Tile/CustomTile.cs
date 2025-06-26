@@ -8,7 +8,7 @@ using UnityEngine.Tilemaps;
 public class CustomTile : RuleTile<CustomTile.Neighbor>
 {
     public TileBase[] specifiedBlocks;
-    public int blockId;
+    public long blockId;
 
     //πÊ‘ÚÕÿ’π
     public class Neighbor : RuleTile.TilingRule.Neighbor

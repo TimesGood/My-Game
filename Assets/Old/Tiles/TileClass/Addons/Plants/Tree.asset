@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tile: {fileID: 11400000, guid: d742abb76ad29044ea55a4f9a093fde6, type: 2}
   layer: 0
-  blockId: 8
+  blockId: 8857447891883533312
   isIlluminated: 0
   lightLevel: 0
   lightColor: {r: 0, g: 0, b: 0, a: 0}

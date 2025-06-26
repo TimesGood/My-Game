@@ -9,12 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f3dc9e8c27fcc3145ac7af637304c3c4, type: 3}
-  m_Name: StoneWall
+  m_Script: {fileID: 11500000, guid: 38dadbb088a4a01499eebf27f0a60da9, type: 3}
+  m_Name: TileIdManager
   m_EditorClassIdentifier: 
-  tile: {fileID: 11400000, guid: c22b68dd7764c7141b24d921da598917, type: 2}
-  layer: 1
-  blockId: 3046998762718531390
-  isIlluminated: 0
-  lightLevel: 0
-  lightColor: {r: 0, g: 0, b: 0, a: 0}
+  _nextId: 1

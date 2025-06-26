@@ -138,7 +138,7 @@ public class SurfaceBiome : BaseBiome {
                 int noiseX = noiseXs[startIndex];
                 if (y > terrainHeight) continue;
                 int noiseY = GetLocalPositionY(y);
-                TileClass tileClass = world.GetTileData(Layers.Ground, x, y);
+                TileClass tileClass = world.GetTileClass(Layers.Ground, x, y);
 
                 //群落地表地形
                 if (y > baseHeight && IsSurfaceRange(x)) {
@@ -169,14 +169,14 @@ public class SurfaceBiome : BaseBiome {
 
                     //挖洞穴
                     if (cave.noiseTexture.GetPixel(noiseX, y).r <= 0) {
-                        world.SetTileData(null, Layers.Ground, x, y);
+                        world.SetTileClass(null, Layers.Ground, x, y);
                         tileClass = null;
 
                         //洞穴植株
 
 
                         //洞穴树
-                        if (!(cave.noiseTexture.GetPixel(noiseX, y - 1).r <= 0) && world.GetTileData(Layers.Ground, x, y - 1) != null) {
+                        if (!(cave.noiseTexture.GetPixel(noiseX, y - 1).r <= 0) && world.GetTileClass(Layers.Ground, x, y - 1) != null) {
                             for (int i = 0; i < caveTrees.Length; i++) {
                                 TreeClass tree = caveTrees[i];
                                 if (CheckSpawnTree(tree, x, y)) {
@@ -196,12 +196,12 @@ public class SurfaceBiome : BaseBiome {
                 }
 
                 if (tileClass != null) {
-                    WorldGeneration.Instance.SetTileData(tileClass, tileClass.layer, x, y);
+                    WorldGeneration.Instance.SetTileClass(tileClass, tileClass.layer, x, y);
                 }
 
                 //TODO: 这里可能还要检查一下挖洞会不会把树基底给挖掉了
                 //地表植物
-                if (y == terrainHeight - 1 && IsSurfaceRange(x) && !(cave.noiseTexture.GetPixel(noiseX, y - 1).r <= 0)) {
+                if (y == terrainHeight && IsSurfaceRange(x) && !(cave.noiseTexture.GetPixel(noiseX, y - 1).r <= 0)) {
 
                     for (int i = 0; i < trees.Length; i++) {
                         TreeClass tree = trees[i];
@@ -233,12 +233,12 @@ public class SurfaceBiome : BaseBiome {
     //校验是否满足生成条件
     private bool CheckSpawnTree(TreeClass tree, int x, int y) {
         //如果目标位置下面不是泥土，不能生成
-        TileClass tileBase = world.GetTileData(Layers.Ground, x, y - 1);
+        TileClass tileBase = world.GetTileClass(Layers.Ground, x, y - 1);
         if (tileBase == null || (tileBase != dirtBlock && tileBase != grassBlock)) return false;
 
         for (int extY = y; extY < y + tree.maxHeight; extY++) {
             //查看左右侧树情况，如果存在植物，则不能生成
-            if (world.GetTileData(Layers.Addons, x - 1, extY) != null || world.GetTileData(Layers.Addons, x + 1, extY) != null) {
+            if (world.GetTileClass(Layers.Addons, x - 1, extY) != null || world.GetTileClass(Layers.Addons, x + 1, extY) != null) {
                 return false;
             }
         }
@@ -285,8 +285,8 @@ public class SurfaceBiome : BaseBiome {
     private void FillEraseTile(int height, int blendX) {
         //向下填充
         int downHeight = height;
-        while (world.GetTileData(Layers.Ground, blendX, downHeight) == null) {
-            world.SetTileData(world.baseTerrain.stoneClass, Layers.Ground, blendX, downHeight);
+        while (world.GetTileClass(Layers.Ground, blendX, downHeight) == null) {
+            world.SetTileClass(world.baseTerrain.stoneClass, Layers.Ground, blendX, downHeight);
             downHeight--;
         }
 
@@ -294,7 +294,7 @@ public class SurfaceBiome : BaseBiome {
         int upHeigth = height + 1;
         int oldHeight = world.surfaceHeights[blendX];
         while (upHeigth < oldHeight) {
-            world.SetTileData(null, Layers.Ground, blendX, upHeigth);
+            world.SetTileClass(null, Layers.Ground, blendX, upHeigth);
             upHeigth++;
 
         }
@@ -308,7 +308,7 @@ public class SurfaceBiome : BaseBiome {
         int oldHeight = world.surfaceHeights[x];
         if (oldHeight > newTerrainHeight && IsSurfaceRange(x)) {
             for (int diffY = newTerrainHeight; diffY < oldHeight; diffY++) {
-                world.SetTileData(null, Layers.Ground, x, diffY);
+                world.SetTileClass(null, Layers.Ground, x, diffY);
             }
         }
     }

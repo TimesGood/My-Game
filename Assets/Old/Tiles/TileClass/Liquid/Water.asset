@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tile: {fileID: 11400000, guid: 1b0d6831cdf288548a711666e3c133ea, type: 2}
   layer: 3
-  blockId: 22
+  blockId: 818981121462377330
   isIlluminated: 0
   lightLevel: 0
   lightColor: {r: 0, g: 0, b: 0, a: 0}
-  <flowSpeed>k__BackingField: 0.05
+  <flowSpeed>k__BackingField: 0.01
   <tiles>k__BackingField:
   - {fileID: 11400000, guid: 1c1a9295510aede4986b96531c1690ea, type: 2}
   - {fileID: 11400000, guid: 45faed14ce51a01419b9860eedcc85d7, type: 2}
@@ -26,4 +26,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 55f6ab95fd890664fb0a94af5b614555, type: 2}
   - {fileID: 11400000, guid: fb9753cfcd2709b498b5f1377301b6df, type: 2}
   - {fileID: 11400000, guid: 1b0d6831cdf288548a711666e3c133ea, type: 2}
-  <minVolume>k__BackingField: 0.0005
+  <minVolume>k__BackingField: 0.0001

@@ -91,7 +91,7 @@ public IEnumerator Generation() {
 
                 //¶´Ñ¨
                 if (caveNoise.GetPixel(x, y).r > 0.5f) {
-                    world.SetTileData(tileClass, tileClass.layer, x, y);
+                    world.SetTileClass(tileClass, tileClass.layer, x, y);
                     //WorldGeneration.Instance.PlaceTile(tileClass, x, y);
                 }
             }

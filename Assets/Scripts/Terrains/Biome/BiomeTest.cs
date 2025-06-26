@@ -89,7 +89,7 @@ public class BiomeTest : ScriptableObject
             //擦除旧地形高出新地形的瓦片
             if (oldHeight > terrainHeight && x >= biomeWidth.x && x <= biomeWidth.y) {
                 for (int diffY = terrainHeight; diffY < oldHeight; diffY++) {
-                    world.SetTileData(null, Layers.Ground, x, diffY);
+                    world.SetTileClass(null, Layers.Ground, x, diffY);
                 }
             }
             //地形高度调整
@@ -132,13 +132,13 @@ public class BiomeTest : ScriptableObject
 
                     //挖洞穴
                     if (cave.noiseTexture.GetPixel(noiseX, y).r <= 0) {
-                        world.SetTileData(null, Layers.Ground, x, y);
+                        world.SetTileClass(null, Layers.Ground, x, y);
                         tileClass = null;
                         //洞穴植株
-                        TileClass tileBase = world.GetTileData(Layers.Ground, x, y - treeHeight - 1);
+                        TileClass tileBase = world.GetTileClass(Layers.Ground, x, y - treeHeight - 1);
                         if (tileBase != null && tileBase == dirtBlock) {
                             //如果左侧有树了，树计数器归零
-                            if (world.GetTileData(Layers.Addons, x - 1, y) != null) {
+                            if (world.GetTileClass(Layers.Addons, x - 1, y) != null) {
                                 treeHeight = 0;
                             } else {
 
@@ -158,7 +158,7 @@ public class BiomeTest : ScriptableObject
                 }
 
                 if (tileClass != null) {
-                    WorldGeneration.Instance.SetTileData(tileClass, tileClass.layer, x, y);
+                    WorldGeneration.Instance.SetTileClass(tileClass, tileClass.layer, x, y);
                     treeHeight = 0;
                 }
                 //else if(y < world.surfaceHeights[x]) {
@@ -183,19 +183,19 @@ public class BiomeTest : ScriptableObject
         int maxBranches = Random.Range(3, 10);//树杈
         int bCounts = 0;//树杈计数
         for (int ny = y; ny < y + h; ny++) {
-            WorldGeneration.Instance.SetTileData(tileClass, tileClass.layer, x, ny);
+            WorldGeneration.Instance.SetTileClass(tileClass, tileClass.layer, x, ny);
             //生成树桩
             if (ny == y) {
                 //左侧树桩
                 if (Random.Range(0, 100) < 30) {
-                    if (x > 0 && WorldGeneration.Instance.GetTileData(Layers.Ground, x - 1, ny - 1) != null && WorldGeneration.Instance.GetTileData(Layers.Ground, x - 1, ny) == null) {
-                        WorldGeneration.Instance.SetTileData(tileClass, tileClass.layer, x - 1, ny);
+                    if (x > 0 && WorldGeneration.Instance.GetTileClass(Layers.Ground, x - 1, ny - 1) != null && WorldGeneration.Instance.GetTileClass(Layers.Ground, x - 1, ny) == null) {
+                        WorldGeneration.Instance.SetTileClass(tileClass, tileClass.layer, x - 1, ny);
                     }
                 }
                 //右侧树桩
                 if (Random.Range(0, 100) < 30) {
-                    if (WorldGeneration.Instance.GetTileData(Layers.Ground, x + 1, ny - 1) != null && WorldGeneration.Instance.GetTileData(Layers.Ground, x + 1, ny) == null) {
-                        WorldGeneration.Instance.SetTileData(tileClass, tileClass.layer, x + 1, ny);
+                    if (WorldGeneration.Instance.GetTileClass(Layers.Ground, x + 1, ny - 1) != null && WorldGeneration.Instance.GetTileClass(Layers.Ground, x + 1, ny) == null) {
+                        WorldGeneration.Instance.SetTileClass(tileClass, tileClass.layer, x + 1, ny);
                     }
                 }
 
@@ -203,14 +203,14 @@ public class BiomeTest : ScriptableObject
             //生成树杈
             else if (ny >= y + 2 && ny <= y + h - 3) {
                 if (bCounts < maxBranches && Random.Range(0, 100) < 40) {
-                    if (x > 0 && WorldGeneration.Instance.GetTileData(Layers.Ground, x - 1, ny) == null && WorldGeneration.Instance.GetTileData(Layers.Addons, x - 1, ny - 1) != tileClass) {
-                        WorldGeneration.Instance.SetTileData(leafClass, leafClass.layer, x - 1, ny);
+                    if (x > 0 && WorldGeneration.Instance.GetTileClass(Layers.Ground, x - 1, ny) == null && WorldGeneration.Instance.GetTileClass(Layers.Addons, x - 1, ny - 1) != tileClass) {
+                        WorldGeneration.Instance.SetTileClass(leafClass, leafClass.layer, x - 1, ny);
                         bCounts++;
                     }
                 }
                 if (bCounts < maxBranches && Random.Range(0, 100) < 40) {
-                    if (WorldGeneration.Instance.GetTileData(Layers.Ground, x + 1, ny) == null && WorldGeneration.Instance.GetTileData(Layers.Addons, x + 1, ny - 1) != tileClass) {
-                        WorldGeneration.Instance.SetTileData(leafClass, leafClass.layer, x + 1, ny);
+                    if (WorldGeneration.Instance.GetTileClass(Layers.Ground, x + 1, ny) == null && WorldGeneration.Instance.GetTileClass(Layers.Addons, x + 1, ny - 1) != tileClass) {
+                        WorldGeneration.Instance.SetTileClass(leafClass, leafClass.layer, x + 1, ny);
                         bCounts++;
                     }
                 }

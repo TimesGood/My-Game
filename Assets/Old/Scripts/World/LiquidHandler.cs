@@ -1,185 +1,332 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
 
 //液体流动处理
 public class LiquidHandler : Singleton<LiquidHandler> {
+
     public WorldGeneration world;
+    public LiquidClass[] liquids;//注册需要处理的液体
     public bool openFlow = false;
     public float[,] liquidVolume { get; set; }//记录液体瓦片的体积数据
-    public Dictionary<LiquidClass, HashSet<Vector3Int>> updates = new Dictionary<LiquidClass, HashSet<Vector3Int>>();//存储要计算液体的区域，由于不同液体流动速度不同，需要对不同液体单独处理
+    public Dictionary<LiquidClass, Dictionary<Vector2Int, int>> updates = new Dictionary<LiquidClass, Dictionary<Vector2Int, int>>();//存储要计算液体的区域，由于不同液体流动速度不同，需要对不同液体单独处理
     private Dictionary<LiquidClass, Coroutine> updateRoutines = new Dictionary<LiquidClass, Coroutine>();
     private Dictionary<LiquidClass, Coroutine> backUpdateRoutines = new Dictionary<LiquidClass, Coroutine>();
 
+    // 检查稳定的水源移除计算
+    private float lastCheckUpdateTime;
+    private const float checkUpdateInterval = 1f; // 更新间隔
+
+    // 添加全局下降速度参数
+    public float globalFallSpeed = 4f; // 全局下降速度（所有液体相同）
+    public float globalUpdateInterval = 0.1f; // 全局更新间隔
+
     public void Init() {
         liquidVolume = new float[world.worldWidth, world.worldHeight];
+        foreach (var liquid in liquids) {
+            updates.Add(liquid, new Dictionary<Vector2Int, int>());
+        }
     }
 
     // Update is called once per frame
     void Update() {
-        if (openFlow) UpdateLiquid();
+        UpdateLiquid();
     }
 
+    private void LateUpdate() {
+        Bounds bounds = ChunkHandler.Instance.GetCameraBounds();
+        foreach (var kvp in updates) {
+            Render(bounds, kvp.Value);
+        }
+    }
 
     private void UpdateLiquid() {
-        foreach (var key in updates.Keys) {
-            HashSet<Vector3Int> value;
-            updates.TryGetValue(key, out value);
+        // 每帧最多处理2种液体
+        if (!openFlow) return;
 
-            //可见区域的液体计算
-            Coroutine updateRoutine;
-            updateRoutines.TryGetValue(key, out updateRoutine);
-            if (updateRoutine == null)
-                updateRoutines.Add(key, StartCoroutine(HandlerVisibleIn(key, value)));
+        // 每帧最多处理2种液体
+        int processed = 0;
+        foreach (var kvp in updates) {
+            if (updateRoutines.ContainsKey(kvp.Key) || processed >= 2)
+                continue;
 
-            //不可见区域的液体计算
-            if (!backUpdateRoutines.ContainsKey(key)) {
-                backUpdateRoutines[key] = StartCoroutine(HandlerVisibleOut(key, value));
-            }
-
+            processed++;
+            updateRoutines[kvp.Key] = StartCoroutine(
+                HandleLiquidUpdate(kvp.Key, kvp.Value)
+            );
+            ScanClearSteadyLiquid(kvp.Value);
         }
+
 
     }
-
-    private IEnumerator HandlerVisibleIn(LiquidClass liquid, HashSet<Vector3Int> updates) {
-
-        //只处理摄像机可视范围内的流动液体
+    private IEnumerator HandleLiquidUpdate(LiquidClass liquid, Dictionary<Vector2Int, int> updates) {
         Bounds bounds = ChunkHandler.Instance.GetCameraBounds();
-        //可视范围外的液体体积计算
-        List<Vector3Int> keys = new List<Vector3Int>(updates);
+        List<Vector2Int> keys = new List<Vector2Int>(updates.Keys);
+        int processed = 0;
+
+        // 处理屏幕外区域
         foreach (var item in keys) {
-            if (!bounds.Contains(item)) continue;
-            ProcessLiquidCell(liquid, item);
+            if (!world.CheckWorldBound(item.x, item.y) || bounds.Contains((Vector3Int)item)) continue;
+            float curVolume = liquidVolume[item.x, item.y];
+            float oldVolume = curVolume;
+            ProcessLiquidCell(liquid, item, ref curVolume);
+            if (curVolume == oldVolume) {
+                updates[item] += 1;
+            } else {
+                updates[item] = 0;
+            }
+
+            if (++processed % 1000 == 0) yield return null;
         }
 
-        Render(bounds, updates);
-
+        // 等待流动间隔
         yield return new WaitForSeconds(liquid.flowSpeed);
+
+
+        processed = 0;
+        keys = new List<Vector2Int>(updates.Keys); // 获取最新集合
+        //排序再计算，使窗口内的液体流动自然
+        keys.Sort((a, b) => { return a.y.CompareTo(b.y); });
+
+        // 处理屏幕内区域
+        foreach (var item in keys) {
+            if (!bounds.Contains(((Vector3Int)item))) continue;
+            float curVolume = liquidVolume[item.x, item.y];
+            float oldVolume = curVolume;
+            ProcessLiquidCell(liquid, item, ref curVolume);
+            //记录如果液体体积无变化，计数器+1，否则归零
+            if (curVolume == oldVolume) {
+                updates[item] += 1;
+            } else {
+                updates[item] = 0;
+            }
+
+            if (++processed % 1000 == 0) yield return null;
+        }
+
         updateRoutines.Remove(liquid);
     }
 
+    //第二个方案，支持屏幕前与屏幕后不同的液体处理速度。如果希望加快液体在屏幕后的处理速度，使用该方案
+    //private void UpdateLiquid() {
+    //    Bounds bounds = ChunkHandler.Instance.GetCameraBounds();
+    //    foreach (var kvp in updates) {
+    //        List<Vector2Int> outUpdates = new List<Vector2Int>();
+    //        List<Vector2Int> inUpdates = new List<Vector2Int>();
+    //        foreach (var inKvp in kvp.Value) {
 
-    //计算可视范围外的液体
-    private IEnumerator HandlerVisibleOut(LiquidClass liquid, HashSet<Vector3Int> updates) {
+    //            if (bounds.Contains((Vector3Int)inKvp.Key)) {
+    //                inUpdates.Add(inKvp.Key);
+    //            } else {
+    //                outUpdates.Add(inKvp.Key);
+    //            }
+    //        }
+    //        //可见区域的液体计算
+    //        Coroutine updateRoutine;
+    //        updateRoutines.TryGetValue(kvp.Key, out updateRoutine);
+    //        if (updateRoutine == null)
+    //            updateRoutines[kvp.Key] = StartCoroutine(HandlerVisibleIn(bounds, kvp.Key, inUpdates, kvp.Value));
 
-        //只处理摄像机可视范围内的流动液体
-        Bounds bounds = ChunkHandler.Instance.GetCameraBounds();
-        //可视范围外的液体体积计算
-        List<Vector3Int> keys = new List<Vector3Int>(updates);
-        foreach (var item in keys) {
-            if (!world.CheckWorldBound(item.x, item.y)) continue;
-            if (bounds.Contains(item)) continue;//只处理屏幕外的
-            ProcessLiquidCell(liquid, item);
+    //        //不可见区域的液体计算
+    //        Coroutine backUpdateRoutine;
+    //        backUpdateRoutines.TryGetValue(kvp.Key, out backUpdateRoutine);
+    //        if (backUpdateRoutine == null) {
+    //            backUpdateRoutines[kvp.Key] = StartCoroutine(HandlerVisibleOut(bounds, kvp.Key, outUpdates, kvp.Value));
 
-            //趋于稳定的水移除标记，节省计算
-            float curVolume = liquidVolume[item.x, item.y];
-            if (curVolume == 1f) {
-                bool top = world.tileDatas[(int)Layers.Liquid, item.x, item.y + 1] != null;
-                bool bottom = world.tileDatas[(int)Layers.Liquid, item.x, item.y - 1] != null;
-                bool left = world.tileDatas[(int)Layers.Liquid, item.x - 1, item.y] != null;
-                bool right = world.tileDatas[(int)Layers.Liquid, item.x + 1, item.y] != null;
-                if (top && bottom && left && right) updates.Remove(item);
+    //        }
+
+    //        ScanClearSteadyLiquid(kvp.Value);
+    //    }
+
+    //}
+
+    //private IEnumerator HandlerVisibleIn(Bounds bounds, LiquidClass liquid, List<Vector2Int> inUpdate, Dictionary<Vector2Int, int> updates) {
+    //    yield return new WaitForSeconds(liquid.flowSpeed);;
+    //    //排序在计算，这样水流自然一点
+    //    inUpdate.Sort((a, b) => {
+    //        return a.y.CompareTo(b.y);
+    //    });
+
+    //    foreach (var item in inUpdate) {
+    //        float curVolume = liquidVolume[item.x, item.y];
+    //        float oldVolume = curVolume;
+    //        ProcessLiquidCell(liquid, item, ref curVolume);
+    //        if (!updates.ContainsKey(item)) continue;
+    //        if (curVolume == oldVolume) {
+    //            updates[item] += 1;
+    //        } else {
+    //            updates[item] = 0;
+    //        }
+    //    }
+    //    updateRoutines.Remove(liquid);
+    //}
+
+
+    ////计算可视范围外的液体
+    //private IEnumerator HandlerVisibleOut(Bounds bounds, LiquidClass liquid, List<Vector2Int> outUpdates, Dictionary<Vector2Int, int> updates) {
+
+
+    //    int processed = 0;
+    //    //可视范围外的液体体积计算
+    //    foreach (var item in outUpdates) {
+    //        if (!world.CheckWorldBound(item.x, item.y)) continue;
+    //        if (bounds.Contains((Vector3Int)item)) continue;//只处理屏幕外的
+    //        float curVolume = liquidVolume[item.x, item.y];
+    //        float oldVolume = curVolume;
+    //        ProcessLiquidCell(liquid, item, ref curVolume);
+    //        if (!updates.ContainsKey(item)) continue;
+    //        if (curVolume == oldVolume) {
+    //            updates[item] += 1;
+    //        } else {
+    //            updates[item] = 0;
+    //        }
+
+    //        // 每帧处理1000个瓦片防止卡顿
+    //        if (++processed % 1000 == 0) {
+    //            yield return null;
+    //        }
+
+    //    }
+
+    //    backUpdateRoutines.Remove(liquid);
+    //}
+
+    //扫描清理稳定状态液体
+    private void ScanClearSteadyLiquid(Dictionary<Vector2Int, int> updates) {
+        // 使用固定间隔更新，避免每帧都检查
+        if (Time.time - lastCheckUpdateTime > checkUpdateInterval) {
+            //检查，如果液体不变次数超过一定次数，判定此液体处于稳定状态
+            foreach (var key in updates.ToList()) {
+                updates.TryGetValue(key.Key, out int num);
+                if (num > 5) {
+                    updates.Remove(key.Key);
+                }
             }
-            if (curVolume == 0f) {
-                updates.Remove(item);
-                world.tileDatas[(int)Layers.Liquid, item.x, item.y] = null;
-            }
-
+            lastCheckUpdateTime = Time.time;
         }
-        yield return null;
-        backUpdateRoutines.Remove(liquid);
+
     }
 
     //渲染区域
-    private void Render(Bounds bounds, HashSet<Vector3Int> updates) {
+    private void Render(Bounds bounds, Dictionary<Vector2Int, int> updates) {
+        List<Vector2Int> toRemove = new List<Vector2Int>();
+        Tilemap liquidMap = world.tilemaps[(int)Layers.Liquid];
 
-        ////渲染可视范围的液体瓦片
+        //渲染可视范围的液体瓦片
         for (int y = (int)bounds.min.y; y < bounds.max.y; y++) {
             for (int x = (int)bounds.min.x; x < bounds.max.x; x++) {
-                Vector3Int pos = new Vector3Int(x, y);
-                TileBase tile = world.tilemaps[(int)Layers.Liquid].GetTile(pos);
-                //如果此处水源稳定，并且瓦片不为空，此处不需要渲染，跳过
-                if (!updates.Contains(pos) && tile != null) continue;
+                Vector3Int worldPos = new Vector3Int(x, y);
 
-                LiquidClass liquidClass = (LiquidClass)world.tileDatas[(int)Layers.Liquid, x, y];
+                LiquidClass liquidClass = (LiquidClass)world.GetTileClass(Layers.Liquid, x, y);
+                TileBase oldTile = world.tilemaps[(int)Layers.Liquid].GetTile(worldPos);
                 if (liquidClass != null) {
-                    float volume = liquidVolume[x, y];
-                    world.tilemaps[(int)Layers.Liquid].SetTile(pos, liquidClass.GetTile(volume));
-                } else {
-                    world.tilemaps[(int)Layers.Liquid].SetTile(pos, null);
-                    updates.Remove(pos);
-                }
 
+                    float volume = liquidVolume[x, y];
+                    //有时候由于大量液体在空中导致个别液体无法做液体运动，这里渲染时检查一下是否有异常空中液体，重新激活该液体
+                    Vector3Int downPos = worldPos + Vector3Int.down;
+                    TileClass downGroundClass = world.GetTileClass(Layers.Ground, downPos.x, downPos.y);
+                    TileClass downLiquidClass = world.GetTileClass(Layers.Liquid, downPos.x, downPos.y);
+                    if (!updates.ContainsKey((Vector2Int)worldPos) && downGroundClass == null && downLiquidClass == null)
+                        MarkForUpdate(liquidClass, (Vector2Int)worldPos);
+
+                    //如果渲染前新旧液体瓦片一致，不需要再次渲染跳过
+                    TileBase newTile = liquidClass.GetTileToVolume(volume);
+                    if (newTile == oldTile) continue;
+                    world.tilemaps[(int)Layers.Liquid].SetTile(worldPos, newTile);
+                } else {
+                    if (oldTile == null) continue;
+                    world.tilemaps[(int)Layers.Liquid].SetTile(worldPos, null);
+                }
             }
         }
     }
 
     // 核心处理逻辑
-    private void ProcessLiquidCell(LiquidClass liquid, Vector3Int pos) {
+    private void ProcessLiquidCell(LiquidClass liquid, Vector2Int pos, ref float curVolume) {
         int x = pos.x;
         int y = pos.y;
 
-        float curVolume = liquidVolume[x, y];
         //体积太小时，擦掉该瓦片
         if (curVolume < liquid.minVolume) {
-            liquidVolume[x, y] = 0;
-            world.tileDatas[(int)Layers.Liquid, x, y] = null;
-            MarkForUpdate(liquid, x, y);
+            UpdateVolume(null, pos, 0);
+            MarkForUpdate(liquid, pos);
             return;
         }
-
+        //液体在地面瓦片中，擦掉
+        if (world.GetTileClass(Layers.Ground, x, y) != null) {
+            UpdateVolume(null, pos, 0);
+            MarkForUpdate(liquid, pos);
+            return;
+        }
         // 优先向下流动
-        if (!TryFlowDown(pos, liquid, ref curVolume)) {
+        if (!TryFlowDown(liquid, pos, ref curVolume)) {
             // 扩散处理
-            DistributePressure(pos, liquid, curVolume);
+            DistributePressure(pos, liquid, ref curVolume);
         }
 
         //液体溢出
-        curVolume = liquidVolume[x, y];
-        float topVolume = liquidVolume[x, y + 1];
         if (curVolume > 1f) {
-            liquidVolume[x, y] = 1f;
-            liquidVolume[x, y + 1] = topVolume + curVolume - 1f;
-            MarkForUpdate(liquid, x, y + 1);
-            world.tileDatas[(int)Layers.Liquid, x, y + 1] = liquid;
+            Vector2Int upPos = pos + Vector2Int.up;
+            float upVolume = liquidVolume[upPos.x, upPos.y];
+            upVolume += curVolume - 1f;
+            UpdateVolume(liquid, upPos, upVolume);
+            MarkForUpdate(liquid, upPos);
+
+            curVolume = 1f;
+            UpdateVolume(liquid, pos, curVolume);
+            MarkForUpdate(liquid, pos);
         }
+
+
     }
 
     // 尝试向下流动（返回是否成功流动）
-    private bool TryFlowDown(Vector3Int pos, LiquidClass liquid, ref float curVolume) {
+    private bool TryFlowDown(LiquidClass liquid, Vector2Int pos, ref float curVolume) {
         int x = pos.x;
         int y = pos.y;
         if (y <= 0) return false;
 
-
+        Vector2Int downPos = pos + Vector2Int.down;
         // 检查下方是否可流动
-        if (world.GetTileData(Layers.Ground, x, y - 1) != null) return false;
-        float downVolume = liquidVolume[x, y - 1];
+        if (world.GetTileClass(Layers.Ground, downPos.x, downPos.y) != null) return false;
+        //液体满了
+        float downVolume = liquidVolume[downPos.x, downPos.y];
         if (downVolume >= 1f) return false;
+        //液体不一致
+        LiquidClass downLiquid = world.GetTileClass(Layers.Liquid, downPos.x, downPos.y) as LiquidClass;
+        if (downLiquid != null && downLiquid != liquid)
+            return false;
         downVolume += curVolume;
-        liquidVolume[x, y] = 0;
-        liquidVolume[x, y - 1] = downVolume;
-        MarkForUpdate(liquid, x, y + 1);
+        curVolume = 0;
+
+        UpdateVolume(liquid, pos, curVolume);
         MarkForUpdate(liquid, pos);
-        MarkForUpdate(liquid, x, y - 1);
-        world.tileDatas[(int)Layers.Liquid, x, y] = null;
-        world.tileDatas[(int)Layers.Liquid, x, y - 1] = liquid;
+
+        UpdateVolume(liquid, downPos, downVolume);
+        MarkForUpdate(liquid, downPos);
+
+        //可能周围有稳定状态液体，重新激活上左右液体液体
+        MarkForUpdate(liquid, pos + Vector2Int.up);
+        //MarkForUpdate(liquid, pos + Vector2Int.left);
+        //MarkForUpdate(liquid, pos + Vector2Int.right);
         return true;
     }
 
 
     // 扩散处理
-    private void DistributePressure(Vector3Int pos, LiquidClass liquid, float curVolume) {
+    private void DistributePressure(Vector2Int pos, LiquidClass liquid, ref float curVolume) {
         int x = pos.x;
         int y = pos.y;
-        List<Vector3Int> flowDirs = new List<Vector3Int>();
+        List<Vector2Int> flowDirs = new List<Vector2Int>();
 
         // 检测可用流动方向
-        CheckFlowDirection(x - 1, y, curVolume, ref flowDirs); // 左
-        CheckFlowDirection(x + 1, y, curVolume, ref flowDirs); // 右
+        CheckFlowDirection(x - 1, y, liquid, curVolume, ref flowDirs); // 左
+        CheckFlowDirection(x + 1, y, liquid, curVolume, ref flowDirs); // 右
         if (flowDirs.Count == 0) return;
         // 计算每个方向的分配量
         float avg = curVolume;
@@ -188,40 +335,52 @@ public class LiquidHandler : Singleton<LiquidHandler> {
         }
         avg /= (flowDirs.Count + 1);
 
-        liquidVolume[x, y] = avg;
+        //avg = Mathf.Round(avg * 10000f) / 10000f;
+        curVolume = avg;
+        UpdateVolume(liquid, pos, curVolume);
         MarkForUpdate(liquid, pos);
         foreach (var dir in flowDirs) {
-            liquidVolume[dir.x, dir.y] = avg;
+            UpdateVolume(liquid, dir, avg);
             MarkForUpdate(liquid, dir);
-            world.tileDatas[(int)Layers.Liquid, dir.x, dir.y] = liquid;
         }
+
+        //可能周围有稳定状态液体，重新激活上左右液体液体
+        MarkForUpdate(liquid, pos + Vector2Int.up);
+        MarkForUpdate(liquid, pos + Vector2Int.left);
+        MarkForUpdate(liquid, pos + Vector2Int.right);
     }
 
     // 检查流动方向是否有效
-    private void CheckFlowDirection(int x, int y, float curVolume, ref List<Vector3Int> dirs) {
+    private void CheckFlowDirection(int x, int y, LiquidClass liquid, float curVolume, ref List<Vector2Int> dirs) {
         if (!world.CheckWorldBound(x, y)) return;
-        if (world.GetTileData(Layers.Ground, x, y) != null || liquidVolume[x, y] >= curVolume) return;
-        dirs.Add(new Vector3Int(x, y));
+        // 在CheckFlowDirection中添加：
+        TileClass targetLiquid = world.GetTileClass(Layers.Liquid, x, y);
+        if (targetLiquid != null && targetLiquid != liquid)
+            return;
+        float targetVolume = liquidVolume[x, y];
+        if (world.GetTileClass(Layers.Ground, x, y) != null || targetVolume >= curVolume) return;
+        //两边液体体积相差无几，不扩散，避免水体表面一直在计算
+        if (curVolume - targetVolume < 0.0001f) return;
+        dirs.Add(new Vector2Int(x, y));
     }
 
-    public void MarkForUpdate(LiquidClass liquid, int x, int y) {
-        Vector3Int pos = new Vector3Int(x, y);
-        if (liquid == null) Debug.Log(1);
-        MarkForUpdate(liquid, pos);
+
+    //更新液体体积
+    private void UpdateVolume(LiquidClass liquid, Vector2Int pos, float volume) {
+        liquidVolume[pos.x, pos.y] = volume;
+        world.SetTileClass(liquid, Layers.Liquid, pos.x, pos.y);
     }
 
-    // 标记需要更新的区块
-    public void MarkForUpdate(LiquidClass liquid, Vector3Int pos) {
-        HashSet<Vector3Int> target = null;
-        if (!updates.ContainsKey(liquid)) {
-            target = new HashSet<Vector3Int>();
-            updates.Add(liquid, target);
-        } else {
-            updates.TryGetValue(liquid, out target);
+    //标记要计算的区域
+    public void MarkForUpdate(LiquidClass liquid, Vector2Int pos) {
+        if (!world.CheckWorldBound(pos.x, pos.y)) return;
+
+        if (!updates.TryGetValue(liquid, out var set)) {
+            throw new Exception("液体" + liquid.name + "未进行注册！");
         }
 
-        if (!target.Contains(pos)) {
-            target.Add(pos);
+        if (!set.ContainsKey(pos)) {
+            set.Add(pos, 0);
         }
     }
 }

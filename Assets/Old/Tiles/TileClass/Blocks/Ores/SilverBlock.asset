@@ -14,13 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tile: {fileID: 11400000, guid: 5f11a86be121fd942944f2a29b5c57d1, type: 2}
   layer: 2
-  blockId: 0
+  blockId: 6101322211703202175
   isIlluminated: 0
   lightLevel: 0
   lightColor: {r: 0, g: 0, b: 0, a: 0}
-  spreadTexture: {fileID: 0}
   <oreRarity>k__BackingField: 0
   <oreRadius>k__BackingField: 0
   <minY>k__BackingField: 0
   <maxY>k__BackingField: 0
   <offset>k__BackingField: 0
+  noise: {fileID: 0}
