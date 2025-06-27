@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
@@ -35,7 +36,7 @@ namespace UnityEditor
                     BrushCell cell = cells[GetCellIndexWrapAround(pos.x, pos.y, pos.z)];
                     if (cell.tile is CustomTile) {
                         long id = ((CustomTile)cell.tile).blockId;
-                        TileClass tileClass = WorldGeneration.Instance.GetTileClass(id);
+                        TileClass tileClass = WorldGeneration.TileRegistry.GetTile(id);
 
                         if (tileClass is LiquidClass) {
                             

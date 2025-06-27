@@ -30,15 +30,15 @@ public class MapSaveManager : Singleton<MapSaveManager> {
         WorldGeneration world = WorldGeneration.Instance;
         ChunkHandler chunk = ChunkHandler.Instance;
         //分区
-        int chunkXCount = chunk.chunkCount;
-        int chunkYCount = chunk.chunkCount * world.worldHeight / world.worldWidth;
-        int[,][,,] chunkDatas = new int[chunkXCount, chunkYCount][,,];
+        int chunkXCount = world.chunkXCount;
+        int chunkYCount = world.chunkYCount;
+        long[,][,,] chunkDatas = new long[chunkXCount, chunkYCount][,,];
         //每个区的瓦片
         int chunkXSize = world.worldWidth / chunkXCount;
         int chunkYSize = world.worldHeight / chunkYCount;
         for (int x = 0; x < chunkXCount; x++) {
             for (int y = 0; y < chunkYCount; y++) {
-                chunkDatas[x, y] = new int[4, chunkXSize, chunkYSize];
+                chunkDatas[x, y] = new long[4, chunkXSize, chunkYSize];
             }
         }
 

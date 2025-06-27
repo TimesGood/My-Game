@@ -5,6 +5,7 @@ using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using static UnityEditor.PlayerSettings;
 
 
 //液体流动处理
@@ -22,9 +23,6 @@ public class LiquidHandler : Singleton<LiquidHandler> {
     private float lastCheckUpdateTime;
     private const float checkUpdateInterval = 1f; // 更新间隔
 
-    // 添加全局下降速度参数
-    public float globalFallSpeed = 4f; // 全局下降速度（所有液体相同）
-    public float globalUpdateInterval = 0.1f; // 全局更新间隔
 
     public void Init() {
         liquidVolume = new float[world.worldWidth, world.worldHeight];
@@ -75,6 +73,7 @@ public class LiquidHandler : Singleton<LiquidHandler> {
             float curVolume = liquidVolume[item.x, item.y];
             float oldVolume = curVolume;
             ProcessLiquidCell(liquid, item, ref curVolume);
+            if (!updates.ContainsKey(item)) continue;
             if (curVolume == oldVolume) {
                 updates[item] += 1;
             } else {
@@ -100,6 +99,7 @@ public class LiquidHandler : Singleton<LiquidHandler> {
             float oldVolume = curVolume;
             ProcessLiquidCell(liquid, item, ref curVolume);
             //记录如果液体体积无变化，计数器+1，否则归零
+            if (!updates.ContainsKey(item)) continue;
             if (curVolume == oldVolume) {
                 updates[item] += 1;
             } else {
@@ -146,7 +146,9 @@ public class LiquidHandler : Singleton<LiquidHandler> {
     //}
 
     //private IEnumerator HandlerVisibleIn(Bounds bounds, LiquidClass liquid, List<Vector2Int> inUpdate, Dictionary<Vector2Int, int> updates) {
-    //    yield return new WaitForSeconds(liquid.flowSpeed);;
+    //    yield return new WaitForSeconds(liquid.flowSpeed);
+    //    
+    //    int processed = 0;
     //    //排序在计算，这样水流自然一点
     //    inUpdate.Sort((a, b) => {
     //        return a.y.CompareTo(b.y);
@@ -161,6 +163,10 @@ public class LiquidHandler : Singleton<LiquidHandler> {
     //            updates[item] += 1;
     //        } else {
     //            updates[item] = 0;
+    //        }
+    //        // 每帧处理1000个瓦片防止卡顿
+    //        if (++processed % 1000 == 0) {
+    //            yield return null;
     //        }
     //    }
     //    updateRoutines.Remove(liquid);
@@ -207,6 +213,7 @@ public class LiquidHandler : Singleton<LiquidHandler> {
                     updates.Remove(key.Key);
                 }
             }
+            Debug.Log(updates.Count);
             lastCheckUpdateTime = Time.time;
         }
 
@@ -264,23 +271,13 @@ public class LiquidHandler : Singleton<LiquidHandler> {
             return;
         }
         // 优先向下流动
-        if (!TryFlowDown(liquid, pos, ref curVolume)) {
-            // 扩散处理
-            DistributePressure(pos, liquid, ref curVolume);
-        }
+        if (TryFlowDown(liquid, pos, ref curVolume)) return;
+        // 扩散处理
+        if (HandlerDiffusion(liquid, pos, ref curVolume)) return;
+
 
         //液体溢出
-        if (curVolume > 1f) {
-            Vector2Int upPos = pos + Vector2Int.up;
-            float upVolume = liquidVolume[upPos.x, upPos.y];
-            upVolume += curVolume - 1f;
-            UpdateVolume(liquid, upPos, upVolume);
-            MarkForUpdate(liquid, upPos);
-
-            curVolume = 1f;
-            UpdateVolume(liquid, pos, curVolume);
-            MarkForUpdate(liquid, pos);
-        }
+        if (HandlerOverflow(liquid, pos, curVolume)) curVolume = 1f; ;
 
 
     }
@@ -319,7 +316,7 @@ public class LiquidHandler : Singleton<LiquidHandler> {
 
 
     // 扩散处理
-    private void DistributePressure(Vector2Int pos, LiquidClass liquid, ref float curVolume) {
+    private bool HandlerDiffusion(LiquidClass liquid, Vector2Int pos, ref float curVolume) {
         int x = pos.x;
         int y = pos.y;
         List<Vector2Int> flowDirs = new List<Vector2Int>();
@@ -327,7 +324,7 @@ public class LiquidHandler : Singleton<LiquidHandler> {
         // 检测可用流动方向
         CheckFlowDirection(x - 1, y, liquid, curVolume, ref flowDirs); // 左
         CheckFlowDirection(x + 1, y, liquid, curVolume, ref flowDirs); // 右
-        if (flowDirs.Count == 0) return;
+        if (flowDirs.Count == 0) return false;
         // 计算每个方向的分配量
         float avg = curVolume;
         foreach (var item in flowDirs) {
@@ -339,15 +336,35 @@ public class LiquidHandler : Singleton<LiquidHandler> {
         curVolume = avg;
         UpdateVolume(liquid, pos, curVolume);
         MarkForUpdate(liquid, pos);
+        if(HandlerOverflow(liquid, pos, curVolume)) curVolume = 1f;
         foreach (var dir in flowDirs) {
             UpdateVolume(liquid, dir, avg);
             MarkForUpdate(liquid, dir);
+            HandlerOverflow(liquid, dir, avg);
         }
 
         //可能周围有稳定状态液体，重新激活上左右液体液体
         MarkForUpdate(liquid, pos + Vector2Int.up);
         MarkForUpdate(liquid, pos + Vector2Int.left);
         MarkForUpdate(liquid, pos + Vector2Int.right);
+        return true;
+    }
+
+    //溢出处理
+    private bool HandlerOverflow(LiquidClass liquid, Vector2Int pos, float curVolume) {
+        if (curVolume <= 1f) return false;
+        //液体溢出
+        Vector2Int upPos = pos + Vector2Int.up;
+        float upVolume = liquidVolume[upPos.x, upPos.y];
+        upVolume += curVolume - 1f;
+        UpdateVolume(liquid, upPos, upVolume);
+        MarkForUpdate(liquid, upPos);
+
+        curVolume = 1f;
+        UpdateVolume(liquid, pos, curVolume);
+        MarkForUpdate(liquid, pos);
+        return true;
+        
     }
 
     // 检查流动方向是否有效

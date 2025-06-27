@@ -5,15 +5,21 @@ using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.WSA;
+using static ChunkHandler;
+//地图生成器
 public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
 {
     public int seed;//世界种子
-    public int worldWidth = 200;//世界宽度
-    public int worldHeight = 100;//世界高度
+    public int worldWidth = 2000;//世界宽度
+    public int worldHeight = 1000;//世界高度
 
     
     public Tilemap[] tilemaps;//瓦片地图集
-    private long[,,] tileIds;//瓦片对应位置Id
+    private long[,,] tileIds;//地图瓦片Id
+    //private long[,][,,] chunkDatas { get; set; }//瓦片分区数据集
+    private Dictionary<Vector2Int, long[,,]> chunkDatas = new Dictionary<Vector2Int, long[,,]>(); 
+    public bool openChunk = false;
 
     public int baseHeight => (int)(worldHeight * 0.7);//地形基准高度
     public int[] surfaceHeights { get; set; }//地形高度数据
@@ -78,16 +84,6 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
         Debug.Log($"已注册 {i} 个图块");
     }
 
-    //根据瓦片Id获取瓦片资产
-    public TileClass GetTileClass(long id) {
-
-        TileClass tileClass = TileRegistry.GetTile(id);
-        if (tileClass != null) return tileClass;
-
-        Debug.LogWarning($"找不到 ID: {id} 对应的图块");
-        return null;
-    }
-
     private void Start() {
         InitWorld();
         if (MapSaveManager.Instance.HasSaveData()) {
@@ -112,6 +108,7 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
         }
         //tileDatas = new TileClass[4, worldWidth, worldHeight];
         tileIds = new long[Enum.GetValues(typeof(Layers)).Length, worldWidth, worldHeight];
+        InitChunk();
         LiquidHandler.Instance.Init();
         ChunkHandler.Instance.InitChunk();
     }
@@ -187,12 +184,18 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
             //根据液体不同体积设置不同瓦片
             TileBase tile = tileClass.GetTileToVolume(LiquidHandler.Instance.liquidVolume[x, y]);
             tilemaps[(int)Layers.Liquid].SetTile(new Vector3Int(x, y), tile);
+
         }
     }
     //设置瓦片数据
     public bool SetTileClass(TileClass tileClass, Layers layer, int x, int y) {
         if (!CheckWorldBound(x, y)) return false;
-        tileIds[(int)layer, x, y] = tileClass == null ? 0 : tileClass.blockId;
+        long tileId = tileClass == null ? 0 : tileClass.blockId;
+        if (openChunk) {
+            SetChunkTile(tileId, layer, x, y);
+            return true;
+        }
+        tileIds[(int)layer, x, y] = tileId;
         return true;
     }
 
@@ -229,6 +232,8 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
     //获取指定位置瓦片
     public TileClass GetTileClass(Layers layer, int x, int y) {
         if (!CheckWorldBound(x, y)) return null;
+        if(openChunk)
+            return GetChunkTile(layer, x, y); ;
         long tileId = tileIds[(int)layer, x, y];
         TileClass tileClass = TileRegistry.GetTile(tileId);
         return tileClass;
@@ -290,30 +295,9 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
     #endregion
 
 
-
-    //填充所有瓦片
-#if UNITY_EDITOR
-
-    //获取资产库中的所有装备数据
-    [ContextMenu("填充物品数据")]
-    private void GetTileClassBase() {
-
-        //查找目录中的装备数据，返回的是GUID
-        string[] assetNames = AssetDatabase.FindAssets("", new[] { "Assets/Old/Tiles" });
-        foreach (string SOName in assetNames) {
-            var SOpath = AssetDatabase.GUIDToAssetPath(SOName);//GUID转为物件实际项目路径
-            var itemData = AssetDatabase.LoadAssetAtPath<TileClass>(SOpath);//根据路径读取指定物件
-            if (itemData == null) continue;
-            //if (tileDictionary.ContainsKey(itemData.blockId)) continue;
-        }
-    }
-
-#endif
-
-
-
     //地图加载与保存
     public void LoadData(MapData data) {
+        //不使用区块
         for (int i = 0; i < tileIds.GetLength(0); i++) {
             for (int x = 0; x < worldWidth; x++) {
                 for (int y = 0; y < worldHeight; y++) {
@@ -322,11 +306,30 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
                 }
             }
         }
+
+        //使用区块
+        for (int chunkXIndex = 0; chunkXIndex < chunkXCount; chunkXIndex++) {
+            for (int chunkYIndex = 0; chunkYIndex < chunkYCount; chunkYIndex++) {
+                long[,,] tileIds = data.chunkDatas[chunkXIndex, chunkYIndex];
+                Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
+                for (int i = 0; i < layers.Length; i++) {
+                    //分区块保存
+                    for (int x = 0; x < chunkXSize; x++) {
+                        for (int y = 0; y < chunkYSize; y++) {
+                            long tileId = tileIds[i, x, y];
+                            //chunkDatas[chunkXIndex, chunkYIndex][i, x, y] = tileId;
+                            chunkDatas.TryGetValue(new Vector2Int(chunkXIndex, chunkYIndex), out long[,,] tileClasses);
+                            tileClasses[i, x, y] = tileId;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public void SaveData(ref MapData data) {
+
         for (int i = 0; i < tileIds.GetLength(0); i++) {
-            //分区块保存
             for (int x = 0; x < worldWidth; x++) {
                 for (int y = 0; y < worldHeight; y++) {
                     long tileId = tileIds[i, x, y];
@@ -335,5 +338,72 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
             }
         }
 
+
+        for (int chunkXIndex = 0; chunkXIndex < chunkXCount; chunkXIndex++) {
+            for (int chunkYIndex = 0; chunkYIndex < chunkYCount; chunkYIndex++) {
+                //long[,,] tileClasses = chunkDatas[chunkXIndex, chunkYIndex];
+                chunkDatas.TryGetValue(new Vector2Int(chunkXIndex, chunkYIndex), out long[,,] tileClasses);
+                Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
+                for (int i = 0; i < layers.Length; i++) {
+                    //分区块保存
+                    for (int x = 0; x < chunkXSize; x++) {
+                        for (int y = 0; y < chunkYSize; y++) {
+                            long tileId = tileClasses[i, x, y];
+                            data.chunkDatas[chunkXIndex, chunkYIndex][i, x, y] = tileId;
+                        }
+                    }
+                }
+            }
+        }
     }
+
+
+    #region 分区块
+
+
+    public int chunkXCount;     //X轴区块数
+    public int chunkYCount;     //Y轴区块数
+    private int chunkXSize;      //X轴每区块像素大小
+    private int chunkYSize;      //Y轴每区块像素大小
+    public int chunkSize { get; private set; }//总区块大小
+    //初始化分区
+    private void InitChunk() {
+        //chunkDatas = new long[chunkXCount, chunkYCount][,,];
+        
+        //每个区的瓦片
+        chunkXSize = worldWidth / chunkXCount;
+        chunkYSize = worldHeight / chunkYCount;
+        chunkSize = chunkXSize * chunkYSize;
+        for (int chunkXIndex = 0; chunkXIndex < chunkXCount; chunkXIndex++) {
+            for (int chunkYIndex = 0; chunkYIndex < chunkYCount; chunkYIndex++) {
+                //chunkDatas[chunkXIndex, chunkYIndex] = new long[Enum.GetValues(typeof(Layers)).Length, chunkXSize, chunkYSize];
+                chunkDatas.Add(new Vector2Int(chunkXIndex, chunkYIndex), new long[Enum.GetValues(typeof(Layers)).Length, chunkXSize, chunkYSize]);
+            }
+        }
+    }
+
+    //设置区块瓦片
+    public void SetChunkTile(long tileId, Layers layer, int x, int y) {
+        int chunkXIndex = x / chunkXSize;
+        int chunkYIndex = y / chunkYSize;
+        int tileXIndex = x - (chunkXIndex * chunkXSize);
+        int tileYIndex = y - (chunkYIndex * chunkYSize);
+        //chunkDatas[chunkXIndex, chunkYIndex][(int)layer, tileXIndex, tileYIndex] = tileId;
+        chunkDatas.TryGetValue(new Vector2Int(chunkXIndex, chunkYIndex), out long[,,] tiles);
+        tiles[(int)layer, tileXIndex, tileYIndex] = tileId;
+    }
+
+    //获取区块瓦片
+    public TileClass GetChunkTile(Layers layer, int x, int y) {
+        int chunkXIndex = x / chunkXSize;
+        int chunkYIndex = y / chunkYSize;
+        int tileXIndex = x - (chunkXIndex * chunkXSize);
+        int tileYIndex = y - (chunkYIndex * chunkYSize);
+        //long tileId = chunkDatas[chunkXIndex, chunkYIndex][(int)layer, tileXIndex, tileYIndex];
+        chunkDatas.TryGetValue(new Vector2Int(chunkXIndex, chunkYIndex), out long[,,] tiles);
+        long tileId = tiles[(int)layer, tileXIndex, tileYIndex];
+        return TileRegistry.GetTile(tileId);
+    }
+    #endregion
+
 }

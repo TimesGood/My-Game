@@ -21,8 +21,8 @@ public class ChunkHandler : Singleton<ChunkHandler> {
     public Camera renderCamera;
     public float padding = 2f;   // 视口外缓冲区块数
     private ChunkData[,] chunks;
-    private Dictionary<Vector2Int, ChunkData> loadedChunks = new Dictionary<Vector2Int, ChunkData>();//储存已加载的区块
-    private HashSet<Vector2Int> unloadingChunks = new HashSet<Vector2Int>(); // 跟踪正在卸载的区块
+    private HashSet<Vector2Int> loadedChunkIDs = new HashSet<Vector2Int>();//跟踪已加载的区块
+
     private Vector2Int lastLoadedChunk = new Vector2Int(int.MinValue, int.MinValue);
 
     private Coroutine loadingCoroutine;
@@ -35,24 +35,24 @@ public class ChunkHandler : Singleton<ChunkHandler> {
         Unloading
     }
 
-
     public class ChunkData {
         public Vector2Int coord;//区块坐标
         public Vector3Int[] tilePos;//区块瓦片坐标
         public int[] tileIDs;//瓦片Id
-        public ChunkState state = ChunkState.Unloaded;
+        public ChunkState state = ChunkState.Unloaded;//区块加载状态
         public Bounds bounds;//区块范围盒
     }
 
     private void Update() {
         Vector2Int currentChunk = WorldToChunkCoord(renderCamera.transform.position);
 
-        if (currentChunk != lastLoadedChunk || Time.frameCount % 10 == 0) //每10帧强制检查
-        {
+        // 当玩家移动到新区块时重新加载
+        if (currentChunk != lastLoadedChunk) {
             LoadChunksAroundCamera();
             lastLoadedChunk = currentChunk;
         }
     }
+
 
 
     //初始化分区
@@ -125,120 +125,95 @@ public class ChunkHandler : Singleton<ChunkHandler> {
 
         return bounds;
     }
+
     private void LoadChunksAroundCamera() {
 
-        if (loadingCoroutine != null) {
-            StopCoroutine(loadingCoroutine);
-        }
-
-        loadingCoroutine = StartCoroutine(UpdateVisibleChunks());
-    }
-
-    // 更新可见分块
-    private IEnumerator UpdateVisibleChunks() {
-
         Vector2Int centerChunk = WorldToChunkCoord(renderCamera.transform.position);
+        // 查找范围内区块
         List<Vector2Int> chunksToLoad = new List<Vector2Int>();
-
-        //以圆形进行渲染
         int radius = Mathf.CeilToInt(loadRadius);
         for (int y = -radius; y <= radius; y++) {
             for (int x = -radius; x <= radius; x++) {
                 Vector2Int chunkID = centerChunk + new Vector2Int(x, y);
 
-                if (Vector2Int.Distance(centerChunk, chunkID) > loadRadius)
-                    continue;
-
-                if (chunkID.x < 0 || chunkID.x >= chunkXCount ||
-                    chunkID.y < 0 || chunkID.y >= chunkYCount)
-                    continue;
-
-                chunksToLoad.Add(chunkID);
+                // 只加载圆形区域内的区块
+                if (Vector2Int.Distance(centerChunk, chunkID) <= loadRadius) {
+                    //越界
+                    if (chunkID.x >= chunks.GetLength(0) || chunkID.x < 0 || chunkID.y >= chunks.GetLength(1) || chunkID.y < 0) continue;
+                    chunksToLoad.Add(chunkID);
+                }
             }
         }
+
+        
+        List<Vector2Int> toUnload = new List<Vector2Int>();
+        foreach (var chunkID in loadedChunkIDs) {
+            if (!chunksToLoad.Contains(chunkID)) {
+                toUnload.Add(chunkID);
+            }
+        }
+        UpdateUnLoadChunks(toUnload);
 
         // 按距离排序，先加载最近的
         chunksToLoad.Sort((a, b) =>
             Vector2Int.Distance(centerChunk, a).CompareTo(Vector2Int.Distance(centerChunk, b)));
+        if (loadingCoroutine != null) StopCoroutine(loadingCoroutine);
+        loadingCoroutine = StartCoroutine(UpdateLoadChunks(chunksToLoad));
+    }
 
-        //以摄像机矩形进行渲染
-        //Bounds bounds = GetCameraBounds();
-        //for (int y = (int)bounds.min.y; y <= bounds.max.y; y++) {
-        //    for (int x = (int)bounds.min.x; x <= bounds.max.x; x++) {
-        //        Vector2Int chunkID = GetChunkIndex(x, y);
 
-        //        if (chunkID.x < 0 || chunkID.x >= chunkXCount ||
-        //            chunkID.y < 0 || chunkID.y >= chunkYCount)
-        //            continue;
-
-        //        chunksToLoad.Add(chunkID);
-
-        //    }
-        //}
-
-        // 卸载不在视野内的区块
-        List<Vector2Int> toUnload = new List<Vector2Int>();
-        foreach (var kvp in loadedChunks) {
-            if (!chunksToLoad.Contains(kvp.Key) &&
-                kvp.Value.state == ChunkState.Loaded) {
-                toUnload.Add(kvp.Key);
-            }
-        }
-        
-        // 开始卸载
-        foreach (var chunkID in toUnload) {
-            if (unloadingChunks.Contains(chunkID)) continue;
-
-            StartCoroutine(UnloadChunk(loadedChunks[chunkID]));
-            unloadingChunks.Add(chunkID);
-        }
-        //int processed = 0;
-        // 加载新区块
-        foreach (var chunkID in chunksToLoad) {
+    //加载视野内的区块
+    private IEnumerator UpdateLoadChunks(List<Vector2Int> visiblePos) {
+        int processed = 0;
+        foreach (var chunkID in visiblePos) {
             ChunkData chunk = chunks[chunkID.x, chunkID.y];
 
-            if (chunk.state == ChunkState.Unloaded &&
-                !unloadingChunks.Contains(chunkID)) {
-                ////防止加载协程太多造成卡顿
-                //if (processed++ % 5 == 0)
-                //    yield return null;
+            if (chunk.state == ChunkState.Unloaded) {
+                //防止加载的区块协程太多，导致卡顿。不过调太小也会导致加载速度太慢，跟不上玩家速度
+                if (processed++ % 5 == 0)
+                    yield return null;
                 StartCoroutine(LoadChunkAsync(chunk));
             }
         }
-        yield return null;
+    }
+    //卸载已加载的区块
+    private void UpdateUnLoadChunks(List<Vector2Int> chunkIDs) {
+        foreach (var chunkID in chunkIDs) {
+            ChunkData chunk = chunks[chunkID.x, chunkID.y];
+            if (chunk.state == ChunkState.Loaded)
+                StartCoroutine(UnloadChunk(chunk));
+        }
     }
 
-    //使用SetTilesBlock批量设置区块
-    // 异步加载分块
+    // 异步加载区块
     IEnumerator LoadChunkAsync(ChunkData chunk) {
+        Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
         // 如果区块正在卸载，等待卸载完成
-        while (unloadingChunks.Contains(chunk.coord)) {
+        while (chunk.state == ChunkState.Unloading) {
             yield return null;
         }
 
         chunk.state = ChunkState.Loading;
 
-        Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
         foreach (Layers layer in layers) {
-            if (layer == Layers.Liquid) continue;
-
             List<TileBase> tileBases = new List<TileBase>();
+
+            //液体由LiquidHandler渲染，跳过
+            if (layer == Layers.Liquid) continue;
             foreach (Vector3Int tilePos in chunk.tilePos) {
                 TileClass tileClass = world.GetTileClass(layer, tilePos.x, tilePos.y);
+
                 tileBases.Add(tileClass?.tile);
             }
 
             BoundsInt bound = ToBoundsInt(chunk.bounds);
             world.tilemaps[(int)layer].SetTilesBlock(bound, tileBases.ToArray());
-            yield return null;
+            yield return null; // 每设置一层暂停一帧
         }
 
         chunk.state = ChunkState.Loaded;
 
-        // 确保只添加一次
-        if (!loadedChunks.ContainsKey(chunk.coord)) {
-            loadedChunks.Add(chunk.coord, chunk);
-        }
+        loadedChunkIDs.Add(chunk.coord);
     }
     //转为Int包围盒
     private BoundsInt ToBoundsInt(Bounds bounds) {
@@ -246,7 +221,7 @@ public class ChunkHandler : Singleton<ChunkHandler> {
         Vector3Int size = new Vector3Int(Mathf.FloorToInt(bounds.size.x), Mathf.FloorToInt(bounds.size.y), 1);
         return new BoundsInt(min, size);
     }
-    // 卸载分块
+    // 卸载区块
     private IEnumerator UnloadChunk(ChunkData chunk) {
         // 如果区块正在加载，等待加载完成
         while (chunk.state == ChunkState.Loading) {
@@ -256,15 +231,16 @@ public class ChunkHandler : Singleton<ChunkHandler> {
         chunk.state = ChunkState.Unloading;
 
         Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
+
         foreach (Layers layer in layers) {
             BoundsInt bound = ToBoundsInt(chunk.bounds);
             world.tilemaps[(int)layer].SetTilesBlock(bound, new TileBase[bound.size.x * bound.size.y]);
-            yield return null;
+            yield return null; // 每设置一层暂停一帧
         }
 
+
         chunk.state = ChunkState.Unloaded;
-        loadedChunks.Remove(chunk.coord);
-        unloadingChunks.Remove(chunk.coord);
+        loadedChunkIDs.Remove(chunk.coord);
     }
 
 

@@ -439,7 +439,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 11.9, y: 1451.2, z: -10}
+  m_LocalPosition: {x: 75.3, y: 1462.4, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -655,8 +655,11 @@ MonoBehaviour:
   - {fileID: 1537649229}
   - {fileID: 2112469979}
   - {fileID: 1505872236}
+  openChunk: 0
   baseTerrain: {fileID: 11400000, guid: 44fe922146dde9847bc191f445b1747b, type: 2}
   biomeTerrain: {fileID: 11400000, guid: 197e3b38fa9c6df41ae313855e62219f, type: 2}
+  chunkXCount: 20
+  chunkYCount: 20
 --- !u!156049354 &858115490
 Grid:
   m_ObjectHideFlags: 0
@@ -789,8 +792,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   world: {fileID: 858115489}
-  loadRadius: 5
-  chunkCount: 500
+  loadRadius: 10
+  chunkCount: 1000
   chunkXCount: 0
   chunkYCount: 0
   chunkXSize: 0
