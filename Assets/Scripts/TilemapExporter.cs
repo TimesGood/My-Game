@@ -26,6 +26,7 @@ public class TilemapExporter : MonoBehaviour {
 
         ChunkHandler chunkHandler = ChunkHandler.Instance;
         ChunkHandler.ChunkData[,] chunkDatas = chunkHandler.GetChunkDatas();
+
         int chunkCount = chunkDatas.GetLength(0) * chunkDatas.GetLength(1);
         // 保存到文件
         using (BinaryWriter writer = new BinaryWriter(File.OpenWrite(path))) {
@@ -78,20 +79,20 @@ public class TilemapExporter : MonoBehaviour {
 
     //写入区块数据
     private void WriteChunk(BinaryWriter writer, ChunkHandler.ChunkData chunk) {
-        writer.Write(chunk.coord.x);
-        writer.Write(chunk.coord.y);
-        writer.Write(chunk.tilePos.Length);
-        for (int i = 0; i < chunk.tilePos.Length; i++) {
-            int x = chunk.tilePos[i].x;
-            int y = chunk.tilePos[i].y;
-            writer.Write(x);
-            writer.Write(y);
-            Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
-            foreach (var layer in layers) {
-                TileClass tileClass = world.GetTileClass(layer, x, y);
-                writer.Write(tileClass == null ? 0 : tileClass.blockId);
-            }
-        }
+        //writer.Write(chunk.coord.x);
+        //writer.Write(chunk.coord.y);
+        //writer.Write(chunk.tilePos.Length);
+        //for (int i = 0; i < chunk.tilePos.Length; i++) {
+        //    int x = chunk.tilePos[i].x;
+        //    int y = chunk.tilePos[i].y;
+        //    writer.Write(x);
+        //    writer.Write(y);
+        //    Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
+        //    foreach (var layer in layers) {
+        //        TileClass tileClass = world.GetTileClass(layer, x, y);
+        //        writer.Write(tileClass == null ? 0 : tileClass.blockId);
+        //    }
+        //}
     }
     //加载区块数据
     private ChunkHandler.ChunkData ReadChunk(BinaryReader reader) {

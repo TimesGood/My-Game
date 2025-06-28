@@ -44,7 +44,7 @@ namespace UnityEditor
                         } else {
                             WorldGeneration.Instance.PlaceTile(tileClass, pos.x, pos.y);
                             if (tileClass.isIlluminated) {
-                                LightHandler.Instance.LightUpdate(pos.x, pos.y);
+                                LightHandler.Instance.MarForUpdate(pos.x, pos.y);
                             }
                         }
                     }

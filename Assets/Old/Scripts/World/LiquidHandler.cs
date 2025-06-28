@@ -5,6 +5,7 @@ using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using static ChunkHandler;
 using static UnityEditor.PlayerSettings;
 
 
@@ -23,12 +24,15 @@ public class LiquidHandler : Singleton<LiquidHandler> {
     private float lastCheckUpdateTime;
     private const float checkUpdateInterval = 1f; // 更新间隔
 
-
-    public void Init() {
+    protected override void Awake() {
+        base.Awake();
+        //初始化液体存储
         liquidVolume = new float[world.worldWidth, world.worldHeight];
+        //初始化注册液体字典
         foreach (var liquid in liquids) {
             updates.Add(liquid, new Dictionary<Vector2Int, int>());
         }
+
     }
 
     // Update is called once per frame

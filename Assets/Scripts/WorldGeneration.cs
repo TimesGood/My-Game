@@ -1,12 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
-using UnityEngine.WSA;
-using static ChunkHandler;
+
 //地图生成器
 public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
 {
@@ -16,7 +14,7 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
 
     
     public Tilemap[] tilemaps;//瓦片地图集
-    private long[,,] tileIds;//地图瓦片Id
+    //private long[,,] tileIds;//地图瓦片Id
     //private long[,][,,] chunkDatas { get; set; }//瓦片分区数据集
     private Dictionary<Vector2Int, long[,,]> chunkDatas = new Dictionary<Vector2Int, long[,,]>(); 
     public bool openChunk = false;
@@ -107,10 +105,8 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
             surfaceHeights[x] = baseHeight;
         }
         //tileDatas = new TileClass[4, worldWidth, worldHeight];
-        tileIds = new long[Enum.GetValues(typeof(Layers)).Length, worldWidth, worldHeight];
+        //tileIds = new long[Enum.GetValues(typeof(Layers)).Length, worldWidth, worldHeight];
         InitChunk();
-        LiquidHandler.Instance.Init();
-        ChunkHandler.Instance.InitChunk();
     }
 
     //校验坐标是否在世界范围内
@@ -136,9 +132,9 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
 
         Debug.Log("正在生成群落地形...");
         yield return StartCoroutine(biomeTerrain.Generation());
-        //初始化光照
-        //Debug.Log("正在渲染光照...");
-        //LightHandler.Instance.Init();
+
+        Debug.Log("正在渲染光照...");
+        LightHandler.Instance.InitLight();
 
         //保存游戏数据
 
@@ -195,7 +191,7 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
             SetChunkTile(tileId, layer, x, y);
             return true;
         }
-        tileIds[(int)layer, x, y] = tileId;
+        //tileIds[(int)layer, x, y] = tileId;
         return true;
     }
 
@@ -232,11 +228,11 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
     //获取指定位置瓦片
     public TileClass GetTileClass(Layers layer, int x, int y) {
         if (!CheckWorldBound(x, y)) return null;
-        if(openChunk)
+        //if(openChunk)
             return GetChunkTile(layer, x, y); ;
-        long tileId = tileIds[(int)layer, x, y];
-        TileClass tileClass = TileRegistry.GetTile(tileId);
-        return tileClass;
+        //long tileId = tileIds[(int)layer, x, y];
+        //TileClass tileClass = TileRegistry.GetTile(tileId);
+        //return tileClass;
     }
 
     //消除瓦片
@@ -279,13 +275,14 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
     }
 
 
-    //获取指定位置亮度级别
+    //获取指定位置发光体发光强度最高的那个图层亮度
     public float GetLightValue(int x, int y) {
         float lightValue = 0;
-        for (int i = 0; i < tileIds.GetLength(0); i++) {
-            //TODO：这里强转不知道有没有问题
+        Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
+        for (int i = 0; i < layers.Length; i++) {
             Layers layer = (Layers)Enum.ToObject(typeof(Layers), i);
             TileClass tileClass = GetTileClass(layer, x, y);
+            if (tileClass == null) continue;
             if (tileClass.lightLevel > lightValue)
                 lightValue = tileClass.lightLevel;
         }
@@ -298,14 +295,14 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
     //地图加载与保存
     public void LoadData(MapData data) {
         //不使用区块
-        for (int i = 0; i < tileIds.GetLength(0); i++) {
-            for (int x = 0; x < worldWidth; x++) {
-                for (int y = 0; y < worldHeight; y++) {
-                    long tileBlockId = data.tileDatas[i, x, y];
-                    tileIds[i, x, y] = tileBlockId;
-                }
-            }
-        }
+        //for (int i = 0; i < tileIds.GetLength(0); i++) {
+        //    for (int x = 0; x < worldWidth; x++) {
+        //        for (int y = 0; y < worldHeight; y++) {
+        //            long tileBlockId = data.tileDatas[i, x, y];
+        //            tileIds[i, x, y] = tileBlockId;
+        //        }
+        //    }
+        //}
 
         //使用区块
         for (int chunkXIndex = 0; chunkXIndex < chunkXCount; chunkXIndex++) {
@@ -329,14 +326,14 @@ public class WorldGeneration : Singleton<WorldGeneration>, ISaveManager
 
     public void SaveData(ref MapData data) {
 
-        for (int i = 0; i < tileIds.GetLength(0); i++) {
-            for (int x = 0; x < worldWidth; x++) {
-                for (int y = 0; y < worldHeight; y++) {
-                    long tileId = tileIds[i, x, y];
-                    data.tileDatas[i, x, y] = tileId;
-                }
-            }
-        }
+        //for (int i = 0; i < tileIds.GetLength(0); i++) {
+        //    for (int x = 0; x < worldWidth; x++) {
+        //        for (int y = 0; y < worldHeight; y++) {
+        //            long tileId = tileIds[i, x, y];
+        //            data.tileDatas[i, x, y] = tileId;
+        //        }
+        //    }
+        //}
 
 
         for (int chunkXIndex = 0; chunkXIndex < chunkXCount; chunkXIndex++) {
