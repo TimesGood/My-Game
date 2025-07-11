@@ -215,7 +215,7 @@ GameObject:
   - component: {fileID: 339773163}
   - component: {fileID: 339773162}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: TilemapDataUtil
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -300,6 +300,7 @@ MonoBehaviour:
   lightTex: {fileID: 0}
   lightMap: {fileID: 2100000, guid: 31e7f576489830c48bdca414ee05b6b3, type: 2}
   updating: 0
+  spriteRenderer: {fileID: 352358284}
 --- !u!212 &352358284
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -610,7 +611,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 743476706}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c95f9a17078f5d44a65fa1803551900, type: 3}
   m_Name: 
@@ -656,8 +657,6 @@ MonoBehaviour:
   - {fileID: 2112469979}
   - {fileID: 1505872236}
   openChunk: 1
-  baseTerrain: {fileID: 11400000, guid: 44fe922146dde9847bc191f445b1747b, type: 2}
-  biomeTerrain: {fileID: 11400000, guid: 197e3b38fa9c6df41ae313855e62219f, type: 2}
   chunkXCount: 20
   chunkYCount: 20
 --- !u!156049354 &858115490
@@ -1307,6 +1306,8 @@ MonoBehaviour:
   world: {fileID: 858115489}
   liquids:
   - {fileID: 11400000, guid: 8ce1d91866f79b641aa2058b27d01002, type: 2}
+  - {fileID: 11400000, guid: d4e4cc04092dc094fbed02ac0c5df7b4, type: 2}
+  test: {fileID: 11400000, guid: d17025596157bbf43b0c12608c058574, type: 2}
   openFlow: 1
 --- !u!1 &1322792613
 GameObject:
@@ -1986,6 +1987,57 @@ TilemapCollider2D:
   m_MaximumTileChangeCount: 1000
   m_ExtrusionFactor: 0
   m_UseDelaunayMesh: 0
+--- !u!1 &2143271235
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2143271237}
+  - component: {fileID: 2143271236}
+  m_Layer: 0
+  m_Name: MapGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2143271236
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2143271235}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a3e6bac12300c94f9d3e993b7436298, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  seed: 0
+  mapSize: {x: 6000, y: 2000}
+  chunkCount: {x: 20, y: 20}
+  chunkSize: {x: 0, y: 0}
+  baseHeight: 0
+  baseTerrain: {fileID: 11400000, guid: 44fe922146dde9847bc191f445b1747b, type: 2}
+  biomeTerrain: {fileID: 11400000, guid: 197e3b38fa9c6df41ae313855e62219f, type: 2}
+--- !u!4 &2143271237
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2143271235}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 244.77884, y: 1447.274, z: -10.319965}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1998,3 +2050,4 @@ SceneRoots:
   - {fileID: 537737216}
   - {fileID: 161935106}
   - {fileID: 339773163}
+  - {fileID: 2143271237}

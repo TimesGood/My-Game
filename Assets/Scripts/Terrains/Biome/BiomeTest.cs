@@ -103,7 +103,7 @@ public class BiomeTest : ScriptableObject
                 //群落地表地形
                 if (y > baseHeight && x >= biomeWidth.x && x <= biomeWidth.y) {
 
-                    tileClass = world.baseTerrain.dirtClass;
+                    //tileClass = world.baseTerrain.dirtClass;
 
                 }
 

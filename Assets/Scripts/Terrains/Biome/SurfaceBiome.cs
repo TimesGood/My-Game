@@ -45,17 +45,17 @@ public class SurfaceBiome : BaseBiome {
         bool isReversal = false;
         surfaceStart = 0;
         surfaceEnd = 0;
-        for (int x = generatePos.x; x < generatePos.x + biomeWidth; x++) {
-            int noiseX = GetLocalPositionX(x);
-            if (!isReversal && outLine.noiseTexture.GetPixel(noiseX, baseHeight).r > 0.5) {
-                surfaceStart = x;
+        for (int x = 0; x < biomeWidth; x++) {
+            if (!isReversal && outLine.noiseTexture.GetPixel(x, baseHeight).r > 0.5) {
+                int worldX = GetWorldPositionX(x);
+                surfaceStart = worldX;
                 break;
             }
         }
-        for (int x = generatePos.x + biomeWidth; x > generatePos.x; x--) {
-            int noiseX = GetLocalPositionX(x);
-            if (outLine.noiseTexture.GetPixel(noiseX, baseHeight).r > 0.5) {
-                surfaceEnd = x;
+        for (int x = biomeWidth; x > 0; x--) {
+            if (outLine.noiseTexture.GetPixel(x, baseHeight).r > 0.5) {
+                int worldX = GetWorldPositionX(x);
+                surfaceEnd = worldX;
                 break;
             }
         }
@@ -110,45 +110,44 @@ public class SurfaceBiome : BaseBiome {
 
     public override IEnumerator GenerateBiome() {
         int baseHeight = WorldGeneration.Instance.baseHeight;
-        int[] terrainHeights = new int[biomeWidth];
-        int[] noiseXs = new int[biomeWidth];
+        int[] terrainHeights = new int[biomeWidth];//存储地形高度
+        int[] worldXs = new int[biomeWidth];//存储x轴世界坐标
         int maxHeight = 0;
         //上往下由左往右生成（生成树的时候方便）
-        for (int x = generatePos.x; x < generatePos.x + biomeWidth; x++) {
-            int noiseX = GetLocalPositionX(x);
-            int terrainHeight = baseHeight + terrain.GetHeight(noiseX);
-            int startIndex = x - generatePos.x;
-            terrainHeights[startIndex] = terrainHeight;
+        for (int x = 0; x < biomeWidth; x++) {
             
-            noiseXs[startIndex] = noiseX;
+            int terrainHeight = baseHeight + terrain.GetHeight(x);
+
+            terrainHeights[x] = terrainHeight;
+            int worldX = GetWorldPositionX(x);
+            worldXs[x] = worldX;
             if (terrainHeight > maxHeight) maxHeight = terrainHeight;
             //群落地形调整
-            EraseTopTile(x, terrainHeight);
+            EraseTopTile(worldX, terrainHeight);
             //地形高度调整
-            if (IsSurfaceRange(x)) {
-                world.surfaceHeights[x] = terrainHeight;
+            if (IsSurfaceRange(worldX)) {
+                map.surfaceHeights[worldX] = terrainHeight;
             }
         }
         int processed = 0;
         int totalCell = maxHeight * biomeWidth;
         for (int y = maxHeight; y >= 0; y--) {
-            for (int x = generatePos.x; x < generatePos.x + biomeWidth; x++) {
-                int startIndex = x - generatePos.x;
-                int terrainHeight = terrainHeights[startIndex];
-                int noiseX = noiseXs[startIndex];
-                if (y > terrainHeight) continue;
-                int noiseY = GetLocalPositionY(y);
-                TileClass tileClass = world.GetTileClass(Layers.Ground, x, y);
+            int worldY = GetWorldPositionY(y);
+            for (int x = 0; x < biomeWidth; x++) {
+                int terrainHeight = terrainHeights[x];
+                int worldX = worldXs[x];
+                if (worldY > terrainHeight) continue;
+                TileClass tileClass = map.GetTileClass(Layers.Ground, worldX, worldY);
 
                 //群落地表地形
-                if (y > baseHeight && IsSurfaceRange(x)) {
-                    tileClass = world.baseTerrain.dirtClass;
+                if (worldY > baseHeight && IsSurfaceRange(worldX)) {
+                    tileClass = map.baseTerrain.dirtClass;
                 }
                 //群落轮廓内
-                if (outLine.noiseTexture.GetPixel(noiseX, noiseY).r > 0.5f) {
+                if (outLine.noiseTexture.GetPixel(x, y).r > 0.5f) {
 
                     //基础地形
-                    if (y < terrainHeight - 1) {
+                    if (worldY < terrainHeight - 1) {
                         //岩层
                         tileClass = dirtBlock;
 
@@ -168,50 +167,49 @@ public class SurfaceBiome : BaseBiome {
                     }
 
                     //挖洞穴
-                    if (cave.noiseTexture.GetPixel(noiseX, y).r <= 0) {
-                        world.SetTileClass(null, Layers.Ground, x, y);
+                    if (cave.noiseTexture.GetPixel(x, y).r <= 0) {
+                        map.SetTileClass(null, Layers.Ground, worldX, worldY);
                         tileClass = null;
 
                         //洞穴植株
 
 
                         //洞穴树
-                        if (!(cave.noiseTexture.GetPixel(noiseX, y - 1).r <= 0) && world.GetTileClass(Layers.Ground, x, y - 1) != null) {
+                        if (!(cave.noiseTexture.GetPixel(x, y - 1).r <= 0) && map.GetTileClass(Layers.Ground, worldX, worldY - 1) != null) {
                             for (int i = 0; i < caveTrees.Length; i++) {
                                 TreeClass tree = caveTrees[i];
-                                if (CheckSpawnTree(tree, x, y)) {
+                                if (CheckSpawnTree(tree, worldX, worldY)) {
                                     //概率生成
                                     Texture2D treeNoise;
                                     noises.TryGetValue("" + tree.blockId, out treeNoise);
-                                    if (treeNoise.GetPixel(noiseX, noiseY).r > 0.5) {
-                                        tree.PlanceSelf(x, y);
+                                    if (treeNoise.GetPixel(x, y).r > 0.5) {
+                                        tree.PlanceSelf(worldX, worldY);
                                         break;
                                     }
 
                                 }
                             }
-                        } 
+                        }
                     }
 
                 }
 
                 if (tileClass != null) {
-                    WorldGeneration.Instance.SetTileClass(tileClass, tileClass.layer, x, y);
+                    map.SetTileClass(tileClass, tileClass.layer, worldX, worldY);
                 }
 
                 //TODO: 这里可能还要检查一下挖洞会不会把树基底给挖掉了
                 //地表植物
-                if (y == terrainHeight && IsSurfaceRange(x) && !(cave.noiseTexture.GetPixel(noiseX, y - 1).r <= 0)) {
+                if (worldY == terrainHeight && IsSurfaceRange(worldX) && !(cave.noiseTexture.GetPixel(x, y - 1).r <= 0)) {
 
                     for (int i = 0; i < trees.Length; i++) {
                         TreeClass tree = trees[i];
-                        if (CheckSpawnTree(tree, x, y + 1)) {
+                        if (CheckSpawnTree(tree, worldX, worldY + 1)) {
                             //概率生成
                             Texture2D treeNoise;
                             noises.TryGetValue("" + tree.blockId, out treeNoise);
-                            noiseY = GetLocalPositionY(y + 1);
-                            if (treeNoise.GetPixel(noiseX, noiseY).r > 0.5) {
-                                tree.PlanceSelf(x, y + 1);
+                            if (treeNoise.GetPixel(x, y + 1).r > 0.5) {
+                                tree.PlanceSelf(worldX, worldY + 1);
                                 break;
                             }
                         }
@@ -226,19 +224,18 @@ public class SurfaceBiome : BaseBiome {
 
             }
         }
-
         BroundTransition();
     }
 
     //校验是否满足生成条件
-    private bool CheckSpawnTree(TreeClass tree, int x, int y) {
+    private bool CheckSpawnTree(TreeClass tree, int worldX, int worldY) {
         //如果目标位置下面不是泥土，不能生成
-        TileClass tileBase = world.GetTileClass(Layers.Ground, x, y - 1);
+        TileClass tileBase = map.GetTileClass(Layers.Ground, worldX, worldY - 1);
         if (tileBase == null || (tileBase != dirtBlock && tileBase != grassBlock)) return false;
 
-        for (int extY = y; extY < y + tree.maxHeight; extY++) {
+        for (int extY = worldY; extY < worldY + tree.maxHeight; extY++) {
             //查看左右侧树情况，如果存在植物，则不能生成
-            if (world.GetTileClass(Layers.Addons, x - 1, extY) != null || world.GetTileClass(Layers.Addons, x + 1, extY) != null) {
+            if (map.GetTileClass(Layers.Addons, worldX - 1, extY) != null || map.GetTileClass(Layers.Addons, worldX + 1, extY) != null) {
                 return false;
             }
         }
@@ -249,13 +246,13 @@ public class SurfaceBiome : BaseBiome {
     private void BroundTransition() {
         if (surfaceStart == 0 || surfaceEnd == 0) return;
         //群落边界地形平滑过渡调整
-        int leftBiomeHeight = world.surfaceHeights[surfaceStart];
-        int rightBiomeHeight = world.surfaceHeights[surfaceEnd];
+        int leftBiomeHeight = map.surfaceHeights[surfaceStart];
+        int rightBiomeHeight = map.surfaceHeights[surfaceEnd];
         int blendDistance = 50;//过渡距离
         int leftHeightX = surfaceStart - blendDistance > 0 ? surfaceStart - blendDistance : 0;
-        int rightHeightX = surfaceEnd + blendDistance > world.worldWidth ? world.worldWidth - 1 : surfaceEnd + blendDistance;
-        int leftWorldHeight = world.surfaceHeights[leftHeightX];
-        int rightWorldHeight = world.surfaceHeights[rightHeightX];
+        int rightHeightX = surfaceEnd + blendDistance > map.mapSize.x ? map.mapSize.x - 1 : surfaceEnd + blendDistance;
+        int leftWorldHeight = map.surfaceHeights[leftHeightX];
+        int rightWorldHeight = map.surfaceHeights[rightHeightX];
         //群落左侧过渡
         for (int x = 0; x < blendDistance; x++) {
             float t = (float)x / (blendDistance - 1);
@@ -285,30 +282,30 @@ public class SurfaceBiome : BaseBiome {
     private void FillEraseTile(int height, int blendX) {
         //向下填充
         int downHeight = height;
-        while (world.GetTileClass(Layers.Ground, blendX, downHeight) == null) {
-            world.SetTileClass(world.baseTerrain.stoneClass, Layers.Ground, blendX, downHeight);
+        while (map.GetTileClass(Layers.Ground, blendX, downHeight) == null) {
+            map.SetTileClass(map.baseTerrain.stoneClass, Layers.Ground, blendX, downHeight);
             downHeight--;
         }
 
         //向上消除
         int upHeigth = height + 1;
-        int oldHeight = world.surfaceHeights[blendX];
+        int oldHeight = map.surfaceHeights[blendX];
         while (upHeigth < oldHeight) {
-            world.SetTileClass(null, Layers.Ground, blendX, upHeigth);
+            map.SetTileClass(null, Layers.Ground, blendX, upHeigth);
             upHeigth++;
 
         }
         //更新地形高度
-        world.surfaceHeights[blendX] = height;
+        map.surfaceHeights[blendX] = height;
     }
 
 
     //擦除旧地形高出新地形的瓦片
-    private void EraseTopTile(int x, int newTerrainHeight) {
-        int oldHeight = world.surfaceHeights[x];
-        if (oldHeight > newTerrainHeight && IsSurfaceRange(x)) {
+    private void EraseTopTile(int worldX, int newTerrainHeight) {
+        int oldHeight = map.surfaceHeights[worldX];
+        if (oldHeight > newTerrainHeight && IsSurfaceRange(worldX)) {
             for (int diffY = newTerrainHeight; diffY < oldHeight; diffY++) {
-                world.SetTileClass(null, Layers.Ground, x, diffY);
+                map.SetTileClass(null, Layers.Ground, worldX, diffY);
             }
         }
     }
