@@ -7,7 +7,7 @@ using Debug = UnityEngine.Debug;
 //光源处理
 public class LightHandler : Singleton<LightHandler>
 {
-    public WorldGeneration world;
+    public WorldManager world;
     public float[,] lightValues;//记录发光瓦片瓦片的亮度数据
     public readonly float sunlight = 15f;//太阳光照
     public Texture2D lightTex;//光照材质
@@ -19,18 +19,18 @@ public class LightHandler : Singleton<LightHandler>
 
     protected override void Awake() {
         base.Awake();
-        lightValues = new float[world.worldWidth, world.worldHeight];
+        lightValues = new float[world.worldSize.x, world.worldSize.y];
 
         defaultColor = spriteRenderer.color;
         spriteRenderer.color = new Color(255, 255, 255, 0);
 
-        lightTex = new Texture2D(world.worldWidth, world.worldHeight);
+        lightTex = new Texture2D(world.worldSize.x, world.worldSize.y);
         lightTex.filterMode = FilterMode.Point;
 
         //放大到覆盖地图大小
-        transform.localScale = new Vector3(world.worldWidth, world.worldHeight, 1);
+        transform.localScale = new Vector3(world.worldSize.x, world.worldSize.y, 1);
         //位置
-        transform.localPosition = new Vector3(world.worldWidth / 2f, world.worldHeight / 2f, 0);
+        transform.localPosition = new Vector3(world.worldSize.x / 2f, world.worldSize.y / 2f, 0);
 
     }
     private void Update() {
@@ -42,15 +42,15 @@ public class LightHandler : Singleton<LightHandler>
 
     public void InitLight()
     {
-        StartCoroutine(UpdateScopeLight(0, world.worldWidth - 1, 0, world.worldHeight - 1));
+        StartCoroutine(UpdateScopeLight(0, world.worldSize.x - 1, 0, world.worldSize.y - 1));
     }
 
     IEnumerator LightUpdate(Vector2Int pos) {
         //更新该光源一定范围的光亮
-        int px1 = Mathf.Clamp(pos.x - (int)sunlight, 0, world.worldWidth - 1);//最左
-        int px2 = Mathf.Clamp(pos.x + (int)sunlight, 0, world.worldWidth - 1);//最右
-        int py1 = Mathf.Clamp(pos.y - (int)sunlight, 0, world.worldHeight - 1);//最下
-        int py2 = Mathf.Clamp(pos.y + (int)sunlight, 0, world.worldHeight - 1);//最上
+        int px1 = Mathf.Clamp(pos.x - (int)sunlight, 0, world.worldSize.x - 1);//最左
+        int px2 = Mathf.Clamp(pos.x + (int)sunlight, 0, world.worldSize.x - 1);//最右
+        int py1 = Mathf.Clamp(pos.y - (int)sunlight, 0, world.worldSize.y - 1);//最下
+        int py2 = Mathf.Clamp(pos.y + (int)sunlight, 0, world.worldSize.y - 1);//最上
 
         for (int x = px1; x <= px2; x++) {
             for (int y = py1; y <= py2; y++) {
@@ -85,10 +85,10 @@ public class LightHandler : Singleton<LightHandler>
                 else
                 {
                     //获取四周光亮值
-                    int nx1 = Mathf.Clamp(x - 1, 0, world.worldWidth - 1);
-                    int nx2 = Mathf.Clamp(x + 1, 0, world.worldWidth - 1);
-                    int ny1 = Mathf.Clamp(y - 1, 0, world.worldHeight - 1);
-                    int ny2 = Mathf.Clamp(y + 1, 0, world.worldHeight - 1);
+                    int nx1 = Mathf.Clamp(x - 1, 0, world.worldSize.x - 1);
+                    int nx2 = Mathf.Clamp(x + 1, 0, world.worldSize.x - 1);
+                    int ny1 = Mathf.Clamp(y - 1, 0, world.worldSize.y - 1);
+                    int ny2 = Mathf.Clamp(y + 1, 0, world.worldSize.y - 1);
                     //取最亮的一边
                     lightValue = Mathf.Max(lightValues[x, ny1], lightValues[x, ny2], lightValues[nx1, y], lightValues[nx2, y]);
 
@@ -130,10 +130,10 @@ public class LightHandler : Singleton<LightHandler>
                 else
                 {
                     //获取四周光亮值
-                    int nx1 = Mathf.Clamp(x - 1, 0, world.worldWidth - 1);
-                    int nx2 = Mathf.Clamp(x + 1, 0, world.worldWidth - 1);
-                    int ny1 = Mathf.Clamp(y - 1, 0, world.worldHeight - 1);
-                    int ny2 = Mathf.Clamp(y + 1, 0, world.worldHeight - 1);
+                    int nx1 = Mathf.Clamp(x - 1, 0, world.worldSize.x - 1);
+                    int nx2 = Mathf.Clamp(x + 1, 0, world.worldSize.x - 1);
+                    int ny1 = Mathf.Clamp(y - 1, 0, world.worldSize.y - 1);
+                    int ny2 = Mathf.Clamp(y + 1, 0, world.worldSize.y - 1);
                     //取最亮的一边
                     lightValue = Mathf.Max(lightValues[x, ny1], lightValues[x, ny2], lightValues[nx1, y], lightValues[nx2, y]);
 

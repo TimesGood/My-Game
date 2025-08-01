@@ -1,20 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
-using TreeEditor;
 using UnityEngine;
-using UnityEngine.Tilemaps;
-using UnityEngine.UIElements;
-using static UnityEditor.PlayerSettings;
 
 //树
 [CreateAssetMenu(fileName = "TreeClass", menuName = "Tile/new TreeClass")]
 public class TreeClass : TileClass
 {
-    private MapGenerator map;
-    public int maxHeight;//最大树高
-    public int minHeight;//最小树高
-    public int treeWidth;//树宽
-    public TileClass leaf;//树叉
+    protected MapGenerator map => MapGenerator.Instance;
+    protected WorldManager world => WorldManager.Instance;
     public float frequency = 0.04f;//控制树的密度
     public float threshold = 0.6f;//控制树的稀有度
     public float prob = 0.7f;//生成概率
@@ -46,68 +37,51 @@ public class TreeClass : TileClass
 
     #endregion
 
-    //世界生成时，放置自己的时候需要清空周围瓦片
+    //放置自己
+    public virtual void PlanceSelf(int x, int y) {
 
-    public void PlanceSelf(int x, int y) {
-        map = MapGenerator.Instance;
-        int h = Random.Range(minHeight, maxHeight);//树高
-        int maxBranches = Random.Range(3, 10);//树杈
-        int bCounts = 0;//树杈计数
-        //完整的树
-        if (leaf == null) {
-            //清理周围瓦片
-            for (int gridX = 0; gridX < gridWidth; gridX++) {
-                for (int gridY = 0; gridY < gridHeight; gridY++) {
-                    if (ShouldClear(gridX, gridY)) {
-                        //转世界空间
-                        int worldX = gridX - originPoint.x + x;
-                        int worldY = gridY - originPoint.y + y;
-                        TileClass isAddon = map.GetTileClass(Layers.Addons, worldX, worldY + 1);
-                        if (isAddon != null) map.SetTileClass(null, Layers.Addons, worldX, worldY + 1);
-                        map.SetTileClass(null, Layers.Ground, worldX, worldY);
+        //清理周围瓦片
+        for (int gridX = 0; gridX < gridWidth; gridX++) {
+            for (int gridY = 0; gridY < gridHeight; gridY++) {
+                if (ShouldClear(gridX, gridY)) {
+                    //转世界空间
+                    int worldX = gridX - originPoint.x + x;
+                    int worldY = gridY - originPoint.y + y;
+                    TileClass groundTile = world.GetTileClass(Layers.Ground, worldX, worldY);
+                    if (groundTile != null) {
+                        world.SetTileClass(null, Layers.Ground, worldX, worldY);
+                        //查看土块上方是否有树木，清除
+                        TileClass addonsTile = world.GetTileClass(Layers.Addons, worldX, worldY + 1);
+                        if (addonsTile == null) continue;
+                        if (addonsTile is TreeClass) ((TreeClass)addonsTile).ClearSelf(worldX, worldY + 1);
+                        else world.SetTileClass(null, Layers.Addons, worldX, worldY + 1);
                     }
-                }
-            }
-
-            map.SetTileClass(this, this.layer, x, y);
-            return;
-        }
-        //组合树
-        for (int ny = y; ny < y + h; ny++) {
-            map.SetTileClass(this, this.layer, x, ny);
-            //生成树桩
-            if (ny == y) {
-                //左侧树桩
-                if (Random.Range(0, 100) < 30) {
-                    if (x > 0 && map.GetTileClass(Layers.Ground, x - 1, ny - 1) != null && map.GetTileClass(Layers.Ground, x - 1, ny) == null) {
-                        map.SetTileClass(this, this.layer, x - 1, ny);
-                    }
-                }
-                //右侧树桩
-                if (Random.Range(0, 100) < 30) {
-                    if (map.GetTileClass(Layers.Ground, x + 1, ny - 1) != null && map.GetTileClass(Layers.Ground, x + 1, ny) == null) {
-                        map.SetTileClass(this, this.layer, x + 1, ny);
-                    }
-                }
-
-            }
-            //生成树杈
-            else if (ny >= y + 2 && ny <= y + h - 3) {
-                if (bCounts < maxBranches && Random.Range(0, 100) < 40) {
-                    if (x > 0 && map.GetTileClass(Layers.Ground, x - 1, ny) == null && map.GetTileClass(Layers.Addons, x - 1, ny - 1) != this) {
-                        map.SetTileClass(leaf, leaf.layer, x - 1, ny);
-                        bCounts++;
-                    }
-                }
-                if (bCounts < maxBranches && Random.Range(0, 100) < 40) {
-                    if (map.GetTileClass(Layers.Ground, x + 1, ny) == null && map.GetTileClass(Layers.Addons, x + 1, ny - 1) != this) {
-                        map.SetTileClass(leaf, leaf.layer, x + 1, ny);
-                        bCounts++;
-                    }
+                    
+                    
                 }
             }
         }
+        world.SetTileClass(this, layer, x, y);
+
     }
 
+
+    //清理自己
+    public virtual void ClearSelf(int x, int y) {
+        world.SetTileClass(null, layer, x, y);
+    }
+
+    //校验生成
+    public virtual bool CheckSpawn(int x, int y) {
+        //查看左右侧树两格情况，如果存在树木，则不能生成
+        for (int i = 1; i <= 2; i++) {
+            TileClass leftAddons = world.GetTileClass(Layers.Addons, x - i, y);
+            TileClass rightAddons = world.GetTileClass(Layers.Addons, x + i, y);
+            if ((leftAddons != null && leftAddons as TreeClass) || (rightAddons != null && rightAddons as TreeClass)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
 }

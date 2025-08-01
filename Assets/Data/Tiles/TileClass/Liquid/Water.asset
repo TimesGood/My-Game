@@ -25,5 +25,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 55f6ab95fd890664fb0a94af5b614555, type: 2}
   - {fileID: 11400000, guid: fb9753cfcd2709b498b5f1377301b6df, type: 2}
   - {fileID: 11400000, guid: 1b0d6831cdf288548a711666e3c133ea, type: 2}
-  <flowSpeed>k__BackingField: 10
+  <flowSpeed>k__BackingField: 100
   <minVolume>k__BackingField: 0.0001

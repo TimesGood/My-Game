@@ -30,13 +30,13 @@ namespace UnityEditor
                     BrushCell cell = cells[GetCellIndexWrapAround(pos.x, pos.y, pos.z)];
                     if (cell.tile is CustomTile) {
                         long id = ((CustomTile)cell.tile).blockId;
-                        TileClass tileClass = WorldGeneration.TileRegistry.GetTile(id);
+                        TileClass tileClass = WorldManager.TileRegistry.GetTile(id);
 
                         if (tileClass is LiquidClass) {
                             
-                            WorldGeneration.Instance.PlaceLiquidTile((LiquidClass)tileClass, pos.x, pos.y, 1);
+                            WorldManager.Instance.PlaceLiquidTile((LiquidClass)tileClass, pos.x, pos.y, 1);
                         } else {
-                            WorldGeneration.Instance.PlaceTile(tileClass, pos.x, pos.y);
+                            WorldManager.Instance.PlaceTile(tileClass, pos);
                             if (tileClass.isIlluminated) {
                                 LightHandler.Instance.MarForUpdate(pos.x, pos.y);
                             }
@@ -79,7 +79,7 @@ namespace UnityEditor
             if (Application.isPlaying)
             {
                 Layers layer = GetLayerByName(brushTarget.name);
-                WorldGeneration.Instance.Erase(layer, position.x, position.y);
+                WorldManager.Instance.Erase(layer, position);
             }
             else
             {
@@ -112,9 +112,10 @@ namespace UnityEditor
                     // »ñÈ¡ÍßÆ¬
                     TileBase tile = tilemap.GetTile(pos);
                     Layers layer = GetLayerByName(brushTarget.name);
-                    TileClass tileClass = WorldGeneration.Instance.GetTileClass(layer, pos.x, pos.y);
+                    TileClass tileClass = WorldManager.Instance.GetTileClass(layer, pos.x, pos.y);
                     if (tileClass is LiquidClass) {
-                        float volume = LiquidHandler.Instance.liquidVolume[pos.x, pos.y];
+                        //float volume = LiquidHandler.Instance.liquidVolume[pos.x, pos.y];
+                        float volume = LiquidHandler.Instance.GetVolume((Vector2Int)pos);
                         Handles.Label(new Vector3(pos.x, pos.y + 1), volume.ToString() + "->" + tileClass.name);
                     }
 

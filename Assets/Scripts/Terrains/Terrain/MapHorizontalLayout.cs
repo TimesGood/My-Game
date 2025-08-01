@@ -1,58 +1,27 @@
-using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
-using NUnit.Framework;
-using Unity.Entities.UniversalDelegates;
 using UnityEngine;
-using UnityEngine.XR;
 
 
-//水平布局
+//网格布局
 [CreateAssetMenu(fileName = "MapHorizontalLayout", menuName = "Terrain/new MapHorizontalLayout")]
 public class MapHorizontalLayout : MapGridLayout {
+    public Vector2Int cell;
 
-    public override void InitLayout() {
-        map = MapGenerator.Instance;
-        XCell = biomes.Length;
-        YCell = 1;
-        XSize = map.mapSize.x / XCell;
-        YSize = map.mapSize.y / YCell;
-        cellCount = biomes.Length;
-        totalSize = XSize * YSize;
-        InitDistribution();
-    }
+
+    //分布
     protected override void InitDistribution() {
-        System.Collections.Generic.List<BaseBiome> baseBiomes = biomes.ToList();
-        Debug.Log(cellCount);
-        for (int cell = 0; cell < cellCount; cell++) {
+        result.Clear();
+        List<BaseBiome> baseBiomes = biomes.ToList();
+        //网格布局
+        List<Vector2> points = PoissonDiscSampling.GenerateGridPoints(cell, world.worldSize, 1, true);
+        //分配点位
+        foreach (var point in points) {
             int index = Random.Range(0, baseBiomes.Count);
-            Vector2Int cellCenter = GetCellCenter(cell, 0);
             BaseBiome biome = baseBiomes[index];
-            result.Add(cellCenter, biome);
+            result.Add(new Vector2Int((int)point.x, MapGenerator.Instance.baseHeight), biome);
 
             baseBiomes.Remove(biome);
         }
-    }
-
-    public void DestroyNoiseTexture() {
-        //foreach (BiomeTest biome in biomes) {
-        //    biome.child.DestroyNoiseTexture();
-        //    biome.DestroyNoiseTexture();
-        //}
-    }
-
-    public override IEnumerator Generation() {
-        int i = 0;
-        foreach (var item in result) {
-            Vector2Int center = item.Key;
-            BaseBiome biome = item.Value;
-            biome.biomeWidth = XSize;
-            biome.biomeHeight = YSize;
-            biome.InitBiome(center, map.seed);
-
-            Debug.Log("第" + i + "群落【" + biome.name + "】生成中...");
-            i++;
-            yield return map.StartCoroutine(biome.GenerateBiome());
-        }
-
     }
 }

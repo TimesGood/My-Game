@@ -1,24 +1,24 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Tilemaps;
-using static UnityEditor.Progress;
 
 //基础瓦片
 [CreateAssetMenu(fileName = "TileClass", menuName = "Tile/new TileClass")]
 public class TileClass : ScriptableObject
 {
-    public CustomTile tile;//tile
+    public CustomTile tile;//瓦片
+    public GameObject gameObject;//游戏对象
+    public Sprite previewSprite;//预览精灵
     public Layers layer;//方块所属图层
     public long blockId;//方块Id
     public bool isIlluminated;//是否自发光
     public float lightLevel;//发光强度
     public Color lightColor;//发光颜色
 
-    
+    [SerializeField] private ItemData[] possibleDrop;//可掉落物品列表
+    private List<ItemData> dropList = new List<ItemData>();//实际掉落列表
+
+
     private void OnValidate() {
         //TileBase与TileClass的Id必须对应
         if (tile != null && tile.blockId != blockId) {
@@ -26,6 +26,10 @@ public class TileClass : ScriptableObject
         }
     }
 
+
+
+
+    #region id生成
 
     //创建时执行
     protected virtual void OnEnable() {
@@ -60,4 +64,5 @@ public class TileClass : ScriptableObject
             return hash;
         }
     }
+    #endregion
 }

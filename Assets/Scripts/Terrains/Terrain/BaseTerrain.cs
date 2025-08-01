@@ -9,6 +9,7 @@ using UnityEngine;
 public class BaseTerrain : ScriptableObject {
 
     private MapGenerator map;
+    private WorldManager world => WorldManager.Instance;
 
     [Header("地形")]
     public CurveConfig terrain;
@@ -27,13 +28,12 @@ public class BaseTerrain : ScriptableObject {
 
     //初始化噪声纹理
     public void InitNoiseTexture() {
-        map = MapGenerator.Instance;
 
-        terrain.InitValidate(map.mapSize.x, map.mapSize.y, map.seed);
+        terrain.InitValidate(world.worldSize.x, world.worldSize.y, world.seed);
         terrain.heightAdd = 0;
-        dirtNoise.InitValidate(map.mapSize.x, map.mapSize.y, map.seed);
-        stoneNoise.InitValidate(map.mapSize.x, map.mapSize.y, map.seed + 1);
-        caveNoise.InitValidate(map.mapSize.x, map.mapSize.y, map.seed + 2);
+        dirtNoise.InitValidate(world.worldSize.x, world.worldSize.y, world.seed);
+        stoneNoise.InitValidate(world.worldSize.x, world.worldSize.y, world.seed + 1);
+        caveNoise.InitValidate(world.worldSize.x, world.worldSize.y, world.seed + 2);
 
         terrain.InitNoise();
         dirtNoise.InitNoise();
@@ -59,11 +59,11 @@ public class BaseTerrain : ScriptableObject {
 //生成
 public IEnumerator Generation() {
         int processed = 0;
-        for (int x = 0; x < this.map.mapSize.x; x++) {
-            int terrianHeight = this.map.surfaceHeights[x];
+        for (int x = 0; x < this.world.worldSize.x; x++) {
+            int terrianHeight = this.world.surfaceHeights[x];
             terrianHeight += terrain.GetHeight(x);
-            this.map.surfaceHeights[x] = terrianHeight;
-            float stoneHeight = Mathf.PerlinNoise((x + this.map.seed) * 0.02f, this.map.seed * 0.02f) * 10f + (this.map.baseHeight * 0.8f);
+            this.world.surfaceHeights[x] = terrianHeight;
+            float stoneHeight = Mathf.PerlinNoise((x + this.world.seed) * 0.02f, this.world.seed * 0.02f) * 10f + (this.world.baseHeight * 0.8f);
             for (int y = 0; y < terrianHeight; y++) {
                 TileClass tileClass = null;
 
@@ -91,13 +91,13 @@ public IEnumerator Generation() {
 
                 //洞穴
                 if (caveNoise.GetPixel(x, y).r > 0.5f) {
-                    this.map.SetTileClass(tileClass, tileClass.layer, x, y);
+                    this.world.SetTileClass(tileClass, tileClass.layer, x, y);
                     //WorldGeneration.Instance.PlaceTile(tileClass, x, y);
                 }
             }
             // 每帧处理200串防止卡顿
             if (++processed % 200 == 0) {
-                UnityEngine.Debug.Log(Mathf.FloorToInt((float)processed / this.map.mapSize.x * 100) + "%");
+                UnityEngine.Debug.Log(Mathf.FloorToInt((float)processed / this.world.worldSize.x * 100) + "%");
                 yield return null;
             }
         }

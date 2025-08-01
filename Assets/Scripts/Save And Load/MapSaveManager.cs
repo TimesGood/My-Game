@@ -9,80 +9,83 @@ public class MapSaveManager : Singleton<MapSaveManager> {
     [SerializeField] private bool encryptData;
 
     private MapData gameData;
-    private List<ISaveManager> saveManagers;
-    private FileDataHandler dataHandler;
+    private List<IMapSaveManager> saveManagers;
+    private TilemapExporter dataHandler;
 
     //删除游戏数据
     [ContextMenu("Delete save file")]//添加到组件菜单中
     public void DeleteSaveData() {
-        dataHandler = new FileDataHandler(Application.persistentDataPath, fileName, encryptData);
-        dataHandler.Delete();
+
     }
 
     private void Start() {
         saveManagers = FindAllSaveManagers();
-        dataHandler = new FileDataHandler(Application.persistentDataPath, fileName, encryptData);
-        //LoadGame();
+        dataHandler = GetComponent<TilemapExporter>();
+        Debug.Log(dataHandler);
     }
 
     //创建新游戏数据
     public void NewGame() {
-        WorldGeneration world = WorldGeneration.Instance;
+        WorldManager world = WorldManager.Instance;
         ChunkHandler chunk = ChunkHandler.Instance;
-        //分区
-        int chunkXCount = world.chunkXCount;
-        int chunkYCount = world.chunkYCount;
-        long[,][,,] chunkDatas = new long[chunkXCount, chunkYCount][,,];
-        //每个区的瓦片
-        int chunkXSize = world.worldWidth / chunkXCount;
-        int chunkYSize = world.worldHeight / chunkYCount;
-        for (int x = 0; x < chunkXCount; x++) {
-            for (int y = 0; y < chunkYCount; y++) {
-                chunkDatas[x, y] = new long[4, chunkXSize, chunkYSize];
-            }
-        }
+
+        gameData = new MapData();
+    }
 
 
-        long[,,] tileDatas = new long[4, world.worldWidth, world.worldHeight];
-        gameData = new MapData(chunkDatas, tileDatas);
+    [ContextMenu("load Game")]
+    public void LoadTest() {
+        StartCoroutine(LoadGame());
+    }
+    [ContextMenu("save Game")]
+    public void SaveTest() {
+        StartCoroutine(SaveGame());
     }
 
     //加载游戏数据
-    public void LoadGame() {
-        gameData = dataHandler.Load();
+    public IEnumerator LoadGame() {
+
+        yield return StartCoroutine(dataHandler.LoadAllTilemaps(
+            value => this.gameData = value,
+            process => Debug.Log("地图加载中, 进度：" + process)));
+
         if (this.gameData == null) {
             NewGame();
         }
 
-        foreach (ISaveManager saveManager in saveManagers) {
+        foreach (IMapSaveManager saveManager in saveManagers) {
             saveManager.LoadData(gameData);
         }
+
     }
 
-    //保存
-    public void SaveGame() {
-        foreach (ISaveManager saveManager in saveManagers) {
+    //保存游戏数据
+    public IEnumerator SaveGame() {
+        foreach (IMapSaveManager saveManager in saveManagers) {
             saveManager.SaveData(ref gameData);
         }
-        dataHandler.Save(gameData);
+
+        yield return StartCoroutine(dataHandler.ExportAllTilemaps(
+            gameData,
+            process => Debug.Log("地图保存中, 进度：" + process)));
+
     }
 
     //退出保存
     protected override void OnApplicationQuit() {
-        SaveGame();
+        //SaveGame();
         base.OnApplicationQuit();
 
     }
 
     //查找游戏内所有实现ISaveManager接口的对象
-    private List<ISaveManager> FindAllSaveManagers() {
-        IEnumerable<ISaveManager> saveManagers = FindObjectsOfType<MonoBehaviour>().OfType<ISaveManager>();
-        return new List<ISaveManager>(saveManagers);
+    private List<IMapSaveManager> FindAllSaveManagers() {
+        IEnumerable<IMapSaveManager> saveManagers = FindObjectsOfType<MonoBehaviour>().OfType<IMapSaveManager>();
+        return new List<IMapSaveManager>(saveManagers);
     }
 
     //查看是否有保存数据
     public bool HasSaveData() {
-        return dataHandler.Load() != null;
-
+        return dataHandler.isExists();
     }
 }

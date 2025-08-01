@@ -5,11 +5,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using static UnityEditor.PlayerSettings;
 
 //区块数据管理
 public class ChunkHandler : Singleton<ChunkHandler> {
 
-    public WorldGeneration world;
+    public WorldManager world;
     public float loadRadius = 3f;//加载范围
 
     public int chunkCount = 20; //X和Y轴区块数量
@@ -31,6 +32,8 @@ public class ChunkHandler : Singleton<ChunkHandler> {
     private Coroutine unloadingCoroutine;
     private Coroutine loadingCoroutine;
 
+    private bool applyAll = false;
+
     //区块数据
     public class ChunkData {
         public Vector2Int coord;//区块坐标
@@ -44,16 +47,17 @@ public class ChunkHandler : Singleton<ChunkHandler> {
         base.Awake();
         //分区
         chunkXCount = chunkCount;
-        chunkYCount = chunkCount * world.worldHeight / world.worldWidth;
+        chunkYCount = chunkCount * world.worldSize.y / world.worldSize.x;
         //每个区的瓦片
-        chunkXSize = world.worldWidth / chunkXCount;
-        chunkYSize = world.worldHeight / chunkYCount;
+        chunkXSize = world.worldSize.x / chunkXCount;
+        chunkYSize = world.worldSize.y / chunkYCount;
         //空瓦片数组，用于卸载
         emptyTiles = new TileBase[chunkXSize * chunkXSize];
 
     }
 
     private void Update() {
+        if (applyAll == true) return;
         Vector2Int currentChunk = WorldToChunkCoord(renderCamera.transform.position);
 
         // 当玩家移动到新区块时重新加载
@@ -107,13 +111,15 @@ public class ChunkHandler : Singleton<ChunkHandler> {
             for (int x = 0; x < chunkYSize; x++) {
                 int worldXPos = chunk.coord.x * chunkXSize + x;
                 int worldYPos = chunk.coord.y * chunkYSize + y;
-                tilePos.Add(new Vector2Int(worldXPos, worldYPos));
+                Vector2Int worldPos = new Vector2Int(worldXPos, worldYPos);
+                tilePos.Add(worldPos);
                 foreach (var layer in layers) {
                     TileClass tileClass = world.GetTileClass(layer, worldXPos, worldYPos);
                     if (tileBases[(int)layer] == null) tileBases[(int)layer] = new List<TileBase>();
                     TileBase tile = null;
                     if (layer == Layers.Liquid) {
-                        float volume = LiquidHandler.Instance.liquidVolume[worldXPos, worldYPos];
+                        //float volume = LiquidHandler.Instance.liquidVolume[worldXPos, worldYPos];
+                        float volume = LiquidHandler.Instance.GetVolume(worldPos);
                         tile = ((LiquidClass)tileClass)?.GetTileToVolume(volume);
                     } else {
                         tile = tileClass?.tile;
@@ -232,7 +238,8 @@ public class ChunkHandler : Singleton<ChunkHandler> {
         foreach (Layers layer in layers) {
             //if (layer == Layers.Liquid) continue;
             BoundsInt bound = chunkData.bounds;
-            world.tilemaps[(int)layer].SetTilesBlock(bound, chunkData.tileBases[(int)layer].ToArray());
+
+            world.GetTilemap(layer).SetTilesBlock(bound, chunkData.tileBases[(int)layer].ToArray());
             yield return null; // 每设置一层暂停一帧
         }
 
@@ -246,8 +253,8 @@ public class ChunkHandler : Singleton<ChunkHandler> {
 
         foreach (Layers layer in layers) {
             BoundsInt bound = chunkData.bounds;
-            world.tilemaps[(int)layer].SetTilesBlock(chunkData.bounds, emptyTiles);
-            world.tilemaps[(int)layer].CompressBounds();
+            world.GetTilemap(layer).SetTilesBlock(chunkData.bounds, emptyTiles);
+            world.GetTilemap(layer).CompressBounds();
             yield return null; // 每设置一层暂停一帧
         }
         loadedChunkIDs.Remove(chunkID);
@@ -255,8 +262,12 @@ public class ChunkHandler : Singleton<ChunkHandler> {
 
 
     //渲染整个世界
+    [ContextMenu("ApplyAll")]
+    private void ApplyAll() {
+        applyAll = true;
+        StartCoroutine(LoadAllChunkAsync());
+    }
     private IEnumerator LoadAllChunkAsync() {
-
         //==============================按区块渲染=============================
 
         for (int chunkXIndex = 0; chunkXIndex < chunkXCount; chunkXIndex++) {

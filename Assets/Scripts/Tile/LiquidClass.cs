@@ -8,15 +8,18 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.UIElements;
 using static UnityEditor.PlayerSettings;
+using static UnityEditor.Progress;
 
 //液体类瓷砖
 [CreateAssetMenu(fileName = "LiquidClass", menuName = "Tile/new LiquidClass")]
 public class LiquidClass : TileClass {
-    private WorldGeneration world;
+    private WorldManager world;
     private LiquidHandler liquidHandler;
     [field: SerializeField] public TileBase[] tiles { get; private set; }//液体在不同水位时的不同瓦片
     [field: SerializeField] public float flowSpeed { get; private set; }//流动速度
     [field: SerializeField] public float minVolume { get; private set; } = 0.005f;//最小水位
+
+    [field: SerializeField] public TileClass medium;//与不同液体碰触之后生成的物块
 
     //根据水位获取对应体积瓦片
     public TileBase GetTileToVolume(float volume) {
@@ -42,25 +45,22 @@ public class LiquidClass : TileClass {
 
     public bool CalculatePhysics(Vector2Int pos) {
         
-        world = WorldGeneration.Instance;
+        world = WorldManager.Instance;
         liquidHandler = LiquidHandler.Instance;
 
         int x = pos.x;
         int y = pos.y;
-        float curVolume = liquidHandler.liquidVolume[pos.x, pos.y];
+        //float curVolume = liquidHandler.liquidVolume[pos.x, pos.y];
+        float curVolume = liquidHandler.GetVolume(pos);
 
         //体积太小时，擦掉该瓦片
         if (curVolume < minVolume) {
-            liquidHandler.UpdateVolume(null, pos, 0);
-            liquidHandler.RemoveForUpdate(this, pos);
-            liquidHandler.UpdateTile(this, pos, 0);
+            liquidHandler.UpdateVolume(this, pos, 0);
             return false;
         }
         //液体在地面瓦片中，擦掉
         if (world.GetTileClass(Layers.Ground, x, y) != null) {
-            liquidHandler.UpdateVolume(null, pos, 0);
-            liquidHandler.RemoveForUpdate(this, pos);
-            liquidHandler.UpdateTile(this, pos, 0);
+            liquidHandler.UpdateVolume(this, pos, 0);
             return false;
         }
         // 优先向下流动
@@ -84,7 +84,8 @@ public class LiquidClass : TileClass {
         // 检查下方是否可流动
         if (world.GetTileClass(Layers.Ground, downPos.x, downPos.y) != null) return false;
         //液体满了
-        float downVolume = liquidHandler.liquidVolume[downPos.x, downPos.y];
+        //float downVolume = liquidHandler.liquidVolume[downPos.x, downPos.y];
+        float downVolume = liquidHandler.GetVolume(downPos);
         LiquidClass downLiquid = world.GetTileClass(Layers.Liquid, downPos.x, downPos.y) as LiquidClass;
 
         if (downVolume >= 1f && (downLiquid == null || downLiquid == this)) return false;
@@ -93,15 +94,11 @@ public class LiquidClass : TileClass {
         if (downLiquid == null || !downLiquid.TouchLiquid(pos, downPos)) {
             downVolume += curVolume;
             liquidHandler.UpdateVolume(this, downPos, downVolume);
-            liquidHandler.MarkForUpdate(this, downPos);
-            liquidHandler.UpdateTile(this, downPos, downVolume);
 
         }
 
         curVolume = 0;
-        liquidHandler.UpdateVolume(null, pos, curVolume);
-        liquidHandler.RemoveForUpdate(this, pos);
-        liquidHandler.UpdateTile(this, pos, curVolume);
+        liquidHandler.UpdateVolume(this, pos, curVolume);
 
         //可能周围有稳定状态液体，重新激活上左右液体液体
         //liquidHandler.MarkForUpdate(this, pos + Vector2Int.up);
@@ -125,22 +122,19 @@ public class LiquidClass : TileClass {
         // 计算每个方向的分配量
         float avg = curVolume;
         foreach (var item in flowDirs) {
-            avg += liquidHandler.liquidVolume[item.x, item.y];
+            //avg += liquidHandler.liquidVolume[item.x, item.y];
+            avg += liquidHandler.GetVolume(item);
         }
         avg /= (flowDirs.Count + 1);
 
         //avg = Mathf.Round(avg * 10000f) / 10000f;
         curVolume = avg;
         liquidHandler.UpdateVolume(this, pos, curVolume);
-        liquidHandler.MarkForUpdate(this, pos);
-        liquidHandler.UpdateTile(this, pos, curVolume);
         foreach (var dir in flowDirs) {
             LiquidClass targetLiquid = world.GetTileClass(Layers.Liquid, dir.x, dir.y) as LiquidClass;
             if (targetLiquid != null && targetLiquid.TouchLiquid(pos, dir)) continue;
             
             liquidHandler.UpdateVolume(this, dir, avg);
-            liquidHandler.MarkForUpdate(this, dir);
-            liquidHandler.UpdateTile(this, dir, avg);
         }
 
         //可能周围有稳定状态液体，重新激活上左右液体液体
@@ -160,15 +154,13 @@ public class LiquidClass : TileClass {
         if (targetLiquid != null && targetLiquid != this) {
             return false;
         }
-        float upVolume = liquidHandler.liquidVolume[upPos.x, upPos.y];
+        //float upVolume = liquidHandler.liquidVolume[upPos.x, upPos.y];
+        float upVolume = liquidHandler.GetVolume(upPos);
         upVolume += curVolume - 1f;
         liquidHandler.UpdateVolume(this, upPos, upVolume);
-        liquidHandler.MarkForUpdate(this, upPos);
-        liquidHandler.UpdateTile(this, upPos, upVolume);
 
         curVolume = 1f;
         liquidHandler.UpdateVolume(this, pos, curVolume);
-        liquidHandler.MarkForUpdate(this, pos);
         return true;
 
     }
@@ -180,7 +172,8 @@ public class LiquidClass : TileClass {
         bool flag = false;
         //如果液体不相同，可流动
         TileClass targetLiquid = world.GetTileClass(Layers.Liquid, x, y);
-        float targetVolume = liquidHandler.liquidVolume[x, y];
+        //float targetVolume = liquidHandler.liquidVolume[x, y];
+        float targetVolume = liquidHandler.GetVolume(dir);
         if (targetLiquid != null && targetLiquid != this) flag = true;
 
         if (world.GetTileClass(Layers.Ground, x, y) == null && curVolume > targetVolume && curVolume - targetVolume > 0.0001f) flag = true;
@@ -191,7 +184,8 @@ public class LiquidClass : TileClass {
         if (!world.CheckWorldBound(x, y)) return;
         TileClass targetLiquid = world.GetTileClass(Layers.Liquid, x, y);
 
-        float targetVolume = liquidHandler.liquidVolume[x, y];
+        //float targetVolume = liquidHandler.liquidVolume[x, y];
+        float targetVolume = liquidHandler.GetVolume(new Vector2Int(x, y));
         if (world.GetTileClass(Layers.Ground, x, y) != null || (targetVolume >= curVolume && (targetLiquid == null || targetLiquid == this))) return;
         //两边液体体积相差无几，不扩散，避免水体表面一直在计算
         if (curVolume - targetVolume < 0.0001f) return;
@@ -199,16 +193,16 @@ public class LiquidClass : TileClass {
     }
 
 
-    //与其他液体接触
+    //与其他液体接触，origin：接触者， target：被接触者
     private bool TouchLiquid(Vector2Int origin, Vector2Int target) {
-        TileClass targetLiquid = world.GetTileClass(Layers.Liquid, origin.x, origin.y);
+        LiquidClass originLiquid = world.GetTileClass(Layers.Liquid, origin.x, origin.y) as LiquidClass;
         //如果接触目标不是相同液体，进行处理
-        if (targetLiquid != this) {
+        if (originLiquid != this) {
 
-            liquidHandler.UpdateVolume(null, target, 0);
-            liquidHandler.RemoveForUpdate(this, target);
-            world.SetTileClass(liquidHandler.test, Layers.Ground, target.x, target.y);
-            world.tilemaps[(int)Layers.Ground].SetTile((Vector3Int)target, liquidHandler.test.tile);
+            liquidHandler.UpdateVolume(this, target, 0);
+            world.PlaceTile(liquidHandler.test, (Vector3Int) target);
+            //world.SetTileClass(liquidHandler.test, Layers.Ground, target.x, target.y);
+            //world.tilemaps[(int)Layers.Ground].SetTile((Vector3Int)target, liquidHandler.test.tile);
             return true;
         }
         return false;
