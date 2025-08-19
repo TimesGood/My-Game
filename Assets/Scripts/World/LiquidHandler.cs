@@ -13,10 +13,8 @@ public class LiquidHandler : Singleton<LiquidHandler> {
     public WorldManager world;
     public LiquidLayer liquidLayer;
     public LiquidClass[] liquids;//注册需要处理的液体
-    public TileClass test;
     public bool openFlow = false;
-    private Dictionary<Vector2Int, float> volume = new Dictionary<Vector2Int, float>();//液体体积
-    public Dictionary<LiquidClass, Dictionary<Vector2Int, int>> updates = new Dictionary<LiquidClass, Dictionary<Vector2Int, int>>();//存储要计算液体的区域，由于不同液体流动速度不同，需要对不同液体单独处理
+    public Dictionary<LiquidClass, Dictionary<Vector2Int, int>> updates = new Dictionary<LiquidClass, Dictionary<Vector2Int, int>>();//计数器，存储要计算液体的区域，由于不同液体流动速度不同，需要对不同液体单独处理
     private HashSet<string> loadingRoutines = new HashSet<string>();//记录正在执行的协程
     private Dictionary<LiquidClass, Coroutine> updateRoutines = new Dictionary<LiquidClass, Coroutine>();
 

@@ -31,15 +31,9 @@ namespace UnityEditor
                     if (cell.tile is CustomTile) {
                         long id = ((CustomTile)cell.tile).blockId;
                         TileClass tileClass = WorldManager.TileRegistry.GetTile(id);
-
-                        if (tileClass is LiquidClass) {
-                            
-                            WorldManager.Instance.PlaceLiquidTile((LiquidClass)tileClass, pos.x, pos.y, 1);
-                        } else {
-                            WorldManager.Instance.PlaceTile(tileClass, pos);
-                            if (tileClass.isIlluminated) {
-                                LightHandler.Instance.MarForUpdate(pos.x, pos.y);
-                            }
+                        WorldManager.Instance.PlaceTile(tileClass, pos);
+                        if (tileClass.isIlluminated) {
+                            LightHandler.Instance.MarForUpdate(pos.x, pos.y);
                         }
                     }
                 }

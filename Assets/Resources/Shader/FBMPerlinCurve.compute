@@ -3,7 +3,7 @@
 #include "Include/Noise.hlsl"
 
 RWTexture2D<float4> NoiseTexture;
-RWStructuredBuffer<int> CurveData;
+RWStructuredBuffer<float> CurveData;
 float Frequency;
 float Threshold;
 int Seed;
@@ -46,7 +46,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     
     float normalizedHeight = totalHeight / maxHeight;
-    int yPos = floor(normalizedHeight * HeightMult + HeightAdd);
+    float yPos = normalizedHeight * HeightMult + HeightAdd;
 
     NoiseTexture[uint2(id.x, yPos)] = float4(1,1,1,1);
     CurveData[id.x] = yPos;

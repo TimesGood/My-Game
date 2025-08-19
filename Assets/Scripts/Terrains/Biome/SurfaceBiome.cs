@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using Random = UnityEngine.Random;
 
 //地表群落
@@ -105,7 +106,7 @@ public class SurfaceBiome : BaseBiome {
         //从上往下-左往右生成（生成树的时候方便）
         for (int x = 0; x < biomeSize.x; x++) {
             
-            int terrainHeight = baseHeight + terrain.GetHeight(x);
+            int terrainHeight = baseHeight + (int)terrain.GetHeight(x);
 
             terrainHeights[x] = terrainHeight;
             int worldX = LocalToWorldPosX(x);
@@ -114,8 +115,12 @@ public class SurfaceBiome : BaseBiome {
             //群落地形调整
             EraseTopTile(worldX, terrainHeight);
         }
+
+
         int processed = 0;
         int totalCell = maxHeight * biomeSize.x;
+
+        //地形生成
         for (int y = maxHeight; y >= 0; y--) {
             int worldY = LocalToWorldPosY(y);
             for (int x = 0; x < biomeSize.x; x++) {
@@ -151,26 +156,6 @@ public class SurfaceBiome : BaseBiome {
                     if (cave.noiseTexture.GetPixel(x, y).r <= 0) {
                         world.SetTileClass(null, Layers.Ground, worldX, worldY);
                         tileClass = null;
-
-                        //洞穴植株
-
-
-                        //洞穴树
-                        if (!(cave.noiseTexture.GetPixel(x, y - 1).r <= 0) && world.GetTileClass(Layers.Ground, worldX, worldY - 1) != null) {
-                            for (int i = 0; i < caveTrees.Length; i++) {
-                                TreeClass tree = caveTrees[i];
-                                if (tree.CheckSpawn(worldX, worldY)) {
-
-                                    //概率生成
-                                    noises.TryGetValue(tree.blockId.ToString(), out Texture2D treeNoise);
-                                    if (treeNoise.GetPixel(x, y).r > 0.5) {
-                                        tree.PlanceSelf(worldX, worldY);
-                                        break;
-                                    }
-
-                                }
-                            }
-                        }
                     }
 
                 }
@@ -178,9 +163,7 @@ public class SurfaceBiome : BaseBiome {
                 if (tileClass != null) {
                     world.SetTileClass(tileClass, tileClass.layer, worldX, worldY);
                 }
-
-                //TODO: 这里可能还要检查一下挖洞会不会把树基底给挖掉了
-                //地表植物
+                //地表
                 if (worldY == terrainHeight && IsSurfaceRange(worldX) && !(cave.noiseTexture.GetPixel(x, y - 1).r <= 0)) {
                     TileClass tileBase = world.GetTileClass(Layers.Ground, worldX, worldY);
                     if (tileBase != null && (tileBase == dirtBlock || tileBase == grassBlock)) {
@@ -198,17 +181,64 @@ public class SurfaceBiome : BaseBiome {
                             }
                         }
                     }
-                    
-
                 }
+
                 // 每帧处理5000个防止卡顿
                 if (++processed % 5000 == 0) {
-                    UnityEngine.Debug.Log(Mathf.FloorToInt((float)processed / totalCell * 100) + "%");
+                    Debug.Log(Mathf.FloorToInt((float)processed / totalCell * 100) + "%");
                     yield return null;
                 }
 
             }
         }
+
+        //植物生成
+        for (int y = maxHeight; y >= 0; y--) {
+            int worldY = LocalToWorldPosY(y);
+            for (int x = 0; x < biomeSize.x; x++) {
+                int terrainHeight = terrainHeights[x];
+                int worldX = worldXs[x];
+                if (worldY > terrainHeight) continue;
+
+                //地底洞穴
+                if (isOutLine(x, y)) {
+                    //挖洞穴
+                    if (cave.noiseTexture.GetPixel(x, y).r <= 0) {
+                        //洞穴树
+                        if (!(cave.noiseTexture.GetPixel(x, y - 1).r <= 0) && world.GetTileClass(Layers.Ground, worldX, worldY - 1) != null) {
+                            if (caveTrees.Length != 0 && Random.Range(0, 100) > 60) {
+                                int caveIndex = Random.Range(0, caveTrees.Length);
+                                TreeClass tree = caveTrees[caveIndex];
+                                if (tree.CheckSpawn(worldX, worldY)) {
+                                    tree.PlanceSelf(worldX, worldY);
+                                }
+                            }
+                        }
+
+                    }
+                }
+                //地表
+                if (worldY == terrainHeight && IsSurfaceRange(worldX) && !(cave.noiseTexture.GetPixel(x, y - 1).r <= 0)) {
+                    TileClass tileBase = world.GetTileClass(Layers.Ground, worldX, worldY);
+                    if (tileBase != null && (tileBase == dirtBlock || tileBase == grassBlock)) {
+                        for (int i = 0; i < trees.Length; i++) {
+                            TreeClass tree = trees[i];
+
+                            if (tree.CheckSpawn(worldX, worldY + 1)) {
+                                //概率生成
+                                Texture2D treeNoise;
+                                noises.TryGetValue(tree.blockId.ToString(), out treeNoise);
+                                if (treeNoise.GetPixel(x, y + 1).r > 0.5) {
+                                    tree.PlanceSelf(worldX, worldY + 1);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
 
         //群落地表地形过渡
         BroundTransition();

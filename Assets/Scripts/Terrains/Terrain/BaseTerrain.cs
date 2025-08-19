@@ -30,6 +30,7 @@ public class BaseTerrain : ScriptableObject {
     public void InitNoiseTexture() {
 
         terrain.InitValidate(world.worldSize.x, world.worldSize.y, world.seed);
+        //terrain.heightMult = 1;
         terrain.heightAdd = 0;
         dirtNoise.InitValidate(world.worldSize.x, world.worldSize.y, world.seed);
         stoneNoise.InitValidate(world.worldSize.x, world.worldSize.y, world.seed + 1);
@@ -39,15 +40,6 @@ public class BaseTerrain : ScriptableObject {
         dirtNoise.InitNoise();
         stoneNoise.InitNoise();
         caveNoise.InitNoise();
-
-        //for (int x = 0; x < world.worldWidth; x++) {
-        //    for (int y = 0; y < world.worldHeight; y++) {
-        //        terrain.Draw(x, y);
-        //        dirtNoise.Draw(x, y);
-        //        stoneNoise.Draw(x, y);
-        //        caveNoise.Draw(x, y);
-        //    }
-        //}
     }
 
     public void DestroyNoiseTexture() {
@@ -58,12 +50,15 @@ public class BaseTerrain : ScriptableObject {
 
 //Éú³É
 public IEnumerator Generation() {
+        world.terrainCurveData = terrain.GetCurveData();
         int processed = 0;
         for (int x = 0; x < this.world.worldSize.x; x++) {
             int terrianHeight = this.world.surfaceHeights[x];
-            terrianHeight += terrain.GetHeight(x);
+            terrianHeight += (int)(terrain.GetHeight(x));
             this.world.surfaceHeights[x] = terrianHeight;
-            float stoneHeight = Mathf.PerlinNoise((x + this.world.seed) * 0.02f, this.world.seed * 0.02f) * 10f + (this.world.baseHeight * 0.8f);
+            float stoneCurve = Mathf.PerlinNoise((x + this.world.seed) * 0.02f, this.world.seed * 0.02f) * 10f;
+            this.world.stoneCurveData[x] = stoneCurve;
+            float stoneHeight = (this.world.baseHeight * 0.8f) + stoneCurve;
             for (int y = 0; y < terrianHeight; y++) {
                 TileClass tileClass = null;
 

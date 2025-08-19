@@ -21,7 +21,7 @@ public class MapSaveManager : Singleton<MapSaveManager> {
     private void Start() {
         saveManagers = FindAllSaveManagers();
         dataHandler = GetComponent<TilemapExporter>();
-        Debug.Log(dataHandler);
+        
     }
 
     //创建新游戏数据
@@ -61,6 +61,10 @@ public class MapSaveManager : Singleton<MapSaveManager> {
 
     //保存游戏数据
     public IEnumerator SaveGame() {
+        if (this.gameData == null) {
+            gameData = new MapData();
+        }
+
         foreach (IMapSaveManager saveManager in saveManagers) {
             saveManager.SaveData(ref gameData);
         }

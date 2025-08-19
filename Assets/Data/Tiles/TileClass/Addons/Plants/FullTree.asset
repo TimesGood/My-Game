@@ -13,15 +13,14 @@ MonoBehaviour:
   m_Name: FullTree
   m_EditorClassIdentifier: 
   tile: {fileID: 11400000, guid: 29ce50006c9459049a6f2fdc1e5e5e06, type: 2}
+  gameObject: {fileID: 0}
+  previewSprite: {fileID: 0}
   layer: 0
   blockId: 7955631771537150255
   isIlluminated: 0
   lightLevel: 0
   lightColor: {r: 0, g: 0, b: 0, a: 0}
-  maxHeight: 10
-  minHeight: 5
-  treeWidth: 0
-  leaf: {fileID: 0}
+  possibleDrop: []
   frequency: 0.04
   threshold: 0.6
   prob: 0.7
@@ -30,4 +29,4 @@ MonoBehaviour:
   gridWidth: 7
   gridHeight: 7
   originPoint: {x: 3, y: 0}
-  clearMap: 00000000010000000101010100000001010101010000010101010100000101010101000000010101000000000000000000
+  clearMap: 00000001000000000001010100000001010101010000010101010100000001010100000000010101000000000000000000

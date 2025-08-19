@@ -200,7 +200,7 @@ public class LiquidClass : TileClass {
         if (originLiquid != this) {
 
             liquidHandler.UpdateVolume(this, target, 0);
-            world.PlaceTile(liquidHandler.test, (Vector3Int) target);
+            world.PlaceTile(medium, (Vector3Int) target);
             //world.SetTileClass(liquidHandler.test, Layers.Ground, target.x, target.y);
             //world.tilemaps[(int)Layers.Ground].SetTile((Vector3Int)target, liquidHandler.test.tile);
             return true;

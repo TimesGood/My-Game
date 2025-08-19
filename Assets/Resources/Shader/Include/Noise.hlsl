@@ -189,7 +189,6 @@ float FBMValueNoise(
     float noiseValue = 0.0;
     float frequency = baseFrequency;
     float amplitude = 1.0;
-
     float maxAmplitude = 0.0;
 
     [unroll(8)] // 显式展开循环提升性能

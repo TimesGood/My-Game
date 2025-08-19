@@ -12,7 +12,7 @@ public abstract class CurveConfig : NoiseConfig
     public float heightMult = 50f;       // 限高
     public float heightAdd =10f;         // 补充
     public float offset;                 // 噪图偏移（避免同参数情况生成一致的噪图）
-    protected int[] curveData;         // 曲线数据
+    protected float[] curveData;         // 曲线数据
     protected RenderTexture _gpuNoiseTex;
     [field: SerializeField] protected ComputeShader shader;
     protected ComputeBuffer curveBuffer;
@@ -29,7 +29,7 @@ public abstract class CurveConfig : NoiseConfig
         _noiseTexture.Apply();
 
         // 初始化曲线数组
-        curveData = new int[noiseWidth];
+        curveData = new float[noiseWidth];
     }
 
     protected override Texture2D GenerateNoise() {
@@ -42,11 +42,14 @@ public abstract class CurveConfig : NoiseConfig
     public virtual void Draw(int x) { }
 
     //获取指定X轴曲线数据
-    public int GetHeight(int x) {
+    public float GetHeight(int x) {
 
         return curveData[x];
     }
 
+    public float[] GetCurveData() {
+        return curveData;
+    }
 
     //创建可写纹理
     private void InitializeTexture() {

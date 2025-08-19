@@ -15,11 +15,13 @@ public class MapHorizontalLayout : MapGridLayout {
         List<BaseBiome> baseBiomes = biomes.ToList();
         //网格布局
         List<Vector2> points = PoissonDiscSampling.GenerateGridPoints(cell, world.worldSize, 1, true);
+        Debug.Log("地表群落点位数："+points.Count);
         //分配点位
         foreach (var point in points) {
+            if (baseBiomes.Count == 0) break;
             int index = Random.Range(0, baseBiomes.Count);
             BaseBiome biome = baseBiomes[index];
-            result.Add(new Vector2Int((int)point.x, MapGenerator.Instance.baseHeight), biome);
+            result.Add(new Vector2Int((int)point.x, world.baseHeight), biome);
 
             baseBiomes.Remove(biome);
         }
