@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f1ebf8ae529fec458fd01d184cfa07f, type: 3}
+  m_Name: RainforestBiome
+  m_EditorClassIdentifier: 
+  <heightScale>k__BackingField: 0
+  biomeSize: {x: 1000, y: 1000}
+  <outLine>k__BackingField: {fileID: 11400000, guid: 2f8176b390b0836419a2c95ee0f417bd, type: 2}
+  <distributionNoise>k__BackingField: {fileID: 0}
+  surfaceStart: 3146
+  surfaceEnd: 3173
+  <terrain>k__BackingField: {fileID: 11400000, guid: 9e4758f0a07a3d54c855cf165d157ea9, type: 2}
+  <cave>k__BackingField: {fileID: 11400000, guid: 165c7d66d395680468c48e44c1c2d74e, type: 2}
+  <ores>k__BackingField: []
+  <grassBlock>k__BackingField: {fileID: 11400000, guid: d17025596157bbf43b0c12608c058574, type: 2}
+  <dirtBlock>k__BackingField: {fileID: 11400000, guid: ef2b46ed50cce49469606978ea1fbea6, type: 2}
+  <dirtWall>k__BackingField: {fileID: 11400000, guid: 5b25f7427ffafc7468e2169eb113886f, type: 2}
+  <stoneBlock>k__BackingField: {fileID: 11400000, guid: ea7c6f3bacb8d344284e14c8709e33d8, type: 2}
+  <stoneWall>k__BackingField: {fileID: 11400000, guid: a613d59ff9cd85b45a7db7d6a6228ed6, type: 2}
+  <plants>k__BackingField: []
+  <trees>k__BackingField:
+  - {fileID: 11400000, guid: cd1564e2bb72c744f84de26ec6864371, type: 2}
+  <caveTrees>k__BackingField:
+  - {fileID: 11400000, guid: cd1564e2bb72c744f84de26ec6864371, type: 2}
+  <vine>k__BackingField: {fileID: 11400000, guid: 49197c0c9fb77e24f9736f1fae62ad19, type: 2}

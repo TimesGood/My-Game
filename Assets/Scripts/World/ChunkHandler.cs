@@ -2,147 +2,148 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Tilemaps;
-using static UnityEditor.PlayerSettings;
 
-//Çø¿éÊı¾İ¹ÜÀí
+// åŒºå—æ¸²æŸ“ç®¡ç†å™¨ â€”â€” æ ¹æ®æ‘„åƒæœºä½ç½®åŠ è½½/å¸è½½ Unity Tilemap å›¾å—
 public class ChunkHandler : Singleton<ChunkHandler> {
-
     public WorldManager world;
-    public float loadRadius = 3f;//¼ÓÔØ·¶Î§
+    public float loadRadius = 3f;
 
-    public int chunkCount = 20; //XºÍYÖáÇø¿éÊıÁ¿
-    public int chunkXCount;     //XÖáÇø¿éÊı
-    public int chunkYCount;     //YÖáÇø¿éÊı
-    public int chunkXSize;      //XÖáÃ¿Çø¿éÏñËØ´óĞ¡
-    public int chunkYSize;      //YÖáÃ¿Çø¿éÏñËØ´óĞ¡
+    public int chunkCount = 20;
+    public int chunkXCount;
+    public int chunkYCount;
+    public int chunkXSize;
+    public int chunkYSize;
     private static TileBase[] emptyTiles;
-    public int maxCachedChunks = 50; // ×î´ó»º´æÇø¿éÊı
+    public int maxCachedChunks = 50;
 
-    public Camera renderCamera; // ÉãÏñ»ú£¨¸ú×ÙÄ¿±ê£©
-    public float padding = 2f;   // ÊÓ¿ÚÍâ»º³åÇø¿éÊı
+    public Camera renderCamera;
+    public float padding = 2f;
 
-    public HashSet<Vector2Int> loadedChunkIDs = new HashSet<Vector2Int>();//¸ú×ÙÒÑ¼ÓÔØµÄÇø¿é
+    public HashSet<Vector2Int> loadedChunkIDs = new HashSet<Vector2Int>();
     private Vector2Int lastLoadedChunk = new Vector2Int(int.MinValue, int.MinValue);
-    private Dictionary<Vector2Int, ChunkData> chunkDataCache = new Dictionary<Vector2Int, ChunkData>();//Çø¿éÊı¾İ»º´æ£¬±ÜÃâÖØ¸´´´½¨
-
+    private Dictionary<Vector2Int, ChunkRenderData> chunkDataCache = new Dictionary<Vector2Int, ChunkRenderData>();
 
     private Coroutine unloadingCoroutine;
     private Coroutine loadingCoroutine;
-
     private bool applyAll = false;
 
-    //Çø¿éÊı¾İ
-    public class ChunkData {
-        public Vector2Int coord;//Çø¿é×ø±ê
-        public List<Vector2Int> tilePos;
-        public List<TileBase>[] tileBases;//Çø¿éÍßÆ¬¼¯
-        public BoundsInt bounds;//Çø¿é·¶Î§ºĞ
-        public DateTime lastAccessTime;  // ×îºó·ÃÎÊÊ±¼ä£¨ÓÃÓÚ»º´æ¹ÜÀí£©
+    // åŒºå—æ¸²æŸ“æ•°æ®ï¼ˆGPU å›¾å—ï¼Œéæ•°æ®ï¼‰
+    public class ChunkRenderData {
+        public Vector2Int coord; // åŒºå—åæ ‡
+        public List<TileBase>[] tileBases; // é€å±‚å›¾å—æ•°ç»„ï¼Œä¾› SetTilesBlock ä½¿ç”¨
+        public BoundsInt bounds; // åŒºå—èŒƒå›´ç›’
+        public DateTime lastAccessTime; // è¿½åè®¿é—®æ—¶é—´ï¼ˆç”¨äºæ··æ‘ç®¡ç†ï¼‰
     }
 
     protected override void Awake() {
         base.Awake();
-        //·ÖÇø
+
         chunkXCount = chunkCount;
         chunkYCount = chunkCount * world.worldSize.y / world.worldSize.x;
-        //Ã¿¸öÇøµÄÍßÆ¬
+
         chunkXSize = world.worldSize.x / chunkXCount;
         chunkYSize = world.worldSize.y / chunkYCount;
-        //¿ÕÍßÆ¬Êı×é£¬ÓÃÓÚĞ¶ÔØ
-        emptyTiles = new TileBase[chunkXSize * chunkXSize];
-
+        // ç©ºç“¦ç‰‡æ•°ç»„ï¼Œç”¨äºå¸è½½
+        emptyTiles = new TileBase[chunkXSize * chunkYSize];
     }
 
     private void Update() {
-        if (applyAll == true) return;
+        if (applyAll) return;
         Vector2Int currentChunk = WorldToChunkCoord(renderCamera.transform.position);
 
-        // µ±Íæ¼ÒÒÆ¶¯µ½ĞÂÇø¿éÊ±ÖØĞÂ¼ÓÔØ
+        // å½“ç©å®¶ç§»åŠ¨åˆ°æ–°åŒºå—æ˜¯é‡æ–°åŠ è½½
         if (currentChunk != lastLoadedChunk) {
             LoadChunksAroundCamera();
             lastLoadedChunk = currentChunk;
         }
     }
 
-    public ChunkData GetChunkData(int chunkX, int chunkY) {
+    public ChunkRenderData GetChunkRenderData(int chunkX, int chunkY) {
         Vector2Int coord = new Vector2Int(chunkX, chunkY);
 
-        //if (!chunkDataCache.TryGetValue(coord, out var data)) {
-            ChunkData data = BuildChunkData(chunkX, chunkY);
+        // å·²ä¿®å¤ï¼šå¯ç”¨ç¼“å­˜æŸ¥æ‰¾
+        if (!chunkDataCache.TryGetValue(coord, out var data)) {
+            data = BuildChunkRenderData(chunkX, chunkY);
             chunkDataCache[coord] = data;
-            CleanupChunkCache(); // ÇåÀí»º´æ
-        //}
+            CleanupChunkCache(); // æ¸…ç†ç¼“å­˜
+        }
 
         data.lastAccessTime = DateTime.Now;
         return data;
     }
-    // ÇåÀí¹ıÆÚµÄÇø¿é»º´æ
+    // æ¸…ç†è¿‡æœŸçš„åŒºå—ç¼“å­˜
     private void CleanupChunkCache() {
-        if (chunkDataCache.Count <= maxCachedChunks)
-            return;
-
-        // ÒÆ³ı×î¾ÃÎ´Ê¹ÓÃµÄÇø¿é
-        var chunksToRemove = chunkDataCache.OrderBy(x => x.Value.lastAccessTime)
-                                          .Take(chunkDataCache.Count - maxCachedChunks)
-                                          .ToList();
+        if (chunkDataCache.Count <= maxCachedChunks) return;
+        // ç§»é™¤æœ€ä¹…æœªä½¿ç”¨çš„åŒºå—
+        var chunksToRemove = chunkDataCache
+            .OrderBy(x => x.Value.lastAccessTime)
+            .Take(chunkDataCache.Count - maxCachedChunks)
+            .ToList();
 
         foreach (var chunk in chunksToRemove) {
             chunkDataCache.Remove(chunk.Key);
         }
     }
-    //¹¹½¨Çø¿éÊı¾İ
-    private ChunkData BuildChunkData(int chunkX, int chunkY) {
-        ChunkData chunk = new ChunkData {
+
+    // ä» ChunkManager çš„ç»Ÿä¸€ TileData æ„å»ºæ¸²æŸ“æ•°æ®
+    private ChunkRenderData BuildChunkRenderData(int chunkX, int chunkY) {
+        ChunkRenderData data = new ChunkRenderData {
             coord = new Vector2Int(chunkX, chunkY),
             bounds = new BoundsInt(
-                        new Vector3Int(
-                            chunkX * chunkXSize,
-                            chunkY * chunkYSize, 0),
-                        new Vector3Int(chunkXSize, chunkYSize, 1))
+                new Vector3Int(chunkX * chunkXSize, chunkY * chunkYSize, 0),
+                new Vector3Int(chunkXSize, chunkYSize, 1))
         };
+
         Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
         List<TileBase>[] tileBases = new List<TileBase>[layers.Length];
-        List<Vector2Int> tilePos = new List<Vector2Int>();
-        //´Óy¿ªÊ¼£¬·½±ãÊ¹ÓÃSetTilesBlock
-        for (int y = 0; y < chunkXSize; y++) {
-            for (int x = 0; x < chunkYSize; x++) {
-                int worldXPos = chunk.coord.x * chunkXSize + x;
-                int worldYPos = chunk.coord.y * chunkYSize + y;
-                Vector2Int worldPos = new Vector2Int(worldXPos, worldYPos);
-                tilePos.Add(worldPos);
+
+        for (int i = 0; i < layers.Length; i++) {
+            tileBases[i] = new List<TileBase>();
+        }
+
+        // å·²ä¿®å¤ï¼šY å¾ªç¯ä½¿ç”¨ chunkYSizeï¼ˆåŸå…ˆé”™è¯¯åœ°ä½¿ç”¨äº† chunkXSizeï¼‰
+        for (int y = 0; y < chunkYSize; y++) {
+            for (int x = 0; x < chunkXSize; x++) {
+                int worldX = chunkX * chunkXSize + x;
+                int worldY = chunkY * chunkYSize + y;
+
+                // ä¸€æ¬¡è°ƒç”¨è·å–å…¨éƒ¨å›¾å±‚æ•°æ®
+                TileData tileData = world.GetTileData(worldX, worldY);
+
                 foreach (var layer in layers) {
-                    TileClass tileClass = world.GetTileClass(layer, worldXPos, worldYPos);
-                    if (tileBases[(int)layer] == null) tileBases[(int)layer] = new List<TileBase>();
+                    long blockId = tileData.GetBlockId(layer);
                     TileBase tile = null;
-                    if (layer == Layers.Liquid) {
-                        //float volume = LiquidHandler.Instance.liquidVolume[worldXPos, worldYPos];
-                        float volume = LiquidHandler.Instance.GetVolume(worldPos);
-                        tile = ((LiquidClass)tileClass)?.GetTileToVolume(volume);
-                    } else {
-                        tile = tileClass?.tile;
+
+                    if (blockId != 0) {
+                        TileClass tileClass = WorldManager.TileRegistry.GetTile(blockId);
+                        if (tileClass != null) {
+                            if (layer == Layers.Liquid) {
+                                tile = ((LiquidClass)tileClass)?.GetTileToVolume(tileData.liquidVolume);
+                            } else {
+                                tile = tileClass.tile;
+                            }
+                        }
                     }
+
                     tileBases[(int)layer].Add(tile);
                 }
-
             }
         }
-        chunk.tilePos = tilePos;
-        chunk.tileBases = tileBases;
-        return chunk;
+
+        data.tileBases = tileBases;
+        return data;
     }
 
-    // »ñÈ¡ÉãÏñ»ú¾ØÕó
+    // æ‘„åƒæœºè§†é”¥ä½“èŒƒå›´ï¼Œç”¨äºåˆ¤æ–­åŒºå—å¯è§æ€§
     public Bounds GetCameraBounds() {
         Vector3[] frustumCorners = new Vector3[4];
         renderCamera.CalculateFrustumCorners(
             new Rect(0, 0, 1, 1),
             renderCamera.farClipPlane,
             Camera.MonoOrStereoscopicEye.Mono,
-            frustumCorners
-        );
+            frustumCorners);
 
         Matrix4x4 camMatrix = renderCamera.transform.localToWorldMatrix;
         for (int i = 0; i < 4; i++) {
@@ -155,73 +156,66 @@ public class ChunkHandler : Singleton<ChunkHandler> {
             bounds.Encapsulate(corner);
         }
 
-        // À©Õ¹±ß½ç·¶Î§
+        // æ‰©å±•èŒƒå›´
         bounds.Expand(padding * chunkXSize);
-
         return bounds;
     }
 
-    //»ñÈ¡Ä¿±êÔ²ĞÄ·¶Î§ÄÚµÄÇø¿é
+    // è·å–æ‘„åƒæœºåŠ è½½åŠå¾„å†…çš„åŒºå—
     public List<Vector2Int> GetCenterLoadChunk() {
         Vector2Int centerChunk = WorldToChunkCoord(renderCamera.transform.position);
-        // »ñÈ¡·¶Î§ÄÚĞèÒª¼ÓÔØµÄÇø¿é
+        // è·å–èŒƒå›´å†…éœ€è¦åŠ è½½çš„åŒºå—
         List<Vector2Int> chunksToLoad = new List<Vector2Int>();
         int radius = Mathf.CeilToInt(loadRadius);
+
         for (int y = -radius; y <= radius; y++) {
             for (int x = -radius; x <= radius; x++) {
                 Vector2Int chunkID = centerChunk + new Vector2Int(x, y);
-
-                // Ö»¼ÓÔØÔ²ĞÎÇøÓòÄÚµÄÇø¿é
+                // åŠ è½½åœ†å½¢åŒºåŸŸå†…çš„åŒºå—
                 if (Vector2Int.Distance(centerChunk, chunkID) <= loadRadius) {
-                    //Ô½½ç
-                    if (chunkID.x >= chunkXCount || chunkID.x < 0 || chunkID.y >= chunkYCount || chunkID.y < 0) continue;
+                    // è¶Šç•Œ
+                    if (chunkID.x >= chunkXCount || chunkID.x < 0 ||
+                        chunkID.y >= chunkYCount || chunkID.y < 0) continue;
                     chunksToLoad.Add(chunkID);
                 }
             }
         }
-        // °´ÓÅÏÈ¼¶ÅÅĞò (ÖĞĞÄÓÅÏÈ)
+
+        // æŒ‰è·ç¦»æ’åºï¼ˆè¿‘è€…ä¼˜å…ˆï¼‰
         chunksToLoad.Sort((a, b) =>
             Vector2Int.Distance(centerChunk, a).CompareTo(Vector2Int.Distance(centerChunk, b)));
         return chunksToLoad;
     }
 
-
     private void LoadChunksAroundCamera() {
-
         List<Vector2Int> chunksToLoad = GetCenterLoadChunk();
-
 
         List<Vector2Int> toUnload = new List<Vector2Int>();
         foreach (var chunkID in loadedChunkIDs) {
-            if (!chunksToLoad.Contains(chunkID)) {
+            if (!chunksToLoad.Contains(chunkID))
                 toUnload.Add(chunkID);
-            }
         }
 
         if (unloadingCoroutine != null) StopCoroutine(unloadingCoroutine);
         unloadingCoroutine = StartCoroutine(UpdateUnLoadChunks(toUnload));
 
-
         if (loadingCoroutine != null) StopCoroutine(loadingCoroutine);
         loadingCoroutine = StartCoroutine(UpdateLoadChunks(chunksToLoad));
-
     }
 
-    //¼ÓÔØÊÓÒ°ÄÚµÄÇø¿é
+    // åŠ è½½è§†é‡å†…çš„åŒºå—
     private IEnumerator UpdateLoadChunks(List<Vector2Int> visiblePos) {
-        
         int processed = 0;
         foreach (var chunkID in visiblePos) {
             if (loadedChunkIDs.Contains(chunkID)) continue;
-            
-            //·ÀÖ¹¼ÓÔØµÄÇø¿éĞ­³ÌÌ«¶à£¬µ¼ÖÂ¿¨¶Ù¡£²»¹ıµ÷Ì«Ğ¡Ò²»áµ¼ÖÂ¼ÓÔØËÙ¶ÈÌ«Âı£¬¸ú²»ÉÏÍæ¼ÒËÙ¶È
+            //æ¯åŠ è½½5ä¸ªåŒºå—åœä¸€å¸§
             if (processed++ % 5 == 0)
                 yield return null;
             StartCoroutine(LoadChunk(chunkID));
-
         }
     }
-    //Ğ¶ÔØÒÑ¼ÓÔØµÄÇø¿é
+
+    // å¸è½½å·²åŠ è½½çš„åŒºå—
     private IEnumerator UpdateUnLoadChunks(List<Vector2Int> chunkIDs) {
         int processed = 0;
         foreach (var chunkID in chunkIDs) {
@@ -231,79 +225,65 @@ public class ChunkHandler : Singleton<ChunkHandler> {
         }
     }
 
-    // ¼ÓÔØÇø¿é
+    // åŠ è½½åŒºå—
     IEnumerator LoadChunk(Vector2Int chunkID) {
         Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
-        ChunkData chunkData = GetChunkData(chunkID.x, chunkID.y);
-        foreach (Layers layer in layers) {
-            //if (layer == Layers.Liquid) continue;
-            BoundsInt bound = chunkData.bounds;
+        ChunkRenderData data = GetChunkRenderData(chunkID.x, chunkID.y);
 
-            world.GetTilemap(layer).SetTilesBlock(bound, chunkData.tileBases[(int)layer].ToArray());
-            yield return null; // Ã¿ÉèÖÃÒ»²ãÔİÍ£Ò»Ö¡
+        foreach (Layers layer in layers) {
+            world.GetTilemap(layer).SetTilesBlock(data.bounds, data.tileBases[(int)layer].ToArray());
+            yield return null;
         }
 
         loadedChunkIDs.Add(chunkID);
     }
 
-    // Ğ¶ÔØÇø¿é
+    // å¸è½½åŒºå—
     private IEnumerator UnloadChunk(Vector2Int chunkID) {
-        ChunkData chunkData = GetChunkData(chunkID.x, chunkID.y);
+        ChunkRenderData data = GetChunkRenderData(chunkID.x, chunkID.y);
         Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
 
         foreach (Layers layer in layers) {
-            BoundsInt bound = chunkData.bounds;
-            world.GetTilemap(layer).SetTilesBlock(chunkData.bounds, emptyTiles);
+            world.GetTilemap(layer).SetTilesBlock(data.bounds, emptyTiles);
             world.GetTilemap(layer).CompressBounds();
-            yield return null; // Ã¿ÉèÖÃÒ»²ãÔİÍ£Ò»Ö¡
+            yield return null;
         }
         loadedChunkIDs.Remove(chunkID);
     }
 
 
-    //äÖÈ¾Õû¸öÊÀ½ç
+    //æ¸²æŸ“æ•´ä¸ªä¸–ç•Œ
     [ContextMenu("ApplyAll")]
     private void ApplyAll() {
         applyAll = true;
         StartCoroutine(LoadAllChunkAsync());
     }
+
     private IEnumerator LoadAllChunkAsync() {
-        //==============================°´Çø¿éäÖÈ¾=============================
-
-        for (int chunkXIndex = 0; chunkXIndex < chunkXCount; chunkXIndex++) {
-            for (int chunkYIndex = 0; chunkYIndex < chunkYCount; chunkYIndex++) {
-
-                StartCoroutine(LoadChunk(new Vector2Int(chunkXIndex, chunkYIndex)));
-                yield return null; // Ã¿ÉèÖÃÒ»Çø¿éÔİÍ£Ò»Ö¡ 
+        for (int cx = 0; cx < chunkXCount; cx++) {
+            for (int cy = 0; cy < chunkYCount; cy++) {
+                StartCoroutine(LoadChunk(new Vector2Int(cx, cy)));
+                yield return null;
             }
         }
     }
 
-    //ÊÀ½ç×ø±ê×ªÇø¿éË÷Òı
+    // ä¸–ç•Œåæ ‡è½¬åŒºå—åæ ‡
     private Vector2Int WorldToChunkCoord(Vector3 worldPos) {
         return new Vector2Int(
             Mathf.FloorToInt(worldPos.x / chunkXSize),
-            Mathf.FloorToInt(worldPos.y / chunkYSize)
-        );
+            Mathf.FloorToInt(worldPos.y / chunkYSize));
     }
+
     public Vector2Int WorldToChunkCoord(Vector2Int worldPos) {
         return new Vector2Int(
             Mathf.FloorToInt(worldPos.x / chunkXSize),
-            Mathf.FloorToInt(worldPos.y / chunkYSize)
-        );
+            Mathf.FloorToInt(worldPos.y / chunkYSize));
     }
-
-    //»ñÈ¡Ö¸¶¨Çø¿éÊµ¼ÊÍßÆ¬×ø±ê
+    // è·å–æŒ‡å®šåŒºå—å®é™…ç“¦ç‰‡åæ ‡
     public Vector3Int GetActualIndex(int chunkXIndex, int chunkYIndex, int chunkTileXIndex, int chunkTileYIndex) {
-        int x = chunkTileXIndex + (chunkXIndex * chunkXSize);
-        int y = chunkTileYIndex + (chunkYIndex * chunkXSize);
-        return new Vector3Int(x, y);
+        return new Vector3Int(
+            chunkTileXIndex + (chunkXIndex * chunkXSize),
+            chunkTileYIndex + (chunkYIndex * chunkYSize));
     }
-
-
-    //»ñÈ¡Çø¿éÊı¾İ´ı¶¨
-    public ChunkData[,] GetChunkDatas() {
-        return null;
-    }
-
 }
