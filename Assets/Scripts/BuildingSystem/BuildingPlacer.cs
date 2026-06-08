@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using GameInput;
 using UnityEngine;
-
 namespace BuildingSystem {
     // 建造系统 —— 图块放置与销毁
     public class BuildingPlacer : MonoBehaviour {
@@ -21,6 +20,8 @@ namespace BuildingSystem {
 
         private void Update() {
             var mousePos = _mouseUser.MouseInWorldPosition;
+            var mousePos2Int = new Vector2Int((int) mousePos.x, (int) mousePos.y);
+            //var mousePos = _mouseUser.MousePosition;
 
             if (!IsMouseWithinBuildableRange() || _constructionLayer == null) {
                 _previewLayer.ClearPreview();
@@ -29,7 +30,7 @@ namespace BuildingSystem {
 
             // 右键：销毁
             if (_mouseUser.IsMouseButtonPressed(MouseButton.Right)) {
-                DestroyTile(mousePos);
+                DestroyTile(mousePos2Int, Layers.Ground);
             }
 
             if (ActionBuildable == null) return;
@@ -37,32 +38,34 @@ namespace BuildingSystem {
             // 鼠标移动时更新预览
             if (_mouseUser.MousePosition != lastMousePos) {
                 _previewLayer.ShowPreview(ActionBuildable, mousePos, IsEmpty(mousePos));
-                lastMousePos = new Vector2Int((int)mousePos.x, (int)mousePos.y);
+                lastMousePos = mousePos2Int;
             }
 
             // 左键：建造
             if (_mouseUser.IsMouseButtonPressed(MouseButton.Left) && IsEmpty(mousePos)) {
-                BuildTile(mousePos, ActionBuildable);
+                BuildTile(mousePos2Int, ActionBuildable);
             }
         }
 
-        private void BuildTile(Vector3 worldCoords, TileClass item) {
-            var cellPos = _constructionLayer._tilemap.WorldToCell(worldCoords);
-            WorldManager.Instance.PlaceTile(item, cellPos);
+        private void BuildTile(Vector2Int worldCoords, TileClass item) {
+            _constructionLayer.Build(worldCoords, item);
+            //var cellPos = _constructionLayer._tilemap.WorldToCell(worldCoords);
+            //WorldManager.Instance.PlaceTile(item, cellPos);
         }
 
-        private void DestroyTile(Vector3 worldCoords) {
-            var cellPos = _constructionLayer._tilemap.WorldToCell(worldCoords);
+        private void DestroyTile(Vector2Int worldCoords, Layers layer) {
+            //var cellPos = _constructionLayer._tilemap.WorldToCell(worldCoords);
 
-            // 检查所有图层，销毁找到的第一个非空图块
-            Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
-            foreach (var layer in layers) {
-                TileClass tile = WorldManager.Instance.GetTileClass(layer, cellPos.x, cellPos.y);
-                if (tile != null) {
-                    WorldManager.Instance.Erase(layer, cellPos);
-                    break;
-                }
-            }
+            //// 检查所有图层，销毁找到的第一个非空图块
+            //Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
+            //foreach (var layer in layers) {
+            //    TileClass tile = WorldManager.Instance.GetTileClass(layer, cellPos.x, cellPos.y);
+            //    if (tile != null) {
+            //        WorldManager.Instance.Erase(layer, cellPos);
+            //        break;
+            //    }
+            //}
+            _constructionLayer.Destory(worldCoords);
         }
 
         private bool IsEmpty(Vector3 worldCoords) {

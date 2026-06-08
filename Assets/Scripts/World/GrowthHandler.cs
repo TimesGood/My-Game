@@ -36,7 +36,7 @@ public class GrowthHandler : Singleton<GrowthHandler> {
                     growthData += 1;
                     chunkManager.SetGrowthData(wpos, growthData);
 
-                    Tilemap tilemap = world.GetTilemap(Layers.Addons);
+                    Tilemap tilemap = world.GetTileLayer(Layers.Addons)._tilemap;
                     if (tilemap == null) continue;
 
                     GameObject tileObj = tilemap.GetInstantiatedObject(kvp.Key);

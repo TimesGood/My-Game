@@ -231,7 +231,7 @@ public class ChunkHandler : Singleton<ChunkHandler> {
         ChunkRenderData data = GetChunkRenderData(chunkID.x, chunkID.y);
 
         foreach (Layers layer in layers) {
-            world.GetTilemap(layer).SetTilesBlock(data.bounds, data.tileBases[(int)layer].ToArray());
+            world.GetTileLayer(layer)._tilemap.SetTilesBlock(data.bounds, data.tileBases[(int)layer].ToArray());
             yield return null;
         }
 
@@ -244,8 +244,9 @@ public class ChunkHandler : Singleton<ChunkHandler> {
         Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
 
         foreach (Layers layer in layers) {
-            world.GetTilemap(layer).SetTilesBlock(data.bounds, emptyTiles);
-            world.GetTilemap(layer).CompressBounds();
+            Tilemap tileMap = world.GetTileLayer(layer)._tilemap;
+            tileMap.SetTilesBlock(data.bounds, data.tileBases[(int)layer].ToArray());
+            tileMap.CompressBounds();
             yield return null;
         }
         loadedChunkIDs.Remove(chunkID);

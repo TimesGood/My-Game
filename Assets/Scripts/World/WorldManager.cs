@@ -11,7 +11,6 @@ public class WorldManager : Singleton<WorldManager>, IMapSaveManager {
     public Vector2Int chunkCount = new Vector2Int(20, 20);
 
     // 图层 Tilemap 注册表（用于渲染——每个图层仍有一个 Unity Tilemap GameObject）
-    private Dictionary<Layers, Tilemap> tilemaps = new Dictionary<Layers, Tilemap>();
     private Dictionary<Layers, TilemapLayer> tileLayers = new Dictionary<Layers, TilemapLayer>();
     private ChunkManager chunkManager;
 
@@ -101,8 +100,6 @@ public class WorldManager : Singleton<WorldManager>, IMapSaveManager {
         // 注册各图层的 Unity Tilemap（从 TilemapLayer 子对象中获取）
         TilemapLayer[] tilemapLayers = GetComponentsInChildren<TilemapLayer>();
         foreach (var tml in tilemapLayers) {
-            if (!tilemaps.ContainsKey(tml.layer))
-                tilemaps.Add(tml.layer, tml._tilemap);
             if (!tileLayers.ContainsKey(tml.layer))
                 tileLayers.Add(tml.layer, tml);
         }
@@ -118,69 +115,8 @@ public class WorldManager : Singleton<WorldManager>, IMapSaveManager {
         return x >= 0 && x < worldSize.x && y >= 0 && y < worldSize.y;
     }
 
-    // ===== 图块操作（委托给 ChunkManager）=====
-
-    public void PlaceTile(TileClass tileClass, Vector3Int pos) {
-        if (!CheckWorldBound(pos.x, pos.y)) return;
-
-        if (tileClass is LiquidClass liquid) {
-            PlaceLiquidTile(liquid, pos, 1);
-        } else {
-            chunkManager.SetBlockId(tileClass.layer, new Vector2Int(pos.x, pos.y), tileClass.blockId);
-            // 同时立即更新 Unity Tilemap 以提供即时视觉反馈
-            if (tilemaps.TryGetValue(tileClass.layer, out Tilemap tilemap) && tileClass.tile != null) {
-                tilemap.SetTile(pos, tileClass.tile);
-            }
-        }
-    }
-
-    public void PlaceLiquidTile(LiquidClass tileClass, Vector3Int pos, float volume) {
-        if (!CheckWorldBound(pos.x, pos.y)) return;
-
-        Vector2Int wpos = new Vector2Int(pos.x, pos.y);
-        float oldVolume = chunkManager.GetLiquidVolume(wpos);
-        chunkManager.SetLiquidId(wpos, tileClass.blockId);
-        chunkManager.SetLiquidVolume(wpos, oldVolume + volume);
-        LiquidHandler.Instance.MarkForUpdate(tileClass, wpos);
-    }
-
-    public void Erase(Layers layer, Vector3Int pos) {
-        if (!CheckWorldBound(pos.x, pos.y)) return;
-
-        Vector2Int wpos = new Vector2Int(pos.x, pos.y);
-        chunkManager.SetBlockId(layer, wpos, 0);
-
-        // 立即清除 Unity Tilemap
-        if (tilemaps.TryGetValue(layer, out Tilemap tilemap)) {
-            tilemap.SetTile(pos, null);
-        }
-
-        // 破坏地面时，重新模拟相连的液体
-        if (layer == Layers.Ground) {
-            foreach (var dir in directions) {
-                Vector3Int target = pos + dir;
-                Vector2Int target2D = new Vector2Int(target.x, target.y);
-                long liquidId = chunkManager.GetLiquidId(target2D);
-                if (liquidId == 0) continue;
-
-                TileClass liquidTile = TileRegistry.GetTile(liquidId);
-                if (liquidTile is LiquidClass liquidClass) {
-                    if (LiquidHandler.Instance.CheckMarkForUpdate(liquidClass, target2D)) continue;
-                    List<Vector3Int> tiles = FindConnectedTiles(Layers.Liquid, target);
-                    foreach (var item in tiles) {
-                        LiquidHandler.Instance.MarkForUpdate(liquidClass, new Vector2Int(item.x, item.y));
-                    }
-                }
-            }
-        }
-    }
 
     // ===== 图块查询 =====
-
-    public Tilemap GetTilemap(Layers layer) {
-        tilemaps.TryGetValue(layer, out Tilemap tilemap);
-        return tilemap;
-    }
 
     public TilemapLayer GetTileLayer(Layers layer) {
         tileLayers.TryGetValue(layer, out TilemapLayer tileLayer);
@@ -215,55 +151,6 @@ public class WorldManager : Singleton<WorldManager>, IMapSaveManager {
         terrainCurveData[x] = value;
     }
 
-    // ===== 光照 =====
-
-    public float GetLightValue(int x, int y) {
-        float lightValue = 0;
-        TileData tile = GetTileData(x, y);
-
-        // 检查每个图层的图块是否发光
-        Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
-        foreach (var layer in layers)
-        {
-            long blockId = tile.GetBlockId(layer);
-            TileClass tileClass = TileRegistry.GetTile(blockId);
-            if (tileClass == null) continue;
-            if (tileClass.lightLevel > lightValue)
-                lightValue = tileClass.lightLevel;
-        }
-        return lightValue;
-    }
-
-    // BFS 查找相连的同类型图块
-    public List<Vector3Int> FindConnectedTiles(Layers layer, Vector3Int startPosition) {
-        var connectedTiles = new List<Vector3Int>();
-        var visited = new HashSet<Vector3Int>();
-        var queue = new Queue<Vector3Int>();
-
-        TileClass startTile = GetTileClass(layer, startPosition.x, startPosition.y);
-        if (startTile == null) return connectedTiles;
-
-        queue.Enqueue(startPosition);
-        visited.Add(startPosition);
-
-        while (queue.Count > 0) {
-            Vector3Int current = queue.Dequeue();
-            connectedTiles.Add(current);
-
-            foreach (var dir in directions) {
-                Vector3Int neighbor = current + dir;
-                if (visited.Contains(neighbor)) continue;
-
-                TileClass neighborTile = GetTileClass(layer, neighbor.x, neighbor.y);
-                if (neighborTile != null && neighborTile.Equals(startTile)) {
-                    queue.Enqueue(neighbor);
-                    visited.Add(neighbor);
-                }
-            }
-        }
-
-        return connectedTiles;
-    }
 
     // ===== 存档/读档 =====
 

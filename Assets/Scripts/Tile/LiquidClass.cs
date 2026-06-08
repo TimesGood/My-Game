@@ -47,11 +47,13 @@ public class LiquidClass : TileClass {
         
         world = WorldManager.Instance;
         liquidHandler = LiquidHandler.Instance;
+        var chunkManager = ChunkManager.Instance;
 
         int x = pos.x;
         int y = pos.y;
         //float curVolume = liquidHandler.liquidVolume[pos.x, pos.y];
         float curVolume = liquidHandler.GetVolume(pos);
+        
 
         //体积太小时，擦掉该瓦片
         if (curVolume < minVolume) {
@@ -193,14 +195,15 @@ public class LiquidClass : TileClass {
     }
 
 
-    //与其他液体接触，origin：接触者， target：被接触者
+    // 与其他液体接触时触发一些事件（比如生成新物质）
+    // origin：接触者， target：被接触者
     private bool TouchLiquid(Vector2Int origin, Vector2Int target) {
         LiquidClass originLiquid = world.GetTileClass(Layers.Liquid, origin.x, origin.y) as LiquidClass;
         //如果接触目标不是相同液体，进行处理
         if (originLiquid != this) {
 
             liquidHandler.UpdateVolume(this, target, 0);
-            world.PlaceTile(medium, (Vector3Int) target);
+            ChunkManager.Instance.SetBlockId(Layers.Ground, target, medium.blockId);
             //world.SetTileClass(liquidHandler.test, Layers.Ground, target.x, target.y);
             //world.tilemaps[(int)Layers.Ground].SetTile((Vector3Int)target, liquidHandler.test.tile);
             return true;

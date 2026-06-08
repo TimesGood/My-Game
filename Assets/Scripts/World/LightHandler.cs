@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
+using static WorldManager;
 using Debug = UnityEngine.Debug;
 
 //光源处理
@@ -74,10 +76,7 @@ public class LightHandler : Singleton<LightHandler>
             for (int y = minY; y <= maxY; y++)
             {
                 float lightValue = 0f;
-                if (world.GetLightValue(x, y) != 0)
-                {
-                    lightValue = world.GetLightValue(x, y);
-                }
+                lightValue = GetLightValue(x, y);
                 else if (world.GetTileClass(Layers.Background, x, y) == null && world.GetTileClass(Layers.Ground, x, y) == null)
                 {
                     lightValue = sunlight;
@@ -119,9 +118,9 @@ public class LightHandler : Singleton<LightHandler>
             for (int y = maxY; y >= minY; y--)
             {
                 float lightValue = 0f;
-                if (world.GetLightValue(x, y) != 0)
+                if (GetLightValue(x, y) != 0)
                 {
-                    lightValue = world.GetLightValue(x, y);
+                    lightValue = GetLightValue(x, y);
                 }
                 else if (world.GetTileClass(Layers.Background, x, y) == null && world.GetTileClass(Layers.Ground, x, y) == null)
                 {
@@ -184,4 +183,20 @@ public class LightHandler : Singleton<LightHandler>
         updates.Enqueue(new Vector2Int(x, y));
     }
 
+
+    public float GetLightValue(int x, int y) {
+        float lightValue = 0;
+        TileData tile = ChunkManager.Instance.GetTileData(x, y);
+
+        // 检查每个图层的图块是否发光
+        Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
+        foreach (var layer in layers) {
+            long blockId = tile.GetBlockId(layer);
+            TileClass tileClass = TileRegistry.GetTile(blockId);
+            if (tileClass == null) continue;
+            if (tileClass.lightLevel > lightValue)
+                lightValue = tileClass.lightLevel;
+        }
+        return lightValue;
+    }
 }

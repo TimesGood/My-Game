@@ -148,32 +148,13 @@ public class LiquidHandler : Singleton<LiquidHandler> {
         }
     }
 
-    // 更新液体量并同步数据与视觉
+    // 更新液体
     public void UpdateVolume(LiquidClass liquid, Vector2Int pos, float volume) {
-        SetVolume(pos, volume);
-
-        if (volume == 0) {
-            world.SetTileClass(null, Layers.Liquid, pos.x, pos.y);
-            RemoveForUpdate(liquid, pos);
-        } else {
-            world.SetTileClass(liquid, Layers.Liquid, pos.x, pos.y);
-            MarkForUpdate(liquid, pos);
-        }
-        UpdateTile(liquid, pos, volume);
+        LiquidLayer tilemapLayer = world.GetTileLayer(Layers.Liquid) as LiquidLayer;
+        tilemapLayer.Build(pos, liquid, volume);
     }
 
-    // 更新 Tilemap 上的视觉图块
-    private void UpdateTile(LiquidClass liquid, Vector2Int pos, float volume) {
-        Vector2Int chunkID = ChunkHandler.Instance.WorldToChunkCoord(pos);
-        if (!ChunkHandler.Instance.loadedChunkIDs.Contains(chunkID)) return;
-
-        TileBase newTile = liquid.GetTileToVolume(volume);
-        Tilemap tilemap = world.GetTilemap(Layers.Liquid);
-        if (tilemap != null) {
-            tilemap.SetTile((Vector3Int)pos, newTile);
-        }
-    }
-
+    // 标记
     public void MarkForUpdate(LiquidClass liquid, Vector2Int pos) {
         if (!world.CheckWorldBound(pos.x, pos.y)) return;
 
@@ -186,6 +167,7 @@ public class LiquidHandler : Singleton<LiquidHandler> {
             set[pos] = 0;
     }
 
+    // 删除标记
     public void RemoveForUpdate(LiquidClass liquid, Vector2Int pos) {
         if (!world.CheckWorldBound(pos.x, pos.y)) return;
 
@@ -194,6 +176,7 @@ public class LiquidHandler : Singleton<LiquidHandler> {
         set.Remove(pos);
     }
 
+    // 校验此处有没有活跃水标记
     public bool CheckMarkForUpdate(LiquidClass liquid, Vector2Int pos) {
         if (!updates.TryGetValue(liquid, out var set))
             throw new Exception("Liquid " + liquid.name + " 未注册！");

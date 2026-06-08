@@ -1,27 +1,37 @@
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
+using UnityEngine.Rendering;
+using UnityEngine.Tilemaps;
 
 // 液体层 —— 持有 Tilemap 引用；液体量数据现已存入 ChunkManager（TileData.liquidVolume）
 public class LiquidLayer : ConstructionLayer {
-    // 液体量访问器委托给 ChunkManager
-    public void SetVolume(Vector3Int pos, float volume) {
-        ChunkManager.Instance.SetLiquidVolume(new Vector2Int(pos.x, pos.y), volume);
+
+    public override void Build(Vector2Int worldCoords, TileClass item) {
+        float oldVolume = chunkManager.GetLiquidVolume(worldCoords);
+        this.Build(worldCoords, item, oldVolume + 1);
+        
     }
 
-    public float GetVolume(Vector3Int pos) {
-        return ChunkManager.Instance.GetLiquidVolume(new Vector2Int(pos.x, pos.y));
-    }
-
-    public override void Build(Vector3 worldCoords, TileClass item) {
+    public void Build(Vector2Int worldCoords, TileClass item, float volume) {
         base.Build(worldCoords, item);
-        var coords = _tilemap.WorldToCell(worldCoords);
-        float oldVolume = GetVolume(coords);
-        SetVolume(coords, oldVolume + 1);
-        LiquidHandler.Instance.MarkForUpdate(item as LiquidClass, new Vector2Int(coords.x, coords.y));
+        LiquidClass liquid = item as LiquidClass;
+        chunkManager.SetLiquidVolume(worldCoords, volume);
+        if (volume == 0) {
+            chunkManager.SetBlockId(Layers.Liquid, worldCoords, 0);
+            LiquidHandler.Instance.RemoveForUpdate(liquid, worldCoords);
+        } else {
+            chunkManager.SetBlockId(Layers.Liquid, worldCoords, liquid.blockId);
+            LiquidHandler.Instance.MarkForUpdate(liquid, worldCoords);
+        }
+        
+        // 不同体积水体瓦片
+        TileBase newTile = liquid.GetTileToVolume(volume);
+        var coords = _tilemap.WorldToCell(new Vector3Int(worldCoords.x, worldCoords.y));
+        _tilemap.SetTile(coords, newTile);
     }
 
-    public override void Destory(Vector3 worldCoords) {
+    public override void Destory(Vector2Int worldCoords) {
         base.Destory(worldCoords);
-        var coords = _tilemap.WorldToCell(worldCoords);
-        SetVolume(coords, 0);
+        ChunkManager.Instance.SetLiquidVolume(worldCoords, 0);
     }
 }

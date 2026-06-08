@@ -760,6 +760,51 @@ MonoBehaviour:
   m_CameraActivatedEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &530379991
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 530379992}
+  - component: {fileID: 530379993}
+  m_Layer: 0
+  m_Name: ChunkManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &530379992
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 530379991}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 858115491}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &530379993
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 530379991}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8d9f2b85caac154680e73ad721434ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  world: {fileID: 858115489}
 --- !u!1 &537737214
 GameObject:
   m_ObjectHideFlags: 0
@@ -937,7 +982,6 @@ MonoBehaviour:
   seed: 0
   worldSize: {x: 6000, y: 2000}
   chunkCount: {x: 20, y: 20}
-  openChunk: 0
   terrainCurveData: []
   stoneCurveData: []
 --- !u!156049354 &858115490
@@ -970,6 +1014,7 @@ Transform:
   - {fileID: 2112469981}
   - {fileID: 1505872238}
   - {fileID: 1920927993}
+  - {fileID: 530379992}
   m_Father: {fileID: 1322792614}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &975868223
@@ -1727,7 +1772,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   world: {fileID: 858115489}
-  liquidLayer: {fileID: 1505872239}
   liquids:
   - {fileID: 11400000, guid: 8ce1d91866f79b641aa2058b27d01002, type: 2}
   - {fileID: 11400000, guid: d4e4cc04092dc094fbed02ac0c5df7b4, type: 2}
@@ -2012,7 +2056,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd0ece768da16654f9d16d9b50c7cab3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  addonLayer: {fileID: 1181955164}
 --- !u!1 &1505872235
 GameObject:
   m_ObjectHideFlags: 0

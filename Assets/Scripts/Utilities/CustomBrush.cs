@@ -2,6 +2,7 @@
 using UnityEditor.Tilemaps;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using static UnityEditor.Experimental.GraphView.GraphView;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 
@@ -31,7 +32,8 @@ namespace UnityEditor
                     if (cell.tile is CustomTile) {
                         long id = ((CustomTile)cell.tile).blockId;
                         TileClass tileClass = WorldManager.TileRegistry.GetTile(id);
-                        WorldManager.Instance.PlaceTile(tileClass, pos);
+                        ConstructionLayer tilemapLayer = WorldManager.Instance.GetTileLayer(tileClass.layer) as ConstructionLayer;
+                        tilemapLayer.Build(new Vector2Int(position.x, position.y), tileClass);
                         if (tileClass.isIlluminated) {
                             LightHandler.Instance.MarForUpdate(pos.x, pos.y);
                         }
@@ -73,7 +75,8 @@ namespace UnityEditor
             if (Application.isPlaying)
             {
                 Layers layer = GetLayerByName(brushTarget.name);
-                WorldManager.Instance.Erase(layer, position);
+                ConstructionLayer tilemapLayer = WorldManager.Instance.GetTileLayer(layer) as ConstructionLayer;
+                tilemapLayer.Destory(new Vector2Int(position.x, position.y));
             }
             else
             {
