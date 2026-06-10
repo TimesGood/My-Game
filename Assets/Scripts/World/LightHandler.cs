@@ -76,7 +76,9 @@ public class LightHandler : Singleton<LightHandler>
             for (int y = minY; y <= maxY; y++)
             {
                 float lightValue = 0f;
-                lightValue = GetLightValue(x, y);
+                if (GetLightValue(x, y) != 0L) {
+                    lightValue = GetLightValue(x, y);
+                }
                 else if (world.GetTileClass(Layers.Background, x, y) == null && world.GetTileClass(Layers.Ground, x, y) == null)
                 {
                     lightValue = sunlight;

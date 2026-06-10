@@ -245,7 +245,7 @@ public class ChunkHandler : Singleton<ChunkHandler> {
 
         foreach (Layers layer in layers) {
             Tilemap tileMap = world.GetTileLayer(layer)._tilemap;
-            tileMap.SetTilesBlock(data.bounds, data.tileBases[(int)layer].ToArray());
+            tileMap.SetTilesBlock(data.bounds, emptyTiles);
             tileMap.CompressBounds();
             yield return null;
         }
