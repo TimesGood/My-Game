@@ -45,9 +45,9 @@ public class PerlinNoise : NoiseConfig
         _gpuNoiseTex.Create();
     }
     private void InitShader() {
-        //shader = Resources.Load<ComputeShader>("Shader/" + this.name);
-        //if (shader == null) throw new Exception("找不到着色器：" + this.name);
-        if (shader == null) throw new Exception("请绑定着色器!");
+        shader = Resources.Load<ComputeShader>("Shader/" + this.name);
+        if (shader == null) throw new Exception("找不到着色器：" + this.name);
+        //if (shader == null) throw new Exception("请绑定着色器!");
         int kernel = shader.FindKernel("CSMain");
         // 传递参数（不再需要 ComputeBuffer）
         shader.SetTexture(kernel, "NoiseTexture", _gpuNoiseTex);

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngineInternal;
 
 public class MapGenerator : Singleton<MapGenerator> {
     private MapMetadata metadata;

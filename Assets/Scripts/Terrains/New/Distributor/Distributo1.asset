@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fc71f86dd944bb48aacf1e456f9a526, type: 3}
+  m_Name: Distributo1
+  m_EditorClassIdentifier: 
+  Priority: 0
+  biomeDefinitions:
+  - {fileID: 11400000, guid: a85713699d60333449ed4dde73316587, type: 2}
+  - {fileID: 11400000, guid: 3cf8807bb8436714a90967d748a88745, type: 2}
+  - {fileID: 11400000, guid: 2dd46a3bf270ea04db06de2a936f41ec, type: 2}
+  MinSpacing: 30
+  MaxAttempts: 200

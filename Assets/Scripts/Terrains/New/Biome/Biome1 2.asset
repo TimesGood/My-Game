@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e8f7cdb213ae2846a19fc5f3ce2cb76, type: 3}
+  m_Name: Biome1 2
+  m_EditorClassIdentifier: 
+  biomeId: 
+  BiomeName: New Biome3
+  biomeSize: {x: 0, y: 300}
+  SuitableMin: {x: 0, y: 0}
+  SuitableMax: {x: 0, y: 0}
+  Suitable:
+    x: 3000
+    y: 1000
+    width: 1000
+    height: 0
+  Priority: 0
+  AllowOverlap: 0
+  GeneratorId: Default
+  num: 1

@@ -29,6 +29,7 @@ public class BaseTerrain : ScriptableObject {
     //≥ı ºªØ‘Î…˘Œ∆¿Ì
     public void InitNoiseTexture() {
 
+        FBMPerlinCurve s = new FBMPerlinCurve();
         terrain.InitValidate(world.worldSize.x, world.worldSize.y, world.seed);
         //terrain.heightMult = 1;
         terrain.heightAdd = 0;

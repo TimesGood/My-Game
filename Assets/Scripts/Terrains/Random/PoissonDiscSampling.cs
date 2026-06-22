@@ -9,13 +9,17 @@ public class PoissonDiscSampling {
 
     //采样
     //radius：相邻点距离 sampleRegionSize：采样地图大小 occupiedRegions: 已占点位 numSamplesBeforeRejection：候选点尝试生成次数
-    public static List<Vector2> GeneratePoints(float radius, Vector2 sampleRegionSize, List<OccupiedRegion> occupiedRegions = null, int numSamplesBeforeRejection = 30) {
+    public static List<Vector2> GeneratePoints(float radius, Vector2 regionMin, Vector2 regionMax, List<OccupiedRegion> occupiedRegions = null, int numSamplesBeforeRejection = 30) {
+        // 区域尺寸
+        Vector2 regionSize = regionMax - regionMin;
+
         //网格单元边长（直角三角斜边公式）
         float cellSize = radius / Mathf.Sqrt(2);
 
-        // 创建网格来加速邻近点搜索
-        int gridWidth = Mathf.CeilToInt(sampleRegionSize.x / cellSize);
-        int gridHeight = Mathf.CeilToInt(sampleRegionSize.y / cellSize);
+        // 创建网格来加速邻近点搜索;
+        // 创建网格
+        int gridWidth = Mathf.CeilToInt(regionSize.x / cellSize);
+        int gridHeight = Mathf.CeilToInt(regionSize.y / cellSize);
         int[,] grid = new int[gridWidth, gridHeight];
         
         // 存储生成点
@@ -25,13 +29,13 @@ public class PoissonDiscSampling {
 
         // 初始点：随机选择起始点，确保不在已占区域内
         if (occupiedRegions != null) {
-            FindSpawnPoints(sampleRegionSize, occupiedRegions, spawnPoints);
+            FindSpawnPoints(regionMin, regionMax, occupiedRegions, spawnPoints);
             if (spawnPoints.Count == 0) {
                 Debug.LogWarning("无法找到有效的起始点");
                 return points;
             }
         } else {
-            spawnPoints.Add(sampleRegionSize / 2);
+            spawnPoints.Add((regionMin + regionMax) / 2f); // 区域中心
         }
 
 
@@ -48,10 +52,13 @@ public class PoissonDiscSampling {
                 Vector2 candidate = spawnCentre + dir * Random.Range(radius, 2 * radius);//在半径到两倍半径范围内生成随机候选点
 
                 //检车候选点是否有效
-                if (IsValid(candidate, sampleRegionSize, cellSize, radius, points, grid)) {
+                if (IsValid(candidate, regionMin, regionMax, cellSize, radius, points, grid, occupiedRegions)) {
                     points.Add(candidate);
                     spawnPoints.Add(candidate);
-                    grid[(int)(candidate.x / cellSize), (int)(candidate.y / cellSize)] = points.Count;
+                    //grid[(int)(candidate.x / cellSize), (int)(candidate.y / cellSize)] = points.Count;
+                    int cx = Mathf.Min((int)((candidate.x - regionMin.x) / cellSize), gridWidth - 1);
+                    int cy = Mathf.Min((int)((candidate.y - regionMin.y) / cellSize), gridHeight - 1);
+                    grid[cx, cy] = points.Count;
                     candidateAccepted = true;
                     break;
                 }
@@ -63,56 +70,60 @@ public class PoissonDiscSampling {
         return points;
     }
 
-    private static void FindSpawnPoints(Vector2 sampleRegionSize, List<OccupiedRegion> occupiedRegions, List<Vector2> spawnPoints) {
-        Vector2 startPoint;
-        bool validStart = false;
+    private static void FindSpawnPoints(Vector2 regionMin, Vector2 regionMax, List<OccupiedRegion> occupiedRegions, List<Vector2> spawnPoints, int maxStartPoints = 5) {
         int attempts = 0;
         int maxAttempts = 100;
 
-        do {
-            startPoint = new Vector2(
-                Random.Range(0, sampleRegionSize.x),
-                Random.Range(0, sampleRegionSize.y));
-            validStart = !IsInOccupiedRegion(startPoint, occupiedRegions);
-            attempts++;
-        } while (!validStart && attempts < maxAttempts);
+        while (spawnPoints.Count < maxStartPoints && attempts < maxAttempts) {
+            Vector2 startPoint = new Vector2(
+                Random.Range(regionMin.x, regionMax.x),
+                Random.Range(regionMin.y, regionMax.y));
 
-        if (validStart) {
-            spawnPoints.Add(startPoint);
+            if (!IsInOccupiedRegion(startPoint, occupiedRegions)) {
+                spawnPoints.Add(startPoint);
+                break;
+            }
+            attempts++;
         }
     }
 
     //点位是否有效
-    private static bool IsValid(Vector2 candidate, Vector2 sampleRegionSize, float cellSize, float radius, List<Vector2> points, int[,] grid) {
-        //检查是否在区域内
-        if (candidate.x >= 0 && candidate.x < sampleRegionSize.x && candidate.y >= 0 && candidate.y < sampleRegionSize.y) {
+    private static bool IsValid(Vector2 candidate, Vector2 regionMin, Vector2 regionMax, float cellSize, float radius, List<Vector2> points, int[,] grid, List<OccupiedRegion> occupiedRegions) {
+        // 边界检查：使用 regionMin / regionMax
+        if (candidate.x < regionMin.x || candidate.x >= regionMax.x ||
+            candidate.y < regionMin.y || candidate.y >= regionMax.y) {
+            return false;
+        }
+        if (occupiedRegions != null && IsInOccupiedRegion(candidate, occupiedRegions))
+            return false;
 
-            //计算候选点所在网格单元
-            int cellX = (int)(candidate.x / cellSize);
-            int cellY = (int)(candidate.y / cellSize);
 
-            //搜索周围5x5的网格区域
-            int searchStartX = Mathf.Max(0, cellX - 2);
-            int searchEndX = Mathf.Min(cellX + 2, grid.GetLength(0) - 1);
-            int searchStartY = Mathf.Max(0, cellY - 2);
-            int searchEndY = Mathf.Min(cellY + 2, grid.GetLength(1) - 1);
+        //计算候选点所在网格单元
+        //int cellX = (int)(candidate.x / cellSize);
+        //int cellY = (int)(candidate.y / cellSize);
+        int cellX = (int)((candidate.x - regionMin.x) / cellSize);
+        int cellY = (int)((candidate.y - regionMin.y) / cellSize);
 
-            //检车临近点是否太接近候选点
-            for (int x = searchStartX; x <= searchEndX; x++) {
-                for (int y = searchStartY; y <= searchEndY; y++) {
-                    int pointIndex = grid[x, y] - 1;
-                    if (pointIndex != -1) {
+        //搜索周围5x5的网格区域
+        int searchStartX = Mathf.Max(0, cellX - 2);
+        int searchEndX = Mathf.Min(cellX + 2, grid.GetLength(0) - 1);
+        int searchStartY = Mathf.Max(0, cellY - 2);
+        int searchEndY = Mathf.Min(cellY + 2, grid.GetLength(1) - 1);
 
-                        float sqrDst = (candidate - points[pointIndex]).sqrMagnitude;
-                        if (sqrDst < radius * radius) {
-                            return false;
-                        }
+        //检车临近点是否太接近候选点
+        for (int x = searchStartX; x <= searchEndX; x++) {
+            for (int y = searchStartY; y <= searchEndY; y++) {
+                int pointIndex = grid[x, y] - 1;
+                if (pointIndex != -1) {
+
+                    float sqrDst = (candidate - points[pointIndex]).sqrMagnitude;
+                    if (sqrDst < radius * radius) {
+                        return false;
                     }
                 }
             }
-            return true;
         }
-        return false;
+        return true;
     }
 
     /// <summary>

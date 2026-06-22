@@ -22,12 +22,12 @@ public class MapGridLayout : ScriptableObject {
     protected virtual void InitDistribution() {
         if (biomes == null || biomes.Length == 0) return;
         //²´ËÉÔ²ÅÌËæ»ú
-        List<Vector2> points = PoissonDiscSampling.GeneratePoints(100f, world.worldSize);
-        foreach (var point in points) {
-            int biomeIndex = Random.Range(0, biomes.Length);
-            BaseBiome biome = biomes[biomeIndex];
-            result.Add(new Vector2Int((int)point.x, (int)point.y), biome);
-        }
+        //List<Vector2> points = PoissonDiscSampling.GeneratePoints(100f, new Vector2(0, 0), world.worldSize);
+        //foreach (var point in points) {
+        //    int biomeIndex = Random.Range(0, biomes.Length);
+        //    BaseBiome biome = biomes[biomeIndex];
+        //    result.Add(new Vector2Int((int)point.x, (int)point.y), biome);
+        //}
 
     }
 
