@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Entities.UniversalDelegates;
 using UnityEngine;
 
 //噪音叠加配置
@@ -33,10 +34,12 @@ public class FBMPerlinNoise : PerlinNoise {
                 noiseValue /= maxAmplitude; // 归一化到[0,1]
 
                 // 第四步：二值化
-                _noiseTexture.SetPixel(x, y, noiseValue > threshold ? Color.white : Color.black);
+                if (isBinary)
+                    _noiseTexture.SetPixel(x, y, noiseValue > threshold ? Color.white : Color.black);
+                else
+                    _noiseTexture.SetPixel(x, y, noiseValue > threshold ? new Color(noiseValue, noiseValue, noiseValue, 1) : Color.black);
             }
         }
-
         return _noiseTexture;
     }
 

@@ -20,6 +20,10 @@ public class MIXPerlinWorleyNoise : PerlinNoise {
     [Min(1)]
     public float lacunarity = 2f;        // 频率倍增系数（>1），越大高层细节越密集
 
+    protected override Texture2D GenerateOnCPU() {
+        throw new System.Exception("此噪声生成器未实现CPU生成！");
+    }
+
 
     protected override Texture2D GenerateOnGPU() {
         GenerateOnGPUBefore();

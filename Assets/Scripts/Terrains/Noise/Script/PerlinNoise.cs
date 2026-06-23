@@ -19,10 +19,10 @@ public class PerlinNoise : NoiseConfig
         for (int x = 0; x < _noiseTexture.width; x++) {
             for (int y = 0; y < _noiseTexture.height; y++) {
                 float v = Mathf.PerlinNoise((x + seed) * frequency, (y + seed) * frequency);
-                if (v > threshold)
-                    _noiseTexture.SetPixel(x, y, Color.white);
+                if (isBinary)
+                    _noiseTexture.SetPixel(x, y, v > threshold ? Color.white : Color.black);
                 else
-                    _noiseTexture.SetPixel(x, y, Color.black);
+                    _noiseTexture.SetPixel(x, y, v > threshold ? new Color(v, v, v, v) : Color.black);
             }
         }
         return _noiseTexture;

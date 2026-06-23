@@ -9,6 +9,10 @@ public class WorleyNoise : PerlinNoise
 
     public int returnType = 0;
 
+    protected override Texture2D GenerateOnCPU() {
+        throw new System.Exception("此生成器未实现CPU生成！");
+    }
+
     protected override Texture2D GenerateOnGPU() {
         GenerateOnGPUBefore();
         int kernel = shader.FindKernel("CSMain");

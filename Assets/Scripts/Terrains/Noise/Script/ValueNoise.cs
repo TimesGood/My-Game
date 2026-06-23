@@ -12,21 +12,22 @@ public class ValueNoise : PerlinNoise
 
     protected override void GenerateBefore() {
         base.GenerateBefore();
-        
-    }
-
-    protected override Texture2D GenerateOnCPU() {
         // 预生成Value Noise格点（优化性能）
         int gridSizeX = Mathf.CeilToInt(noiseWidth * frequency) + 1;
         int gridSizeY = Mathf.CeilToInt(noiseHeight * frequency) + 1;
         valueGrid = GenerateValueNoiseGrid(gridSizeX, gridSizeY, 1f);
+    }
 
+    protected override Texture2D GenerateOnCPU() {
         for (int x = 0; x < _noiseTexture.width; x++) {
             for (int y = 0; y < _noiseTexture.height; y++) {
                 float vSampleX = x * frequency;
                 float vSampleY = y * frequency;
                 float valueNoise = GenerateValueNoise(vSampleX, vSampleY, valueGrid);
-                _noiseTexture.SetPixel(x, y, valueNoise > threshold ? Color.white : Color.black);
+                if (isBinary)
+                    _noiseTexture.SetPixel(x, y, valueNoise > threshold ? Color.white : Color.black);
+                else
+                    _noiseTexture.SetPixel(x, y, valueNoise > threshold ? new Color(valueNoise, valueNoise, valueNoise, valueNoise) : Color.black);
             }
         }
         return _noiseTexture;
@@ -53,7 +54,6 @@ public class ValueNoise : PerlinNoise
         int y0 = Mathf.FloorToInt(y);
         int x1 = x0 + 1;
         int y1 = y0 + 1;
-
         // 边界处理
         x0 = Mathf.Clamp(x0, 0, grid.GetLength(0) - 1);
         y0 = Mathf.Clamp(y0, 0, grid.GetLength(1) - 1);

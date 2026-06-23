@@ -56,7 +56,10 @@ public class FBMPerlinValueNoise : ValueNoise
 
                 // 对比度增强和二值化
                 mixedNoise = Mathf.Pow(mixedNoise, contrastPower);
-                noiseTexture.SetPixel(x, y, mixedNoise > threshold ? Color.white : Color.black);
+                if (isBinary)
+                    noiseTexture.SetPixel(x, y, mixedNoise > threshold ? Color.white : Color.black);
+                else
+                    noiseTexture.SetPixel(x, y, mixedNoise > threshold ? new Color(mixedNoise, mixedNoise, mixedNoise, 1) : Color.black);
             }
         }
         return noiseTexture;

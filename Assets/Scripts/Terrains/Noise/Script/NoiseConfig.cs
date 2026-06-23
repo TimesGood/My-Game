@@ -18,14 +18,14 @@ public abstract class NoiseConfig : ScriptableObject
     public bool openGPU = true;
     public bool isBinary = true;         // 二值化
 
-//#if UNITY_EDITOR
-//    private void OnValidate() {
-//        if (!EditorApplication.isPlaying) {
-//            // 延迟调用避免频繁刷新
-//            EditorApplication.delayCall += GenerateNoiseWithSave;
-//        }
-//    }
-//#endif
+    //#if UNITY_EDITOR
+    //    private void OnValidate() {
+    //        if (!EditorApplication.isPlaying) {
+    //            // 延迟调用避免频繁刷新
+    //            EditorApplication.delayCall += GenerateNoiseWithSave;
+    //        }
+    //    }
+    //#endif
 
     //初始化基础属性
     public virtual void InitValidate(int width, int height, int seed) {
