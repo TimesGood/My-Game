@@ -15,14 +15,14 @@ MonoBehaviour:
   biomeId: 
   BiomeName: New Biome2
   biomeSize: {x: 200, y: 100}
-  SuitableMin: {x: 2000, y: 0}
-  SuitableMax: {x: 4000, y: 1000}
-  Suitable:
-    x: 2000
-    y: 1000
-    width: 4000
-    height: -1000
+  suitable:
+  - SuitableMin: {x: 2000, y: 0}
+    SuitableMax: {x: 4000, y: 1000}
   Priority: 0
   AllowOverlap: 0
-  GeneratorId: Default
   num: 1
+  outLine: {fileID: 0}
+  _features: []
+  references:
+    version: 2
+    RefIds: []

@@ -1,65 +1,135 @@
 // =============================================
-//  BiomeDefinition.cs ¡ª ÈºÂä¶¨Òå
+//  BiomeDefinition.cs â€” ç¾¤è½å®šä¹‰ï¼ˆå« Feature ç»„åˆï¼‰
 // =============================================
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// ç¾¤è½å®šä¹‰ = "æ˜¯ä»€ä¹ˆ" + "æ€ä¹ˆç”Ÿæˆ"ã€‚
+/// é€šè¿‡ [SerializeReference] å†…è” Feature åˆ—è¡¨ï¼Œè‡ªå®šä¹‰è¯¥ç¾¤è½çš„ç”Ÿæˆè§„åˆ™ã€‚
+/// </summary>
 [CreateAssetMenu(menuName = "MapGen/Biome Definition")]
 public class BiomeDefinition : ScriptableObject {
 
-    [Header("Éí·İ")]
+    [Header("åŸºæœ¬ä¿¡æ¯")]
     public string biomeId;
     public string BiomeName = "New Biome";
 
-    [Header("³ß´ç´óĞ¡")]
-    public Vector2Int biomeSize = new(0, 300);
+    [Header("å°ºå¯¸å¤§å°")]
+    public Vector2Int biomeSize = new(300, 100);
 
-    [Header("ÊÊÒËÉú³ÉÇø¼ä")]
+    [Header("é€‚åˆåº¦èŒƒå›´")]
     public Suitable[] suitable;
 
-    [Header("ÓÅÏÈ¼¶ (¸ßÓÅÏÈ¼¶ÏÈ·ÖÅä)")]
+    [Header("ä¼˜å…ˆçº§ï¼ˆè¶Šé«˜è¶Šå…ˆåˆ†é…ï¼‰")]
     public int Priority = 0;
 
-    [Header("ÊÇ·ñÔÊĞíÓëÆäËûÈºÂäÖØµş")]
+    [Header("æ˜¯å¦å…è®¸ä¸å…¶ä»–ç¾¤è½é‡å ")]
     public bool AllowOverlap = false;
 
-    [Header("Éú³ÉÆ÷ ID (¶ÔÓ¦ BiomeGeneratorBase.Id)")]
-    public string GeneratorId = "Default";
-
+    [Header("ç”Ÿæˆæ•°é‡")]
     public int num;
 
-    // -------- ¸¨Öú·½·¨ --------
+    [Header("ç¾¤è½è½®å»“ï¼ˆå¯é€‰ï¼Œä¸è§„åˆ™å½¢çŠ¶ï¼‰")]
+    public ShapeGenerator outLine;
 
-    /// <summary>¹éÒ»»¯ X ¡ú Êµ¼ÊÏñËØ X Çø¼ä</summary>
-    //public Vector2Int GetActualXRange(int mapWidth) {
-    //    int min = Mathf.FloorToInt(SuitableXNormalized.x * mapWidth);
-    //    int max = Mathf.CeilToInt(SuitableXNormalized.y * mapWidth);
-    //    return new Vector2Int(min, max);
-    //}
+    [Header("Feature åˆ—è¡¨ï¼ˆæŒ‰é¡ºåºæ‰§è¡Œï¼‰")]
+    [SerializeReference]
+    private List<BiomeFeature> _features = new List<BiomeFeature>();
+    public List<BiomeFeature> features => _features;
 
-    /// <summary>¹éÒ»»¯ X ¡ú Êµ¼ÊÏñËØ X Çø¼ä</summary>
-    //public Vector2Int GetActualYRange(int mapHeight) {
-    //    int min = Mathf.FloorToInt(SuitableYNormalized.x * mapHeight);
-    //    int max = Mathf.CeilToInt(SuitableYNormalized.y * mapHeight);
-    //    return new Vector2Int(min, max);
-    //}
+    [System.NonSerialized] private bool _initialized;
 
-    /// <summary>¼ì²é¸ø¶¨ X Çø¼äÊÇ·ñÓë±¾ÈºÂäÊÊÒËÇø¼äÖØµş</summary>
-    //public bool OverlapsX(Vector2Int range)
-    //    => SuitableX.x >= range.x && SuitableX.y <= range.y;
+    // -------- ç”Ÿæˆ --------
 
-    ///// <summary>¼ì²é¸ø¶¨ Y Çø¼äÊÇ·ñÓë±¾ÈºÂäÊÊÒËÇø¼äÖØµş</summary>
-    //public bool OverlapsY(Vector2Int range)
-    //    => SuitableY.x >= range.x && SuitableY.y <= range.y;
+    /// <summary>
+    /// åˆå§‹åŒ–æ‰€æœ‰ Feature çš„å™ªå£°ï¼ˆä»…æ‰§è¡Œä¸€æ¬¡ï¼‰
+    /// </summary>
+    public void InitFeatures(int _seed)
+    {
+        if (_initialized) return;
+        _initialized = true;
 
-    ///// <summary>×ÜÌåÃæ»ı</summary>
-    //public int GetArea() {
-    //    return biomeSize.x * biomeSize.y;
-    //}
+        var cache = new Dictionary<string, Texture2D>();
+
+        outLine?.InitValidate(biomeSize.x, biomeSize.y, _seed);
+        outLine?.InitNoise();
+
+        for (int i = 0; i < _features.Count; i++)
+        {
+            _features[i]?.Init(biomeSize, _seed + i * 100, cache);
+        }
+    }
+
+    /// <summary>
+    /// å¯¹æŒ‡å®šç¾¤è½å®ä¾‹æ‰§è¡Œç”Ÿæˆ
+    /// </summary>
+    public void Generate(GenerationContext _ctx, BiomeInstance _inst)
+    {
+        InitFeatures(_inst.Seed);
+
+        var biomeCtx = BuildContext(_ctx, _inst);
+        DetectSurfaceRange(biomeCtx);
+
+        if (_features.Count == 0)
+        {
+            Debug.LogWarning($"[BiomeDefinition] '{BiomeName}' æ²¡æœ‰é…ç½®ä»»ä½• Featureï¼Œè·³è¿‡ç”Ÿæˆ");
+            return;
+        }
+
+        for (int i = 0; i < _features.Count; i++)
+        {
+            var f = _features[i];
+            if (f == null) continue;
+            Debug.Log($"  â†’ [{BiomeName}] Feature[{i}] {f.GetType().Name}");
+            f.Execute(biomeCtx);
+        }
+    }
+
+    private BiomeContext BuildContext(GenerationContext _ctx, BiomeInstance _inst)
+    {
+        return new BiomeContext
+        {
+            genContext = _ctx,
+            instance = _inst,
+            noiseCache = new Dictionary<string, Texture2D>()
+        };
+    }
+
+    private void DetectSurfaceRange(BiomeContext _ctx)
+    {
+        int baseHeight = WorldManager.Instance.baseHeight;
+        int start = 0, end = 0;
+
+        if (outLine != null)
+        {
+            for (int x = 0; x < _ctx.biomeSize.x; x++)
+            {
+                if (outLine.noiseTexture.GetPixel(x, baseHeight).r > 0.5f)
+                { start = _ctx.LocalToWorldX(x); break; }
+            }
+            for (int x = _ctx.biomeSize.x - 1; x >= 0; x--)
+            {
+                if (outLine.noiseTexture.GetPixel(x, baseHeight).r > 0.5f)
+                { end = _ctx.LocalToWorldX(x); break; }
+            }
+        }
+        else
+        {
+            start = _ctx.minPos.x;
+            end = _ctx.maxPos.x;
+        }
+
+        _ctx.surfaceStart = start;
+        _ctx.surfaceEnd = end;
+    }
+
+    // -------- é€‚åˆåº¦ --------
 
     [Serializable]
-    public class Suitable {
+    public class Suitable
+    {
         public Vector2Int SuitableMin = new(0, 0);
         public Vector2Int SuitableMax = new(0, 0);
     }
