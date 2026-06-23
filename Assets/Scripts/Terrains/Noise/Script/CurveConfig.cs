@@ -31,16 +31,6 @@ public abstract class CurveConfig : NoiseConfig
         // 初始化曲线数组
         curveData = new float[noiseWidth];
     }
-
-    protected override Texture2D GenerateNoise() {
-        for (int x = 0; x < noiseWidth; x++) {
-            Draw(x);
-        }
-        return _noiseTexture;
-    }
-
-    public virtual void Draw(int x) { }
-
     //获取指定X轴曲线数据
     public float GetHeight(int x) {
 

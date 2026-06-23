@@ -32,7 +32,6 @@ public abstract class NoiseConfig : ScriptableObject
         noiseWidth = width;
         noiseHeight = height;
         this.seed = seed;
-        GenerateBefore();
     }
 
     public Texture2D InitNoise() {
@@ -42,18 +41,17 @@ public abstract class NoiseConfig : ScriptableObject
         if(openGPU)
             _noiseTexture = GenerateOnGPU();
         else
-            _noiseTexture = GenerateNoise();
+            _noiseTexture = GenerateOnCPU();
 
         _noiseTexture.Apply();
 
-        
-        
 
 #if UNITY_EDITOR
         // 自动保存纹理资产
         //if (!EditorApplication.isPlaying) SaveTextureAsset();
 
 #endif
+        GenerateAfter();
         return _noiseTexture;
     }
 
@@ -70,8 +68,14 @@ public abstract class NoiseConfig : ScriptableObject
         }
     }
 
-    //执行生成
-    protected abstract Texture2D GenerateNoise();
+    protected virtual void GenerateAfter() {
+    
+    }
+
+    //由CPU生成
+    protected virtual Texture2D GenerateOnCPU() {
+        return null;
+    }
 
 
     //GPU生成

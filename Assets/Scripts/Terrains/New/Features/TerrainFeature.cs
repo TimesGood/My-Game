@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// åœ°å½¢å¡«å…… Feature â€”â€” åœ¨ç¾¤è½èŒƒå›´å†…æŒ‰æ›²çº¿é«˜åº¦å’Œç“¦ç‰‡æ˜ å°„å¡«å……åœ°é¢ã€‚
+/// µØĞÎÌî³ä Feature ¡ª¡ª ÔÚÈºÂä·¶Î§ÄÚ°´ÇúÏß¸ß¶ÈºÍÍßÆ¬Ó³ÉäÌî³äµØÃæ¡£
 /// </summary>
 [System.Serializable]
 public class TerrainFeature : BiomeFeature

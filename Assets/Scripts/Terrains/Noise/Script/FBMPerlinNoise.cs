@@ -13,24 +13,31 @@ public class FBMPerlinNoise : PerlinNoise {
     public float scale = 1f;     // 坐标扭曲强度，越大噪图越扭曲
 
 
-    public override void Draw(int x, int y) {
-        float noiseValue = 0;
-        float freq_tmp = frequency;
-        float amplitude = 1;
-        float maxAmplitude = 0;
+    protected override Texture2D GenerateOnCPU() {
 
-        for (int i = 0; i < octaves; i++) {
-            float sampleX = (x - noiseWidth) / scale * freq_tmp + seed;
-            float sampleY = (y - noiseHeight) / scale * freq_tmp + seed;
-            noiseValue += (Mathf.PerlinNoise(sampleX, sampleY) * 2 - 1) * amplitude;
-            maxAmplitude += amplitude;
-            amplitude *= persistence;
-            freq_tmp *= lacunarity;
+        for (int x = 0; x < _noiseTexture.width; x++) {
+            for (int y = 0; y < _noiseTexture.height; y++) {
+                float noiseValue = 0;
+                float freq_tmp = frequency;
+                float amplitude = 1;
+                float maxAmplitude = 0;
+
+                for (int i = 0; i < octaves; i++) {
+                    float sampleX = (x - noiseWidth) / scale * freq_tmp + seed;
+                    float sampleY = (y - noiseHeight) / scale * freq_tmp + seed;
+                    noiseValue += (Mathf.PerlinNoise(sampleX, sampleY) * 2 - 1) * amplitude;
+                    maxAmplitude += amplitude;
+                    amplitude *= persistence;
+                    freq_tmp *= lacunarity;
+                }
+                noiseValue /= maxAmplitude; // 归一化到[0,1]
+
+                // 第四步：二值化
+                _noiseTexture.SetPixel(x, y, noiseValue > threshold ? Color.white : Color.black);
+            }
         }
-        noiseValue /= maxAmplitude; // 归一化到[0,1]
 
-        // 第四步：二值化
-        _noiseTexture.SetPixel(x, y, noiseValue > threshold ? Color.white : Color.black);
+        return _noiseTexture;
     }
 
     protected override Texture2D GenerateOnGPU() {

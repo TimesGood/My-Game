@@ -5,12 +5,16 @@ using UnityEngine;
 //ÇúÏßÍ¼
 [CreateAssetMenu(fileName = "PerlinCurve", menuName = "CurveConfig/new PerlinCurve")]
 public class PerlinCurve : CurveConfig {
-    public override void Draw(int x) {
-        float y = Mathf.PerlinNoise((x + seed) * frequency, seed * frequency) * heightMult + heightAdd;
-        _noiseTexture.SetPixel(x, (int)y, Color.white);
-        curveData[x] = Mathf.FloorToInt(y);
-    }
 
+    protected override Texture2D GenerateOnCPU() {
+
+        for (int x = 0; x < noiseWidth; x++) {
+            float y = Mathf.PerlinNoise((x + seed) * frequency, seed * frequency) * heightMult + heightAdd;
+            noiseTexture.SetPixel(x, (int)y, Color.white);
+            curveData[x] = Mathf.FloorToInt(y);
+        }
+        return noiseTexture;
+    }
 
     protected override Texture2D GenerateOnGPU() {
         GenerateOnGPUBefore();

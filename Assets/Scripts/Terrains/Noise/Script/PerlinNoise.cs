@@ -14,19 +14,15 @@ public class PerlinNoise : NoiseConfig
     protected RenderTexture _gpuNoiseTex;
     [field: SerializeField] protected ComputeShader shader;
 
-    public virtual void Draw(int x, int y) {
-        float v = Mathf.PerlinNoise((x + seed) * frequency, (y + seed) * frequency);
-        if (v > threshold)
-            _noiseTexture.SetPixel(x, y, Color.white);
-        else
-            _noiseTexture.SetPixel(x, y, Color.black);
-    }
-
-    protected override Texture2D GenerateNoise() {
+    protected override Texture2D GenerateOnCPU() {
 
         for (int x = 0; x < _noiseTexture.width; x++) {
             for (int y = 0; y < _noiseTexture.height; y++) {
-                Draw(x, y);
+                float v = Mathf.PerlinNoise((x + seed) * frequency, (y + seed) * frequency);
+                if (v > threshold)
+                    _noiseTexture.SetPixel(x, y, Color.white);
+                else
+                    _noiseTexture.SetPixel(x, y, Color.black);
             }
         }
         return _noiseTexture;

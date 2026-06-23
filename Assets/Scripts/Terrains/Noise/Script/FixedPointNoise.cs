@@ -9,7 +9,7 @@ public class FixedPointNoise : PerlinNoise {
     public int fixedPointX2 = 150;   // 第二个固定点X坐标
     public float connectionSlope = 0.3f; // 连接坡度控制
 
-    protected override Texture2D GenerateNoise() {
+    protected override Texture2D GenerateOnCPU() {
 
         // ==== 步骤2: 生成基础分形噪声 ====
         float[] baseNoise = GenerateFractalNoise();
@@ -99,5 +99,10 @@ public class FixedPointNoise : PerlinNoise {
             }
         }
         _noiseTexture.Apply();
+    }
+
+
+    protected override Texture2D GenerateOnGPU() {
+        throw new System.Exception("此噪声生成器未实现GPU生成!");
     }
 }

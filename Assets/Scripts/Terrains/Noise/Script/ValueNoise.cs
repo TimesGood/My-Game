@@ -12,19 +12,25 @@ public class ValueNoise : PerlinNoise
 
     protected override void GenerateBefore() {
         base.GenerateBefore();
+        
+    }
+
+    protected override Texture2D GenerateOnCPU() {
         // 预生成Value Noise格点（优化性能）
         int gridSizeX = Mathf.CeilToInt(noiseWidth * frequency) + 1;
         int gridSizeY = Mathf.CeilToInt(noiseHeight * frequency) + 1;
         valueGrid = GenerateValueNoiseGrid(gridSizeX, gridSizeY, 1f);
-    }
 
-    public override void Draw(int x, int y) {
-        float vSampleX = x * frequency;
-        float vSampleY = y * frequency;
-        float valueNoise = GenerateValueNoise(vSampleX, vSampleY, valueGrid);
-
-
-        _noiseTexture.SetPixel(x, y, valueNoise > threshold ? Color.white : Color.black);
+        for (int x = 0; x < _noiseTexture.width; x++) {
+            for (int y = 0; y < _noiseTexture.height; y++) {
+                float vSampleX = x * frequency;
+                float vSampleY = y * frequency;
+                float valueNoise = GenerateValueNoise(vSampleX, vSampleY, valueGrid);
+                _noiseTexture.SetPixel(x, y, valueNoise > threshold ? Color.white : Color.black);
+            }
+        }
+        return _noiseTexture;
+        
     }
 
     // 生成Value Noise的基础随机格点
@@ -72,6 +78,7 @@ public class ValueNoise : PerlinNoise
 
     protected override Texture2D GenerateOnGPU() {
         GenerateOnGPUBefore();
+
         int kernel = shader.FindKernel("CSMain");
 
         // 分配线程组

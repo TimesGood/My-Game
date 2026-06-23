@@ -18,42 +18,48 @@ public class FBMPerlinValueNoise : ValueNoise
     public float valueNoiseWeight = 0.5f;// Value Noise权重（0-1）
     public float blendFrequency = 0.1f;  // 混合噪声的频率
 
-    public override void Draw(int x, int y) {
-        // 第一步：域扭曲坐标
-        float warpX = Mathf.PerlinNoise((x + seed) * warpFrequency, (y + seed) * warpFrequency) * warpStrength;
-        float warpY = Mathf.PerlinNoise((x + seed + 100) * warpFrequency, (y + seed + 100) * warpFrequency) * warpStrength;
 
-        // 分形噪声叠加
-        float perlinNoise = 0f;
-        float valueNoise = 0f;
-        float freq_tmp = frequency;
-        float amplitude = 1f;
-        float maxAmplitude = 0f;
+    protected override Texture2D GenerateOnCPU() {
+        for (int x = 0; x < _noiseTexture.width; x++) {
+            for (int y = 0; y < _noiseTexture.height; y++) {
+                // 第一步：域扭曲坐标
+                float warpX = Mathf.PerlinNoise((x + seed) * warpFrequency, (y + seed) * warpFrequency) * warpStrength;
+                float warpY = Mathf.PerlinNoise((x + seed + 100) * warpFrequency, (y + seed + 100) * warpFrequency) * warpStrength;
 
-        for (int i = 0; i < octaves; i++) {
-            // Perlin噪声
-            float pSampleX = (x + warpX) * freq_tmp;
-            float pSampleY = (y + warpY) * freq_tmp;
-            perlinNoise += Mathf.PerlinNoise(pSampleX, pSampleY) * amplitude;
+                // 分形噪声叠加
+                float perlinNoise = 0f;
+                float valueNoise = 0f;
+                float freq_tmp = frequency;
+                float amplitude = 1f;
+                float maxAmplitude = 0f;
 
-            // Value Noise
-            float vSampleX = x * freq_tmp * blendFrequency;
-            float vSampleY = y * freq_tmp * blendFrequency;
-            valueNoise += GenerateValueNoise(vSampleX, vSampleY, valueGrid) * amplitude;
+                for (int i = 0; i < octaves; i++) {
+                    // Perlin噪声
+                    float pSampleX = (x + warpX) * freq_tmp;
+                    float pSampleY = (y + warpY) * freq_tmp;
+                    perlinNoise += Mathf.PerlinNoise(pSampleX, pSampleY) * amplitude;
 
-            maxAmplitude += amplitude;
-            amplitude *= persistence;
-            freq_tmp *= lacunarity;
+                    // Value Noise
+                    float vSampleX = x * freq_tmp * blendFrequency;
+                    float vSampleY = y * freq_tmp * blendFrequency;
+                    valueNoise += GenerateValueNoise(vSampleX, vSampleY, valueGrid) * amplitude;
+
+                    maxAmplitude += amplitude;
+                    amplitude *= persistence;
+                    freq_tmp *= lacunarity;
+                }
+
+                // 归一化并混合两种噪声
+                perlinNoise /= maxAmplitude;
+                valueNoise /= maxAmplitude;
+                float mixedNoise = (perlinNoise * perlinWeight) + (valueNoise * valueNoiseWeight);
+
+                // 对比度增强和二值化
+                mixedNoise = Mathf.Pow(mixedNoise, contrastPower);
+                noiseTexture.SetPixel(x, y, mixedNoise > threshold ? Color.white : Color.black);
+            }
         }
-
-        // 归一化并混合两种噪声
-        perlinNoise /= maxAmplitude;
-        valueNoise /= maxAmplitude;
-        float mixedNoise = (perlinNoise * perlinWeight) + (valueNoise * valueNoiseWeight);
-
-        // 对比度增强和二值化
-        mixedNoise = Mathf.Pow(mixedNoise, contrastPower);
-        noiseTexture.SetPixel(x, y, mixedNoise > threshold ? Color.white : Color.black);
+        return noiseTexture;
     }
     protected override Texture2D GenerateOnGPU() {
         GenerateOnGPUBefore();

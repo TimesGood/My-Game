@@ -62,7 +62,7 @@ public class ShapeGenerator : NoiseConfig {
 
 
 
-    protected override Texture2D GenerateNoise() {
+    protected override Texture2D GenerateOnCPU() {
         ClearTexture(_noiseTexture, Color.clear);
 
         GenerateRandomPolygon(_noiseTexture);

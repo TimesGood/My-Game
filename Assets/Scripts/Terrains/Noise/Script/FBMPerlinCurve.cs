@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-//叠加曲线
+//分形叠加曲线
 [CreateAssetMenu(fileName = "FBMPerlinCurve", menuName = "CurveConfig/new FBMPerlinCurve")]
 
 public class FBMPerlinCurve : CurveConfig
@@ -15,55 +15,57 @@ public class FBMPerlinCurve : CurveConfig
     public float warpIntensity = 2f; // 坐标扭曲强度，（使曲线呈现不规则感）
     public float peakSharpness = 3f; // 波峰锐化
 
-    public override void Draw(int x) {
- 
-        // ======== 1. 分形噪声叠加 ========
-        float totalHeight = 0;
-        float freqTmp = frequency;
-        float amplitude = 1;
-        float maxHeight = 0;
 
-        for (int i = 0; i < octaves; i++) {
-            // ======== 2. 域扭曲坐标 ========
-            float warpX = x + Mathf.PerlinNoise(x * 0.1f + seed, seed) * warpIntensity;
+    protected override Texture2D GenerateOnCPU() {
+        for (int x = 0; x < noiseWidth; x++) {
+            // ======== 1. 分形噪声叠加 ========
+            float totalHeight = 0;
+            float freqTmp = frequency;
+            float amplitude = 1;
+            float maxHeight = 0;
 
-            // ======== 3. 采样噪声 ========
-            float noise = Mathf.PerlinNoise(
-                warpX * freqTmp + seed,  // 添加i*100避免各层重复
-                seed
-            );
+            for (int i = 0; i < octaves; i++) {
+                // ======== 2. 域扭曲坐标 ========
+                float warpX = x + Mathf.PerlinNoise(x * 0.1f + seed, seed) * warpIntensity;
 
-            // ======== 4. 波峰锐化处理 ========
-            if (i == octaves - 1) {
-                noise = Mathf.Pow(noise, peakSharpness);
+                // ======== 3. 采样噪声 ========
+                float noise = Mathf.PerlinNoise(
+                    warpX * freqTmp + seed,  // 添加i*100避免各层重复
+                    seed
+                );
+
+                // ======== 4. 波峰锐化处理 ========
+                if (i == octaves - 1) {
+                    noise = Mathf.Pow(noise, peakSharpness);
+                }
+
+                totalHeight += noise * amplitude;
+                maxHeight += amplitude;
+                amplitude *= persistence;
+                freqTmp *= lacunarity;
             }
 
-            totalHeight += noise * amplitude;
-            maxHeight += amplitude;
-            amplitude *= persistence;
-            freqTmp *= lacunarity;
-        }
+            // ======== 5. 归一化并计算最终高度 ========
+            float normalizedHeight = totalHeight / maxHeight;
+            int yPos = Mathf.FloorToInt(normalizedHeight * heightMult + heightAdd);
 
-        // ======== 5. 归一化并计算最终高度 ========
-        float normalizedHeight = totalHeight / maxHeight;
-        int yPos = Mathf.FloorToInt(normalizedHeight * heightMult + heightAdd);
-
-        // ======== 6. 存储数据 =========
-        curveData[x] = yPos;
+            // ======== 6. 存储数据 =========
+            curveData[x] = yPos;
 
 
-        // ======== 7. 绘制地形线，运行中就不绘制了，节省性能 =======
+            // ======== 7. 绘制地形线，运行中就不绘制了，节省性能 =======
 #if UNITY_EDITOR
-        if (EditorApplication.isPlaying) return;
-        for (int y = yPos - 2; y <= yPos + 2; y++) { // 绘制5像素粗的线条
-            if (y >= 0 && y < noiseHeight) {
-                float gradient = 1 - Mathf.Abs(y - yPos) / 2f; // 渐变透明度
-                _noiseTexture.SetPixel(x, y, Color.Lerp(_noiseTexture.GetPixel(x, y), Color.white, gradient));
+            if (EditorApplication.isPlaying) return noiseTexture;
+            for (int y = yPos - 2; y <= yPos + 2; y++) { // 绘制5像素粗的线条
+                if (y >= 0 && y < noiseHeight) {
+                    float gradient = 1 - Mathf.Abs(y - yPos) / 2f; // 渐变透明度
+                    noiseTexture.SetPixel(x, y, Color.Lerp(noiseTexture.GetPixel(x, y), Color.white, gradient));
+                }
             }
-        }
 #endif
+        }
+        return noiseTexture;
     }
-
     protected override Texture2D GenerateOnGPU() {
 
         GenerateOnGPUBefore();
