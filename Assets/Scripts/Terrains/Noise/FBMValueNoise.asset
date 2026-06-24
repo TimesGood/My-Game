@@ -21,11 +21,12 @@ MonoBehaviour:
   frequency: 0.505
   threshold: 0.421
   offset: 0
-  shader: {fileID: 7200000, guid: fe4f607a1d4f8b84883d8979f3f939e0, type: 3}
-  octaves: 4
-  persistence: 0.5
-  lacunarity: 2
-  scale: 1
+  <shader>k__BackingField: {fileID: 7200000, guid: fe4f607a1d4f8b84883d8979f3f939e0, type: 3}
+  fbm:
+    octaves: 4
+    persistence: 0.5
+    lacunarity: 2
+    scale: 1
 --- !u!28 &8242632853224805601
 Texture2D:
   m_ObjectHideFlags: 0

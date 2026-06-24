@@ -1,18 +1,14 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
-//ÖµÔëÒô
+//å€¼å™ªå£°
 [CreateAssetMenu(fileName = "ValueNoise", menuName = "NoiseConfig/new ValueNoise")]
-public class ValueNoise : PerlinNoise
+public class ValueNoise : TextureNoiseBase
 {
     protected float[,] valueGrid;
 
     protected override void GenerateBefore() {
         base.GenerateBefore();
-        // Ô¤Éú³ÉValue Noise¸ñµã£¨ÓÅ»¯ĞÔÄÜ£©
+        // é¢„ç”ŸæˆValue Noiseç½‘æ ¼ï¼ˆä¼˜åŒ–æ€§èƒ½ï¼‰
         int gridSizeX = Mathf.CeilToInt(noiseWidth * frequency) + 1;
         int gridSizeY = Mathf.CeilToInt(noiseHeight * frequency) + 1;
         valueGrid = GenerateValueNoiseGrid(gridSizeX, gridSizeY, 1f);
@@ -31,36 +27,35 @@ public class ValueNoise : PerlinNoise
             }
         }
         return _noiseTexture;
-        
     }
 
-    // Éú³ÉValue NoiseµÄ»ù´¡Ëæ»ú¸ñµã
+    // ç”ŸæˆValue Noiseçš„åŸºç¡€éšæœºç½‘æ ¼
     protected float[,] GenerateValueNoiseGrid(int sizeX, int sizeY, float scale) {
         UnityEngine.Random.State originalState = UnityEngine.Random.state;
-        UnityEngine.Random.InitState(seed);//Ëæ»úÖÖ×Ó
+        UnityEngine.Random.InitState(seed); //è®¾ç½®ç§å­
         float[,] grid = new float[sizeX, sizeY];
         for (int x = 0; x < sizeX; x++) {
             for (int y = 0; y < sizeY; y++) {
-                grid[x, y] = UnityEngine.Random.value * scale; // 0-1Ëæ»úÖµ
+                grid[x, y] = UnityEngine.Random.value * scale; // 0-1éšæœºå€¼
             }
         }
         UnityEngine.Random.state = originalState;
         return grid;
     }
 
-    // Ë«ÏßĞÔ²åÖµValue Noise
+    // åŒçº¿æ€§æ’å€¼Value Noise
     protected float GenerateValueNoise(float x, float y, float[,] grid) {
         int x0 = Mathf.FloorToInt(x);
         int y0 = Mathf.FloorToInt(y);
         int x1 = x0 + 1;
         int y1 = y0 + 1;
-        // ±ß½ç´¦Àí
+        // è¾¹ç•Œå¤„ç†
         x0 = Mathf.Clamp(x0, 0, grid.GetLength(0) - 1);
         y0 = Mathf.Clamp(y0, 0, grid.GetLength(1) - 1);
         x1 = Mathf.Clamp(x1, 0, grid.GetLength(0) - 1);
         y1 = Mathf.Clamp(y1, 0, grid.GetLength(1) - 1);
 
-        // ²åÖµ
+        // æ’å€¼
         float fracX = x - x0;
         float fracY = y - y0;
 
@@ -69,24 +64,9 @@ public class ValueNoise : PerlinNoise
         float v01 = grid[x0, y1];
         float v11 = grid[x1, y1];
 
-        // Ë«ÏßĞÔ²åÖµ
+        // åŒçº¿æ€§æ’å€¼
         float a = Mathf.Lerp(v00, v10, fracX);
         float b = Mathf.Lerp(v01, v11, fracX);
         return Mathf.Lerp(a, b, fracY);
     }
-
-
-    protected override Texture2D GenerateOnGPU() {
-        GenerateOnGPUBefore();
-
-        int kernel = shader.FindKernel("CSMain");
-
-        // ·ÖÅäÏß³Ì×é
-        int threadGroupsX = Mathf.CeilToInt(_gpuNoiseTex.width / 8f);
-        int threadGroupsY = Mathf.CeilToInt(_gpuNoiseTex.height / 8f);
-        shader.Dispatch(kernel, threadGroupsX, threadGroupsY, 1);
-
-        return ToTexture2D(_gpuNoiseTex);
-    }
-
 }

@@ -1,40 +1,39 @@
-
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 
-//PerlinNoise ValueNoise»ìºÏÔëÒô
+//PerlinNoise ValueNoiseæ··åˆå™ªå£°
 [CreateAssetMenu(fileName = "FBMPerlinValueNoise", menuName = "NoiseConfig/new FBMPerlinValueNoise")]
 public class FBMPerlinValueNoise : ValueNoise
 {
-    public int octaves = 4;              // ·ÖĞÎ²ãÊı£¬²ãÊıÔ½¶à£¬Ï¸½ÚÔ½·á¸»
-    public float persistence = 0.5f;     // Õñ·ùË¥¼õÏµÊı£¨0-1£©£¬Ô½´ó¸ß²ãÏ¸½ÚÔ½Ç¿
-    public float lacunarity = 2f;        // ÆµÂÊ±¶ÔöÏµÊı£¨>1£©£¬Ô½´ó¸ß²ãÏ¸½ÚÔ½ÃÜ¼¯
-    public float contrastPower = 3f;     // ¶Ô±È¶ÈÔöÇ¿Ö¸Êı£¨>1£©£¬Ô½´óºÚ°×¹ı¶ÉÔ½¼âÈñ
-    public float warpStrength = 15f;     // ×ø±êÅ¤ÇúÇ¿¶È£¬Ô½´óÔëÍ¼Ô½Å¤Çú
-    public float warpFrequency = 0.02f;  // ×ø±êÅ¤ÇúÆµÂÊ£¬Ô½´óÅ¤ÇúÏ¸½ÚÔ½Ğ¡
-    public float perlinWeight = 0.5f;    // PerlinÔëÉùÈ¨ÖØ£¨0-1£©
-    public float valueNoiseWeight = 0.5f;// Value NoiseÈ¨ÖØ£¨0-1£©
-    public float blendFrequency = 0.1f;  // »ìºÏÔëÉùµÄÆµÂÊ
+    [SerializeField] private FBMNoiseConfig fbm = new FBMNoiseConfig();
+
+    public int Octaves { get => fbm.octaves; set => fbm.octaves = value; }
+    public float Persistence { get => fbm.persistence; set => fbm.persistence = value; }
+    public float Lacunarity { get => fbm.lacunarity; set => fbm.lacunarity = value; }
+
+    public float contrastPower = 3f;     // å¯¹æ¯”åº¦å¢å¼ºæŒ‡æ•°
+    public float warpStrength = 15f;     // æ‰­æ›²å¼ºåº¦
+    public float warpFrequency = 0.02f;  // æ‰­æ›²é¢‘ç‡
+    public float perlinWeight = 0.5f;    // Perlinå™ªå£°æƒé‡
+    public float valueNoiseWeight = 0.5f;// Value Noiseæƒé‡
+    public float blendFrequency = 0.1f;  // æ··åˆå™ªå£°é¢‘ç‡
 
 
     protected override Texture2D GenerateOnCPU() {
         for (int x = 0; x < _noiseTexture.width; x++) {
             for (int y = 0; y < _noiseTexture.height; y++) {
-                // µÚÒ»²½£ºÓòÅ¤Çú×ø±ê
+                // ç¬¬ä¸€æ­¥ï¼šè®¡ç®—æ‰­æ›²åæ ‡
                 float warpX = Mathf.PerlinNoise((x + seed) * warpFrequency, (y + seed) * warpFrequency) * warpStrength;
                 float warpY = Mathf.PerlinNoise((x + seed + 100) * warpFrequency, (y + seed + 100) * warpFrequency) * warpStrength;
 
-                // ·ÖĞÎÔëÉùµş¼Ó
+                // è®¡ç®—ä¸¤ç§å™ªå£°
                 float perlinNoise = 0f;
                 float valueNoise = 0f;
                 float freq_tmp = frequency;
                 float amplitude = 1f;
                 float maxAmplitude = 0f;
 
-                for (int i = 0; i < octaves; i++) {
-                    // PerlinÔëÉù
+                for (int i = 0; i < fbm.octaves; i++) {
+                    // Perlinå™ªå£°
                     float pSampleX = (x + warpX) * freq_tmp;
                     float pSampleY = (y + warpY) * freq_tmp;
                     perlinNoise += Mathf.PerlinNoise(pSampleX, pSampleY) * amplitude;
@@ -45,16 +44,16 @@ public class FBMPerlinValueNoise : ValueNoise
                     valueNoise += GenerateValueNoise(vSampleX, vSampleY, valueGrid) * amplitude;
 
                     maxAmplitude += amplitude;
-                    amplitude *= persistence;
-                    freq_tmp *= lacunarity;
+                    amplitude *= fbm.persistence;
+                    freq_tmp *= fbm.lacunarity;
                 }
 
-                // ¹éÒ»»¯²¢»ìºÏÁ½ÖÖÔëÉù
+                // å½’ä¸€åŒ–å’Œæ··åˆæƒé‡
                 perlinNoise /= maxAmplitude;
                 valueNoise /= maxAmplitude;
                 float mixedNoise = (perlinNoise * perlinWeight) + (valueNoise * valueNoiseWeight);
 
-                // ¶Ô±È¶ÈÔöÇ¿ºÍ¶şÖµ»¯
+                // å¯¹æ¯”åº¦å¢å¼ºå’ŒäºŒå€¼åŒ–
                 mixedNoise = Mathf.Pow(mixedNoise, contrastPower);
                 if (isBinary)
                     noiseTexture.SetPixel(x, y, mixedNoise > threshold ? Color.white : Color.black);
@@ -64,25 +63,17 @@ public class FBMPerlinValueNoise : ValueNoise
         }
         return noiseTexture;
     }
-    protected override Texture2D GenerateOnGPU() {
-        GenerateOnGPUBefore();
-        int kernel = shader.FindKernel("CSMain");
 
-        // ´«µİ²ÎÊı
-        shader.SetInt("Octaves", octaves);
-        shader.SetFloat("Persistence", persistence);
-        shader.SetFloat("Lacunarity", lacunarity);
+    protected override void InitShader() {
+        base.InitShader();
+        int kernel = shader.FindKernel("CSMain");
+        shader.SetInt("Octaves", fbm.octaves);
+        shader.SetFloat("Persistence", fbm.persistence);
+        shader.SetFloat("Lacunarity", fbm.lacunarity);
         shader.SetFloat("WarpStrength", warpStrength);
         shader.SetFloat("WarpFrequency", warpFrequency);
         shader.SetFloat("PerlinWeight", perlinWeight);
         shader.SetFloat("ValueNoiseWeight", valueNoiseWeight);
         shader.SetFloat("BlendFrequency", blendFrequency);
-
-        // ·ÖÅäÏß³Ì×é
-        int threadGroupsX = Mathf.CeilToInt(_gpuNoiseTex.width / 8f);
-        int threadGroupsY = Mathf.CeilToInt(_gpuNoiseTex.height / 8f);
-        shader.Dispatch(kernel, threadGroupsX, threadGroupsY, 1);
-
-        return ToTexture2D(_gpuNoiseTex);
     }
 }

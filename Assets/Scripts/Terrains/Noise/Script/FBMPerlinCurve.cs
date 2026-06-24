@@ -1,64 +1,61 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
-//·ÖĞÎµş¼ÓÇúÏß
+//å¤šæ®µçš„åœ°å½¢æ›²çº¿
 [CreateAssetMenu(fileName = "FBMPerlinCurve", menuName = "CurveConfig/new FBMPerlinCurve")]
-
 public class FBMPerlinCurve : CurveConfig
 {
-    [Header("ÇúÏßµş¼Ó²ÎÊı")]
-    public int octaves = 5;          // ÔëÉù²ãÊı
-    public float persistence = 0.4f; // Õñ·ùË¥¼õ
-    public float lacunarity = 2.2f;  // ÆµÂÊ±¶Ôö
-    public float warpIntensity = 2f; // ×ø±êÅ¤ÇúÇ¿¶È£¬£¨Ê¹ÇúÏß³ÊÏÖ²»¹æÔò¸Ğ£©
-    public float peakSharpness = 3f; // ²¨·åÈñ»¯
+    [SerializeField] private FBMNoiseConfig fbm = new FBMNoiseConfig();
+
+    public int Octaves { get => fbm.octaves; set => fbm.octaves = value; }
+    public float Persistence { get => fbm.persistence; set => fbm.persistence = value; }
+    public float Lacunarity { get => fbm.lacunarity; set => fbm.lacunarity = value; }
+
+    public float warpIntensity = 2f; // æ‰­æ›²å¼ºåº¦
+    public float peakSharpness = 3f; // å³°å€¼é”åº¦
 
 
     protected override Texture2D GenerateOnCPU() {
         for (int x = 0; x < noiseWidth; x++) {
-            // ======== 1. ·ÖĞÎÔëÉùµş¼Ó ========
+            // ======== 1. è®¡ç®—åˆ†å½¢å™ªå£° ========
             float totalHeight = 0;
             float freqTmp = frequency;
             float amplitude = 1;
             float maxHeight = 0;
 
-            for (int i = 0; i < octaves; i++) {
-                // ======== 2. ÓòÅ¤Çú×ø±ê ========
+            for (int i = 0; i < fbm.octaves; i++) {
+                // ======== 2. æ‰­æ›²åæ ‡ ========
                 float warpX = x + Mathf.PerlinNoise(x * 0.1f + seed, seed) * warpIntensity;
 
-                // ======== 3. ²ÉÑùÔëÉù ========
+                // ======== 3. åˆ†å½¢å åŠ  ========
                 float noise = Mathf.PerlinNoise(
-                    warpX * freqTmp + seed,  // Ìí¼Ói*100±ÜÃâ¸÷²ãÖØ¸´
+                    warpX * freqTmp + seed,
                     seed
                 );
 
-                // ======== 4. ²¨·åÈñ»¯´¦Àí ========
-                if (i == octaves - 1) {
+                // ======== 4. å³°å€¼é”åŒ–å¤„ç† ========
+                if (i == fbm.octaves - 1) {
                     noise = Mathf.Pow(noise, peakSharpness);
                 }
 
                 totalHeight += noise * amplitude;
                 maxHeight += amplitude;
-                amplitude *= persistence;
-                freqTmp *= lacunarity;
+                amplitude *= fbm.persistence;
+                freqTmp *= fbm.lacunarity;
             }
 
-            // ======== 5. ¹éÒ»»¯²¢¼ÆËã×îÖÕ¸ß¶È ========
+            // ======== 5. å½’ä¸€åŒ–å¹¶è®¡ç®—æœ€ç»ˆé«˜åº¦ ========
             float normalizedHeight = totalHeight / maxHeight;
             int yPos = Mathf.FloorToInt(normalizedHeight * heightMult + heightAdd);
 
-            // ======== 6. ´æ´¢Êı¾İ =========
+            // ======== 6. å­˜å‚¨æ•°æ® ========
             curveData[x] = yPos;
 
-
-            // ======== 7. »æÖÆµØĞÎÏß£¬ÔËĞĞÖĞ¾Í²»»æÖÆÁË£¬½ÚÊ¡ĞÔÄÜ =======
+            // ======== 7. ç»˜åˆ¶æ›²çº¿ï¼ˆå¯é€‰ï¼‰ =======
 #if UNITY_EDITOR
-            if (EditorApplication.isPlaying) return noiseTexture;
-            for (int y = yPos - 2; y <= yPos + 2; y++) { // »æÖÆ5ÏñËØ´ÖµÄÏßÌõ
+            if (UnityEditor.EditorApplication.isPlaying) return noiseTexture;
+            for (int y = yPos - 2; y <= yPos + 2; y++) {
                 if (y >= 0 && y < noiseHeight) {
-                    float gradient = 1 - Mathf.Abs(y - yPos) / 2f; // ½¥±äÍ¸Ã÷¶È
+                    float gradient = 1 - Mathf.Abs(y - yPos) / 2f;
                     noiseTexture.SetPixel(x, y, Color.Lerp(noiseTexture.GetPixel(x, y), Color.white, gradient));
                 }
             }
@@ -66,20 +63,22 @@ public class FBMPerlinCurve : CurveConfig
         }
         return noiseTexture;
     }
+
+    protected override void InitShader() {
+        base.InitShader();
+        int kernel = shader.FindKernel("CSMain");
+        shader.SetInt("Octaves", fbm.octaves);
+        shader.SetFloat("Persistence", fbm.persistence);
+        shader.SetFloat("Lacunarity", fbm.lacunarity);
+        shader.SetFloat("WarpIntensity", warpIntensity);
+        shader.SetFloat("PeakSharpness", peakSharpness);
+    }
+
     protected override Texture2D GenerateOnGPU() {
 
         GenerateOnGPUBefore();
-
         int kernel = shader.FindKernel("CSMain");
-
-        // ´«µİ²ÎÊı
-        shader.SetInt("Octaves", octaves);
-        shader.SetFloat("Persistence", persistence);
-        shader.SetFloat("Lacunarity", lacunarity);
-        shader.SetFloat("WarpIntensity", warpIntensity);
-        shader.SetFloat("PeakSharpness", peakSharpness);
-
-        // ·ÖÅäÏß³Ì×é
+        // åˆ†é…çº¿ç¨‹ç»„
         int threadGroupsX = Mathf.CeilToInt(_gpuNoiseTex.width / 8f);
         int threadGroupsY = Mathf.CeilToInt(_gpuNoiseTex.height / 8f);
         shader.Dispatch(kernel, threadGroupsX, threadGroupsY, 1);

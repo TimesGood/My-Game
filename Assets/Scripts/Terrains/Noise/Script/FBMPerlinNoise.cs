@@ -1,21 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.Entities.UniversalDelegates;
 using UnityEngine;
 
-//ÔëÒôµþ¼ÓÅäÖÃ
+//åˆ†å½¢æŸæž—å™ªå£°
 [CreateAssetMenu(fileName = "FBMPerlinNoise", menuName = "NoiseConfig/new FBMPerlinNoise")]
 public class FBMPerlinNoise : PerlinNoise {
-    public int octaves = 4;              // ·ÖÐÎ²ãÊý£¬²ãÊýÔ½¶à£¬Ï¸½ÚÔ½·á¸»
-    [Range(0, 1)]
-    public float persistence = 0.5f;     // Õñ·ùË¥¼õÏµÊý£¨0-1£©£¬Ô½´ó¸ß²ãÏ¸½ÚÔ½Ç¿
-    [Min(2)]
-    public float lacunarity = 2f;        // ÆµÂÊ±¶ÔöÏµÊý£¨>1£©£¬Ô½´ó¸ß²ãÏ¸½ÚÔ½ÃÜ¼¯
-    public float scale = 1f;     // ×ø±êÅ¤ÇúÇ¿¶È£¬Ô½´óÔëÍ¼Ô½Å¤Çú
+    [SerializeField] private FBMNoiseConfig fbm = new FBMNoiseConfig();
 
+    // å…¬å¼€ FBM å‚æ•°è®¿é—®å™¨
+    public int Octaves { get => fbm.octaves; set => fbm.octaves = value; }
+    public float Persistence { get => fbm.persistence; set => fbm.persistence = value; }
+    public float Lacunarity { get => fbm.lacunarity; set => fbm.lacunarity = value; }
+    public float Scale { get => fbm.scale; set => fbm.scale = value; }
 
     protected override Texture2D GenerateOnCPU() {
-
         for (int x = 0; x < _noiseTexture.width; x++) {
             for (int y = 0; y < _noiseTexture.height; y++) {
                 float noiseValue = 0;
@@ -23,17 +19,17 @@ public class FBMPerlinNoise : PerlinNoise {
                 float amplitude = 1;
                 float maxAmplitude = 0;
 
-                for (int i = 0; i < octaves; i++) {
-                    float sampleX = (x - noiseWidth) / scale * freq_tmp + seed;
-                    float sampleY = (y - noiseHeight) / scale * freq_tmp + seed;
+                for (int i = 0; i < fbm.octaves; i++) {
+                    float sampleX = x / fbm.scale * freq_tmp + seed;
+                    float sampleY = y / fbm.scale * freq_tmp + seed;
                     noiseValue += (Mathf.PerlinNoise(sampleX, sampleY) * 2 - 1) * amplitude;
                     maxAmplitude += amplitude;
-                    amplitude *= persistence;
-                    freq_tmp *= lacunarity;
+                    amplitude *= fbm.persistence;
+                    freq_tmp *= fbm.lacunarity;
                 }
-                noiseValue /= maxAmplitude; // ¹éÒ»»¯µ½[0,1]
+                noiseValue /= maxAmplitude; // å½’ä¸€åŒ–åˆ°[0,1]
 
-                // µÚËÄ²½£º¶þÖµ»¯
+                // æ ¹æ®å‚æ•°è®¾ç½®åƒç´ å€¼
                 if (isBinary)
                     _noiseTexture.SetPixel(x, y, noiseValue > threshold ? Color.white : Color.black);
                 else
@@ -43,24 +39,9 @@ public class FBMPerlinNoise : PerlinNoise {
         return _noiseTexture;
     }
 
-    protected override Texture2D GenerateOnGPU() {
-        GenerateOnGPUBefore();
+    protected override void InitShader() {
+        base.InitShader();
         int kernel = shader.FindKernel("CSMain");
-
-        // ´«µÝ²ÎÊý
-        shader.SetInt("Octaves", octaves);
-        shader.SetFloat("Persistence", persistence);
-        shader.SetFloat("Lacunarity", lacunarity);
-        shader.SetFloat("Scale", scale);
-        shader.SetInt("Width", noiseWidth);
-        shader.SetInt("Height", noiseHeight);
-
-        // ·ÖÅäÏß³Ì×é
-        int threadGroupsX = Mathf.CeilToInt(_gpuNoiseTex.width / 8f);
-        int threadGroupsY = Mathf.CeilToInt(_gpuNoiseTex.height / 8f);
-        shader.Dispatch(kernel, threadGroupsX, threadGroupsY, 1);
-
-        return ToTexture2D(_gpuNoiseTex);
+        fbm.SetShaderParams(shader, kernel, noiseWidth, noiseHeight);
     }
-
 }

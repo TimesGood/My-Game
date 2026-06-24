@@ -66,8 +66,9 @@ MonoBehaviour:
   seed: 0
   openGPU: 1
   isBinary: 0
-  frequency: 0.02
-  threshold: 0.06
+  frequency: 0.024
+  threshold: 0.104
   offset: 0
-  shader: {fileID: 7200000, guid: 07131ac71d01d214db9856f04e1b21bc, type: 3}
+  <shader>k__BackingField: {fileID: 7200000, guid: 07131ac71d01d214db9856f04e1b21bc, type: 3}
   returnType: 0
+  isFlip: 0

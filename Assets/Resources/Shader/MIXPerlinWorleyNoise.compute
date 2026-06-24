@@ -5,6 +5,8 @@
 RWTexture2D<float4> NoiseTexture;
 float PerlinFrequency;
 float WorleyFrequency;
+int WorleyReturnType;
+bool WorleyFlip;
 float Threshold;
 float Weight;
 float Scale;
@@ -25,6 +27,8 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         id.xy + float2(Offset, Offset),
         PerlinFrequency,
         WorleyFrequency,
+        WorleyReturnType,
+        WorleyFlip,
         Weight,
         Octaves,
         Persistence,

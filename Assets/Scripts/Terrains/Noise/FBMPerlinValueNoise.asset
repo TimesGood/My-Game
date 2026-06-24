@@ -65,17 +65,19 @@ MonoBehaviour:
   noiseHeight: 1000
   seed: 0
   openGPU: 1
-  isBinary: 1
-  frequency: 0.04
-  threshold: 0.385
+  isBinary: 0
+  frequency: 0.026
+  threshold: 0.064
   offset: 1
-  shader: {fileID: 7200000, guid: 6283de4af84df824c8af49afbdff226b, type: 3}
-  octaves: 3
-  persistence: 0.02
-  lacunarity: 2
-  contrastPower: 2
-  warpStrength: 9.34
+  <shader>k__BackingField: {fileID: 7200000, guid: 6283de4af84df824c8af49afbdff226b, type: 3}
+  fbm:
+    octaves: 4
+    persistence: 0.5
+    lacunarity: 2
+    scale: 1
+  contrastPower: 2.55
+  warpStrength: 3.22
   warpFrequency: 0.56
-  perlinWeight: 0.7
-  valueNoiseWeight: 0.11
-  blendFrequency: 0.04
+  perlinWeight: 0.43
+  valueNoiseWeight: 0.26
+  blendFrequency: 0.08

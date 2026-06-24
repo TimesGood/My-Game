@@ -1,35 +1,37 @@
 using UnityEngine;
 
-//Éú³É¹Ì¶¨Í¼
+//ç”Ÿæˆå›ºå®šå›¾
 
 [CreateAssetMenu(fileName = "FixedPointNoise", menuName = "NoiseConfig/FixedPoint")]
 public class FixedPointNoise : PerlinNoise {
     [Header("Fixed Points")]
-    public int fixedPointX1 = 50;    // µÚÒ»¸ö¹Ì¶¨µãX×ø±ê
-    public int fixedPointX2 = 150;   // µÚ¶ş¸ö¹Ì¶¨µãX×ø±ê
-    public float connectionSlope = 0.3f; // Á¬½ÓÆÂ¶È¿ØÖÆ
+    public int fixedPointX1 = 50;    // ç¬¬ä¸€ä¸ªå›ºå®šç‚¹Xåæ ‡
+    public int fixedPointX2 = 150;   // ç¬¬äºŒä¸ªå›ºå®šç‚¹Xåæ ‡
+    public float connectionSlope = 0.3f; // è¿æ¥æ®µæ–œç‡æ§åˆ¶
+
+    protected override bool SupportsGPU => false;
 
     protected override Texture2D GenerateOnCPU() {
 
-        // ==== ²½Öè2: Éú³É»ù´¡·ÖĞÎÔëÉù ====
+        // ==== æ­¥éª¤2: ç”ŸæˆåŸºç¡€åˆ†å½¢å™ªå£° ====
         float[] baseNoise = GenerateFractalNoise();
 
-        // ==== ²½Öè3: Ç¿ÖÆÉèÖÃ¹Ì¶¨µã ====
+        // ==== æ­¥éª¤3: å¼ºåˆ¶è®¾ç½®å›ºå®šç‚¹ ====
         EnforceFixedPoints(baseNoise);
 
-        // ==== ²½Öè4: Ó¦ÓÃÁ¬½ÓÇúÏß ====
+        // ==== æ­¥éª¤4: åº”ç”¨è¿æ¥æ›²çº¿ ====
         ApplyConnectionCurve(baseNoise);
 
-        // ==== ²½Öè5: äÖÈ¾µ½ÎÆÀí ====
+        // ==== æ­¥éª¤5: æ¸²æŸ“åˆ°çº¹ç† ====
         RenderToTexture(baseNoise);
         return _noiseTexture;
     }
 
-    // Éú³É·ÖĞÎÔëÉù£¨´ø¸ß¶ÈÔ¼Êø£©
+    // ç”Ÿæˆåˆ†å½¢å™ªå£°ï¼ˆé«˜åº¦çº¦æŸï¼‰
     private float[] GenerateFractalNoise() {
         float[] noise = new float[noiseWidth];
         for (int x = 0; x < noiseWidth; x++) {
-            // ·ÖĞÎÔëÉùµş¼Ó
+            // å¤šå±‚å åŠ å™ªå£°
             float total = 0;
             float freq = frequency;
             float amp = 1;
@@ -44,24 +46,24 @@ public class FixedPointNoise : PerlinNoise {
                 amp *= 0.5f;
             }
 
-            // ¹éÒ»»¯²¢Ô¼Êø¸ß¶È
+            // å½’ä¸€åŒ–å¹¶çº¦æŸé«˜åº¦
             noise[x] = Mathf.Clamp01(total / maxAmp) * (noiseHeight - 10);
         }
         return noise;
     }
 
-    // Ç¿ÖÆÉèÖÃ¹Ì¶¨¶¥µã
+    // å¼ºåˆ¶è®¾ç½®å›ºå®šç‚¹å€¼
     private void EnforceFixedPoints(float[] baseNoise) {
-        // ÉèÖÃ¹Ì¶¨µã¸ß¶ÈÎª×î´óÖµ
+        // è®¾ç½®å›ºå®šç‚¹é«˜åº¦ä¸ºæœ€å¤§å€¼
         baseNoise[fixedPointX1] = noiseHeight - 1;
         baseNoise[fixedPointX2] = noiseHeight - 1;
 
-        // Æ½»¬¹ı¶ÉÇøÓò
+        // å¹³æ»‘è¿‡æ¸¡åŒºåŸŸ
         SmoothTransition(fixedPointX1 - 10, fixedPointX1 + 10, baseNoise);
         SmoothTransition(fixedPointX2 - 10, fixedPointX2 + 10, baseNoise);
     }
 
-    // Æ½»¬¹ı¶É´¦Àí
+    // å¹³æ»‘è¿‡æ¸¡
     private void SmoothTransition(int startX, int endX, float[] noise) {
         startX = Mathf.Clamp(startX, 0, noiseWidth - 1);
         endX = Mathf.Clamp(endX, 0, noiseWidth - 1);
@@ -72,7 +74,7 @@ public class FixedPointNoise : PerlinNoise {
         }
     }
 
-    // Ó¦ÓÃÁ¬½ÓÇúÏß£¨¶ş´Î±´Èû¶û£©
+    // åº”ç”¨è¿æ¥æ›²çº¿ï¼ˆäºŒæ¬¡è´å¡å°”æ›²çº¿ï¼‰
     private void ApplyConnectionCurve(float[] noise) {
         Vector2 p0 = new Vector2(fixedPointX1, noiseHeight - 1);
         Vector2 p2 = new Vector2(fixedPointX2, noiseHeight - 1);
@@ -81,7 +83,7 @@ public class FixedPointNoise : PerlinNoise {
         for (int x = fixedPointX1; x <= fixedPointX2; x++) {
             float t = (x - p0.x) / (p2.x - p0.x);
             float y = QuadraticBezier(p0.y, p1.y, p2.y, t);
-            noise[x] = Mathf.Max(noise[x], y); // È·±£Á¬½ÓÏß¸ßÓÚÆäËûÇøÓò
+            noise[x] = Mathf.Max(noise[x], y); // ç¡®ä¿æ›²çº¿é«˜äºåŸºç¡€å™ªå£°
         }
     }
 
@@ -89,7 +91,7 @@ public class FixedPointNoise : PerlinNoise {
         return Mathf.Pow(1 - t, 2) * a + 2 * (1 - t) * t * b + Mathf.Pow(t, 2) * c;
     }
 
-    // äÖÈ¾¸ß¶ÈÊı¾İµ½ÎÆÀí
+    // æ¸²æŸ“é«˜åº¦æ•°æ®åˆ°çº¹ç†
     private void RenderToTexture(float[] heights) {
         for (int x = 0; x < noiseWidth; x++) {
             int yPos = Mathf.FloorToInt(heights[x]);
@@ -99,10 +101,5 @@ public class FixedPointNoise : PerlinNoise {
             }
         }
         _noiseTexture.Apply();
-    }
-
-
-    protected override Texture2D GenerateOnGPU() {
-        throw new System.Exception("´ËÔëÉùÉú³ÉÆ÷Î´ÊµÏÖGPUÉú³É!");
     }
 }

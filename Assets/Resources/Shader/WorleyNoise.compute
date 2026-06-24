@@ -8,6 +8,7 @@ float Threshold;
 int Seed;
 bool IsBinary;
 int ReturnType;
+bool IsFlip;
 float Offset;
 
 [numthreads(8,8,1)]
@@ -15,7 +16,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 {
     float2 uv = (id.xy + float2(Seed, Seed) + float2(Offset, Offset)) * Frequency;
 
-    float noiseValue = worleyNoise(uv, ReturnType);
+    float noiseValue = worleyNoise(uv, ReturnType, IsFlip);
 
 
     float4 color;

@@ -89,9 +89,9 @@ float valueNoise(float2 uv)
 
 //--------------------------
 // Worley噪声（细胞噪声）
-// returnType：返回类型
+// returnType：返回类型 0 细胞 1 岩石
 //--------------------------
-float worleyNoise(float2 uv, int returnType)
+float worleyNoise(float2 uv, int returnType, bool isFlip)
 {
 
     float F1 = 1e5;
@@ -119,15 +119,24 @@ float worleyNoise(float2 uv, int returnType)
         }
     
     }
+    float result;
+    
     switch (returnType) {
         case 0:
-            return F1;
+            result = F1;
+            break;
         case 1:
-            return F2 - F1;
+            result = F2 - F1;
+            break;
         default:
-            return F1;
+            result = F1;
+            break;
     }
+    
+    // 反转
+    result = isFlip ? 1 - result : result;
 
+    return result;
 
 }
 
@@ -217,6 +226,7 @@ float FBMWorleyNoise(
     uint width,
     uint height,
     int returnType,
+    bool isFlip,
     int seed
 ) {
     //uv缩放
@@ -232,7 +242,7 @@ float FBMWorleyNoise(
     [unroll(8)] // 显式展开循环提升性能
     for (int i = 0; i < octaves; i++) {
         float2 samplePos = scaleUv * frequency + float2(seed, seed);
-        float noise = worleyNoise(samplePos, returnType);
+        float noise = worleyNoise(samplePos, returnType, isFlip);
         noiseValue += noise * amplitude;
         maxAmplitude += amplitude;
         amplitude *= persistence;
@@ -241,6 +251,38 @@ float FBMWorleyNoise(
     
     return saturate(noiseValue / maxAmplitude);
 }
+
+//--------------------------
+// Perlin-Value噪声混合
+//--------------------------
+float MIXPerlinValueNoise(
+    float2 uv,
+    float perlinFrequency, //柏林频率
+    float perlinThreshold,
+    float valueFrequency, //细胞频率
+    float valueThreshold,
+    bool isBinary,
+    float weight, //噪声权重（0-1）
+    int octaves,
+    float persistence,
+    float lacunarity,
+    float scale,
+    uint width,
+    uint height,
+    int seed
+)
+{
+    // Perlin噪声添加细节
+    float perlin = snoise((uv + float2(seed, seed)) * perlinFrequency);
+    
+    // value噪声
+    float value = valueNoise((uv + float2(seed, seed)) * valueFrequency);
+    
+    float perlinWeight = 1 - weight;
+
+    return value * weight + perlin * perlinWeight;
+}
+
 
 //--------------------------
 // Perlin-Value噪声混合
@@ -302,6 +344,8 @@ float MIXPerlinWorleyNoise(
     float2 uv,
     float perlinFrequency,//柏林频率
     float worleyFrequency,//细胞频率
+    int worleyReturnType,
+    bool worleyFlip,
     float weight,//噪声权重（0-1）
     int octaves,
     float persistence,
@@ -313,8 +357,8 @@ float MIXPerlinWorleyNoise(
 ) {
     
     // Worley噪声生成洞穴轮廓
-    float worley = 1 - FBMWorleyNoise(
-       uv.xy, worleyFrequency, octaves, persistence, lacunarity, scale, width, height, 0, seed
+    float worley = FBMWorleyNoise(
+       uv.xy, worleyFrequency, octaves, persistence, lacunarity, scale, width, height, worleyReturnType, worleyFlip, seed
     );
     
     // Perlin噪声添加细节
@@ -324,9 +368,48 @@ float MIXPerlinWorleyNoise(
     float perlin = FBMPerlinNoise(
        uv.xy, perlinFrequency, octaves, persistence, lacunarity, scale, width, height, seed
     );
-    float worleyWeight = 1 - weight;
+    float perlinWeight = 1 - weight;
 
-    return worley * worleyWeight + perlin * weight;
+    return worley * weight + perlin * perlinWeight;
+    
+    
+}
+
+//--------------------------
+// Value-Worley噪声混合
+//--------------------------
+float MIXValueWorleyNoise(
+    float2 uv,
+    float valueFrequency, //柏林频率
+    float worleyFrequency, //细胞频率
+    int worleyReturnType,
+    bool worleyFlip,
+    float weight, //噪声权重（0-1）
+    int octaves,
+    float persistence,
+    float lacunarity,
+    float scale,
+    uint width,
+    uint height,
+    int seed
+)
+{
+    
+    // Worley噪声生成洞穴轮廓
+    float worley = FBMWorleyNoise(
+       uv.xy, worleyFrequency, octaves, persistence, lacunarity, scale, width, height, worleyReturnType, worleyFlip, seed
+    );
+    
+    // Perlin噪声添加细节
+    //float perlin = snoise(
+    //   uv.xy * perlinFrequency
+    //);
+    float value = FBMValueNoise(
+       uv.xy, valueFrequency, octaves, persistence, lacunarity, scale, width, height, seed
+    );
+    float valueWeight = 1 - weight;
+
+    return worley * weight + value * valueWeight;
     
     
 }

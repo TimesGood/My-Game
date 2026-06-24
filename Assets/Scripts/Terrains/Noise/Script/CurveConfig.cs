@@ -1,18 +1,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
-//ÇúÏßÍ¼
+//æ›²çº¿å›¾
 public abstract class CurveConfig : NoiseConfig
 {
-    [Header("ÇúÏß»ù´¡²ÎÊı")]
-    public float frequency;              // ÆµÂÊ
-    public float heightMult = 50f;       // ÏŞ¸ß
-    public float heightAdd =10f;         // ²¹³ä
-    public float offset;                 // ÔëÍ¼Æ«ÒÆ£¨±ÜÃâÍ¬²ÎÊıÇé¿öÉú³ÉÒ»ÖÂµÄÔëÍ¼£©
-    protected float[] curveData;         // ÇúÏßÊı¾İ
+    [Header("æ›²çº¿åŸºç¡€å‚æ•°")]
+    public float frequency;              // é¢‘ç‡
+    public float heightMult = 50f;       // é™é«˜
+    public float heightAdd =10f;         // è¡¥å……
+    public float offset;                 // å™ªå›¾åç§»ï¼ˆé¿å…åŒå‚æ•°æƒ…å†µç”Ÿæˆä¸€è‡´çš„å™ªå›¾ï¼‰
+    protected float[] curveData;         // æ›²çº¿æ•°æ®
     protected RenderTexture _gpuNoiseTex;
     [field: SerializeField] protected ComputeShader shader;
     protected ComputeBuffer curveBuffer;
@@ -20,7 +19,7 @@ public abstract class CurveConfig : NoiseConfig
 
     protected override void GenerateBefore() {
         base.GenerateBefore();
-        // ÉèÖÃ´¿ºÚÉ«ÏñËØ±³¾°
+        // è®¾ç½®çº¯é»‘è‰²åƒç´ èƒŒæ™¯
         Color[] colors = new Color[noiseWidth * noiseHeight];
         for (int i = 0; i < colors.Length; i++) {
             colors[i] = Color.black;
@@ -28,10 +27,10 @@ public abstract class CurveConfig : NoiseConfig
         _noiseTexture.SetPixels(colors);
         _noiseTexture.Apply();
 
-        // ³õÊ¼»¯ÇúÏßÊı×é
+        // åˆå§‹åŒ–æ›²çº¿æ•°ç»„
         curveData = new float[noiseWidth];
     }
-    //»ñÈ¡Ö¸¶¨XÖáÇúÏßÊı¾İ
+    //è·å–æŒ‡å®šXè½´æ›²çº¿æ•°æ®
     public float GetHeight(int x) {
 
         return curveData[x];
@@ -41,7 +40,7 @@ public abstract class CurveConfig : NoiseConfig
         return curveData;
     }
 
-    //´´½¨¿ÉĞ´ÎÆÀí
+    //åˆ›å»ºå¯å†™çº¹ç†
     private void InitializeTexture() {
         if (_gpuNoiseTex != null) _gpuNoiseTex.Release();
 
@@ -52,10 +51,10 @@ public abstract class CurveConfig : NoiseConfig
         };
         _gpuNoiseTex.Create();
     }
-    private void InitShader() {
-        if (shader == null) throw new Exception("Çë°ó¶¨×ÅÉ«Æ÷!");
+    protected virtual void InitShader() {
+        if (shader == null) throw new Exception("è¯·ç»‘å®šç€è‰²å™¨!");
         int kernel = shader.FindKernel("CSMain");
-        // ´«µİ²ÎÊı£¨²»ÔÙĞèÒª ComputeBuffer£©
+        // ä¼ é€’å‚æ•°ï¼ˆä¸å†éœ€è¦ ComputeBufferï¼‰
         shader.SetTexture(kernel, "NoiseTexture", _gpuNoiseTex);
         shader.SetFloat("Frequency", frequency);
         shader.SetFloat("HeightMult", heightMult);
@@ -73,8 +72,15 @@ public abstract class CurveConfig : NoiseConfig
     }
     protected void DestroyResource() {
         curveBuffer?.Release();
+        curveBuffer = null;
         if (_gpuNoiseTex != null) {
             _gpuNoiseTex.Release();
+            UnityEngine.Object.DestroyImmediate(_gpuNoiseTex);
+            _gpuNoiseTex = null;
         }
+    }
+
+    private void OnDestroy() {
+        DestroyResource();
     }
 }

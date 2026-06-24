@@ -71,8 +71,10 @@ MonoBehaviour:
   heightAdd: 600
   offset: 0
   shader: {fileID: 7200000, guid: e1f355635b55cff449fc8b8be1a754c7, type: 3}
-  octaves: 4
-  persistence: 0.3
-  lacunarity: 3.81
-  warpIntensity: 1.44
-  peakSharpness: 1
+  fbm:
+    octaves: 4
+    persistence: 0.288
+    lacunarity: 2
+    scale: 1
+  warpIntensity: 2.27
+  peakSharpness: 3

@@ -1,29 +1,27 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
-//Ï¸°û×´ÔëÒôÍ¼
+//ç»†èƒå™ªå£°
 [CreateAssetMenu(fileName = "WorleyNoise", menuName = "NoiseConfig/new WorleyNoise")]
-public class WorleyNoise : PerlinNoise
+public class WorleyNoise : TextureNoiseBase
 {
-
     public int returnType = 0;
+    public bool isFlip;
+
+    protected override bool SupportsCPU => false;
 
     protected override Texture2D GenerateOnCPU() {
-        throw new System.Exception("´ËÉú³ÉÆ÷Î´ÊµÏÖCPUÉú³É£¡");
+        throw new Exception("Worleyå™ªå£°æœªå®ç°CPUç”Ÿæˆï¼");
     }
 
-    protected override Texture2D GenerateOnGPU() {
-        GenerateOnGPUBefore();
-        int kernel = shader.FindKernel("CSMain");
-
+    protected override void InitShader() {
+        base.InitShader();
         shader.SetInt("ReturnType", returnType);
+        shader.SetBool("IsFlip", isFlip);
+    }
 
-        // ·ÖÅäÏß³Ì×é
-        int threadGroupsX = Mathf.CeilToInt(_gpuNoiseTex.width / 8f);
-        int threadGroupsY = Mathf.CeilToInt(_gpuNoiseTex.height / 8f);
-        shader.Dispatch(kernel, threadGroupsX, threadGroupsY, 1);
-
-        return ToTexture2D(_gpuNoiseTex);
+    public enum WorleyType {
+        CELL,
+        ROCK
     }
 }

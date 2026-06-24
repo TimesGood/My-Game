@@ -6,11 +6,11 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Random = UnityEngine.Random;
 
-//¶¥µãÉú³ÉÏŞÖÆÀàĞÍ
+//é¡¶ç‚¹ç”Ÿæˆé™åˆ¶ç±»å‹
 public enum LimitType {
-    Circle,//Ô²
-    Ellipse,//ÍÖÔ²
-    Rect//¾ØĞÎ
+    Circle,//åœ†
+    Ellipse,//æ¤­åœ†
+    Rect//çŸ©å½¢
 }
 
 [CreateAssetMenu(fileName = "ShapeGenerator", menuName = "NoiseConfig/new ShapeGenerator")]
@@ -18,45 +18,45 @@ public class ShapeGenerator : NoiseConfig {
 
 
 
-    [Header("¶à±ßĞÎÉèÖÃ")]
-    public int vertexCount = 5;          // ¶à±ßĞÎ¶¥µãÊı
-    public Vector2 offset = new Vector2(0, 0);//ÕûÌåÍ¼ĞÎÆ«ÒÆ
-    public bool fillPolygon = true;      // Ìî³ä¶à±ßĞÎ
+    [Header("å¤šè¾¹å½¢è®¾ç½®")]
+    public int vertexCount = 5;          // å¤šè¾¹å½¢é¡¶ç‚¹æ•°
+    public Vector2 offset = new Vector2(0, 0);//æ•´ä½“å›¾å½¢åç§»
+    public bool fillPolygon = true;      // å¡«å……å¤šè¾¹å½¢
     [Space]
     public LimitType limitType = LimitType.Circle;
-    [Header("Ô²ĞÎ¶¥µã·¶Î§ÏŞÖÆ")]
-    public float circleRadius = 100;      // ¶¥µãËæ»úÉú³ÉÍâÔ²°ë¾¶
+    [Header("åœ†å½¢é¡¶ç‚¹èŒƒå›´é™åˆ¶")]
+    public float circleRadius = 100;      // é¡¶ç‚¹éšæœºç”Ÿæˆå¤–åœ†åŠå¾„
     [Range(0.001f, 1)]
-    public float circleRange = 0.8f;     // °ë¾¶·¶Î§
-    [Header("ÍÖÔ²¶¥µã·¶Î§ÏŞÖÆ")]
-    public float ellipseRadius = 150f;     // ÍÖÔ²»ù´¡°ë¾¶
+    public float circleRange = 0.8f;     // åŠå¾„èŒƒå›´
+    [Header("æ¤­åœ†é¡¶ç‚¹èŒƒå›´é™åˆ¶")]
+    public float ellipseRadius = 150f;     // æ¤­åœ†åŸºç¡€åŠå¾„
     [Range(0.001f, 1)]
     public float ellipseRange = 0.8f;  
-    public Vector2 ellipseScale = new Vector2(1, 1);  // ÍÖÔ²XYÖáËõ·Å
-    [Range(0, 1)] public float edgeBias = 0.5f; // ·Ö²¼Æ«Ïò£¨0=¿¿½üÄÚÈ¦£¬1=¿¿½üÍâÈ¦£©
-    [Header("·½ĞÎ¶¥µã·¶Î§ÏŞÖÆ")]
+    public Vector2 ellipseScale = new Vector2(1, 1);  // æ¤­åœ†XYè½´ç¼©æ”¾
+    [Range(0, 1)] public float edgeBias = 0.5f; // åˆ†å¸ƒåå‘ï¼ˆ0=é è¿‘å†…åœˆï¼Œ1=é è¿‘å¤–åœˆï¼‰
+    [Header("æ–¹å½¢é¡¶ç‚¹èŒƒå›´é™åˆ¶")]
     public Vector2 rectSize = new Vector2(100, 100);
     [Range(0.001f, 1)]
     public float rectRange = 0.8f;
-    [Header("²Ã¼ô")]
-    public Vector2 leftLower = new Vector2(0, 0);   //²Ã¼ô×óÏÂµãÎ»
-    public Vector2 rightUpper = new Vector2(100, 100);//²Ã¼ôÓÒÉÏµãÎ»
+    [Header("è£å‰ª")]
+    public Vector2 leftLower = new Vector2(0, 0);   //è£å‰ªå·¦ä¸‹ç‚¹ä½
+    public Vector2 rightUpper = new Vector2(100, 100);//è£å‰ªå³ä¸Šç‚¹ä½
     [Space]
-    [Header("±´Èû¶ûÇúÏß¿ØÖÆ")]
-    [Range(0, 1)] public float bezierStrength = 0.3f; // ÇúÏßÍäÇúÇ¿¶È
-    [Range(3, 64)] public int bezierSegments = 16;    // Ã¿±ßÇúÏß·Ö¶ÎÊı
-    public bool useBezierCurves = false;   //¿ªÆô±´Èû¶ûÇúÏß
-    [Header("PerlinÇúÏß¿ØÖÆ")]
-    public float perlinFrequency = 0.05f;  // ÆµÂÊ
-    public float perlinAmplitude = 20f;    // ·ù¶È
+    [Header("è´å¡å°”æ›²çº¿æ§åˆ¶")]
+    [Range(0, 1)] public float bezierStrength = 0.3f; // æ›²çº¿å¼¯æ›²å¼ºåº¦
+    [Range(3, 64)] public int bezierSegments = 16;    // æ¯è¾¹æ›²çº¿åˆ†æ®µæ•°
+    public bool useBezierCurves = false;   //å¼€å¯è´å¡å°”æ›²çº¿
+    [Header("Perlinæ›²çº¿æ§åˆ¶")]
+    public float perlinFrequency = 0.05f;  // é¢‘ç‡
+    public float perlinAmplitude = 20f;    // å¹…åº¦
     [Min(1)]
-    public int perlinSegments = 10;   //²ÉÑù·Ö¶Î£¬Ã¿¸ôseagmentCount¸öµã²ÉÑùÒ»´Î£¬·Ö¶ÎÔ½¸ßÔ½Ç÷ÓÚÔ­Ê¼Í¼Ïñ
+    public int perlinSegments = 10;   //é‡‡æ ·åˆ†æ®µï¼Œæ¯éš”seagmentCountä¸ªç‚¹é‡‡æ ·ä¸€æ¬¡ï¼Œåˆ†æ®µè¶Šé«˜è¶Šè¶‹äºåŸå§‹å›¾åƒ
     public bool usePerlinCurves = false;
-    [Header("ÇúÏßµş¼Ó")]
+    [Header("æ›²çº¿å åŠ ")]
     [Range(1, 5)]
-    public int octaves = 1;          // ÔëÉù²ãÊı
-    public float persistence = 0.4f; // Õñ·ùË¥¼õ
-    public float lacunarity = 2.2f;  // ÆµÂÊ±¶Ôö
+    public int octaves = 1;          // å™ªå£°å±‚æ•°
+    public float persistence = 0.4f; // æŒ¯å¹…è¡°å‡
+    public float lacunarity = 2.2f;  // é¢‘ç‡å€å¢
 
 
 
@@ -69,27 +69,27 @@ public class ShapeGenerator : NoiseConfig {
         return _noiseTexture;
     }
 
-    //=== Ëæ»ú¶à±ßĞÎÉú³É ===//
+    //=== éšæœºå¤šè¾¹å½¢ç”Ÿæˆ ===//
     private void GenerateRandomPolygon(Texture2D tex) {
         Random.State originalState = Random.state;
-        Random.InitState((int)seed);//Ëæ»úÖÖ×Ó
+        Random.InitState((int)seed);//éšæœºç§å­
 
         Vector2[] vertices = GenerateRandomPolygonVertex();
 
-        // »æÖÆ²¢Ìî³ä
+        // ç»˜åˆ¶å¹¶å¡«å……
         DrawShape(tex, vertices, Color.white);
 
         //ApplyDistortion();
         Random.state = originalState;
     }
 
-    //Éú³É¶à±ßĞÎËæ»ú¶¥µã
+    //ç”Ÿæˆå¤šè¾¹å½¢éšæœºé¡¶ç‚¹
     private Vector2[] GenerateRandomPolygonVertex() {
-        Vector2[] vertices = new Vector2[vertexCount];//¶¥µã¼¯ºÏ
+        Vector2[] vertices = new Vector2[vertexCount];//é¡¶ç‚¹é›†åˆ
         
-        Vector2 center = new Vector2(noiseWidth / 2, noiseHeight / 2) + offset;//ÖĞµã
+        Vector2 center = new Vector2(noiseWidth / 2, noiseHeight / 2) + offset;//ä¸­ç‚¹
 
-        //¶¥µãÉú³É
+        //é¡¶ç‚¹ç”Ÿæˆ
         switch (limitType) {
             case LimitType.Circle:
                 GenerateCircleVertex(center, vertices);
@@ -105,7 +105,7 @@ public class ShapeGenerator : NoiseConfig {
         }
 
 
-        // °´¼«½ÇÅÅĞò¶¥µã
+        // æŒ‰æè§’æ’åºé¡¶ç‚¹
         System.Array.Sort(vertices, (a, b) =>
             Mathf.Atan2(a.y - center.y, a.x - center.x).CompareTo(
             Mathf.Atan2(b.y - center.y, b.x - center.x)));
@@ -113,32 +113,32 @@ public class ShapeGenerator : NoiseConfig {
         return vertices;
     }
 
-    //Éú³É¾ØÕóÏŞÖÆ¶¥µã
+    //ç”ŸæˆçŸ©é˜µé™åˆ¶é¡¶ç‚¹
     private void GenerateRectVertex(Vector2 center, Vector2[] vertices) {
         Vector2 halfValidSize = rectSize * 0.5f;//
         Vector2 halfMinSize = halfValidSize * (1 - rectRange);
         
 
         for (int i = 0; i < vertexCount; i++) {
-            float angle = i * Mathf.PI * 2 / vertexCount;//½Ç¶È
-            Vector2 dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));//ÖĞµãµ½¶¥µãÏòÁ¿
+            float angle = i * Mathf.PI * 2 / vertexCount;//è§’åº¦
+            Vector2 dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));//ä¸­ç‚¹åˆ°é¡¶ç‚¹å‘é‡
             
             float x;
-            // ===== Éú³Éx×ø±ê =====
-            if (dir.x > 0) // ×ó²àÇøÓò
+            // ===== ç”Ÿæˆxåæ ‡ =====
+            if (dir.x > 0) // å·¦ä¾§åŒºåŸŸ
             {
                 x = Random.Range(center.x - halfValidSize.x, center.x - halfMinSize.x);
-            } else // ÓÒ²àÇøÓò
+            } else // å³ä¾§åŒºåŸŸ
               {
                 x = Random.Range(center.x + halfMinSize.x, center.x + halfValidSize.x);
             }
 
-            // ===== Éú³Éy×ø±ê =====
+            // ===== ç”Ÿæˆyåæ ‡ =====
             float y;
-            if (dir.y < 0) // ÏÂ²¿ÇøÓò
+            if (dir.y < 0) // ä¸‹éƒ¨åŒºåŸŸ
             {
                 y = Random.Range(center.y - halfValidSize.y, center.y - halfMinSize.y);
-            } else // ÉÏ²¿ÇøÓò
+            } else // ä¸Šéƒ¨åŒºåŸŸ
               {
                 y = Random.Range(center.y + halfMinSize.y, center.y + halfValidSize.y);
             }
@@ -146,33 +146,33 @@ public class ShapeGenerator : NoiseConfig {
             vertices[i] = new Vector2(x, y);
         }
     }
-    //Éú³ÉÔ²ĞÎÏŞÖÆ¶¥µã
+    //ç”Ÿæˆåœ†å½¢é™åˆ¶é¡¶ç‚¹
     private void GenerateCircleVertex(Vector2 center, Vector2[] vertices) {
         for (int i = 0; i < vertexCount; i++) {
 
-            float angle = i * Mathf.PI * 2 / vertexCount;//Æ½¾ù½Ç¶È
-            Vector2 dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));//ÖĞµãµ½¶¥µãÏòÁ¿
-            float radius = Random.Range(circleRadius * (1 - circleRange), circleRadius);//ÏÂÒ»¸öµã·¶Î§
+            float angle = i * Mathf.PI * 2 / vertexCount;//å¹³å‡è§’åº¦
+            Vector2 dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));//ä¸­ç‚¹åˆ°é¡¶ç‚¹å‘é‡
+            float radius = Random.Range(circleRadius * (1 - circleRange), circleRadius);//ä¸‹ä¸€ä¸ªç‚¹èŒƒå›´
             Vector2 dot = center + dir * radius;
             vertices[i] = dot;
         }
     }
-    //Éú³ÉÍÖÔ²ÏŞÖÆ¶¥µã
+    //ç”Ÿæˆæ¤­åœ†é™åˆ¶é¡¶ç‚¹
     private void GenerateEllipseVertex(Vector2 center, Vector2[] vertices) {
-        //ÍÖÔ²ÏŞÖÆÄÚÔ²°ë¾¶
+        //æ¤­åœ†é™åˆ¶å†…åœ†åŠå¾„
         float innerRadius = ellipseRadius * (1 - ellipseRange);
 
         for (int i = 0; i < vertexCount; i++) {
             
-            //float angle = Random.Range(0f, Mathf.PI * 2f);// Ëæ»ú½Ç¶È
-            float angle = i * Mathf.PI * 2 / vertexCount;// Æ½¾ù½Ç¶È
+            //float angle = Random.Range(0f, Mathf.PI * 2f);// éšæœºè§’åº¦
+            float angle = i * Mathf.PI * 2 / vertexCount;// å¹³å‡è§’åº¦
 
-            // ¸ù¾İedgeBias¼ÆËã°ë¾¶²åÖµ
+            // æ ¹æ®edgeBiasè®¡ç®—åŠå¾„æ’å€¼
             float t = Mathf.Pow(Random.value, 1 - edgeBias);
 
             float radius = Mathf.Lerp(innerRadius, ellipseRadius, t);
 
-            // ¼ÆËãÄÚÍâÍÖÔ²Êµ¼Ê°ë¾¶
+            // è®¡ç®—å†…å¤–æ¤­åœ†å®é™…åŠå¾„
             Vector2 outerRadii = new Vector2(
                 ellipseRadius * ellipseScale.x,
                 ellipseRadius * ellipseScale.y
@@ -182,7 +182,7 @@ public class ShapeGenerator : NoiseConfig {
                 innerRadius * ellipseScale.y
             );
 
-            // ÍÖÔ²×ø±ê¼ÆËã£¨»ùÓÚµ±Ç°°ë¾¶µÄ±ÈÀı²åÖµ£©
+            // æ¤­åœ†åæ ‡è®¡ç®—ï¼ˆåŸºäºå½“å‰åŠå¾„çš„æ¯”ä¾‹æ’å€¼ï¼‰
             float currentScaleX = Mathf.Lerp(ellipseScale.x, ellipseScale.x, t);
             float currentScaleY = Mathf.Lerp(ellipseScale.y, ellipseScale.y, t);
 
@@ -197,45 +197,45 @@ public class ShapeGenerator : NoiseConfig {
 
 
 
-    //=== »ù´¡»æÍ¼·½·¨ ===//
-    //=== Í¨ÓÃ»æÖÆ·½·¨ ===//
+    //=== åŸºç¡€ç»˜å›¾æ–¹æ³• ===//
+    //=== é€šç”¨ç»˜åˆ¶æ–¹æ³• ===//
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="tex">»­²¼</param>
-        /// <param name="vertices">¶à±ßĞÎËæ»ú¶¥µã¼¯ºÏ</param>
-        /// <param name="color">»æÖÆÑÕÉ«</param>
+        /// <param name="tex">ç”»å¸ƒ</param>
+        /// <param name="vertices">å¤šè¾¹å½¢éšæœºé¡¶ç‚¹é›†åˆ</param>
+        /// <param name="color">ç»˜åˆ¶é¢œè‰²</param>
     private void DrawShape(Texture2D tex, Vector2[] vertices, Color color) {
         Vector2[] path = vertices;
-        //Å¤ÇúÇúÏß
+        //æ‰­æ›²æ›²çº¿
         if (usePerlinCurves)
             path = GeneratePerlinPath(vertices);
         else if (useBezierCurves)
             path = GenerateCurvedEdges(vertices);
 
 
-        // Ìî³äÍ¼ĞÎ
+        // å¡«å……å›¾å½¢
         if (fillPolygon) {
             //ApplyDistortion(path);
             FillPolygon(tex, path, color);
         } else {
-            // »æÖÆ±ß½ç
+            // ç»˜åˆ¶è¾¹ç•Œ
             for (int i = 0; i < path.Length - 1; i++)
                 DrawLine(tex, path[i], path[i + 1], color);
         }
 
     }
 
-    //Çå³ı»æÖÆ
+    //æ¸…é™¤ç»˜åˆ¶
     private void ClearTexture(Texture2D tex, Color bgColor) {
         Color[] pixels = new Color[tex.width * tex.height];
         System.Array.Fill(pixels, bgColor);
         tex.SetPixels(pixels);
     }
 
-    //»æÖÆÏß
+    //ç»˜åˆ¶çº¿
     private void DrawLine(Texture2D tex, Vector2 start, Vector2 end, Color color) {
-        // BresenhamËã·¨ÊµÏÖ
+        // Bresenhamç®—æ³•å®ç°
         int x0 = (int)start.x, y0 = (int)start.y;
         int x1 = (int)end.x, y1 = (int)end.y;
 
@@ -257,24 +257,24 @@ public class ShapeGenerator : NoiseConfig {
         }
     }
     
-    //¶¥µãÊÇ·ñÔÚ»­²¼ÄÚ
+    //é¡¶ç‚¹æ˜¯å¦åœ¨ç”»å¸ƒå†…
 
     private bool IsInTexture(int x, int y) {
         return (x > 0 && x < noiseWidth && y > 0 && y < noiseHeight) && IsInScope(x, y);
     }
 
-    //¶¥µãÊÇ·ñÔÚÏŞÖÆ·¶Î§ÄÚ
+    //é¡¶ç‚¹æ˜¯å¦åœ¨é™åˆ¶èŒƒå›´å†…
     private bool IsInScope(int x, int y) {
         return x > leftLower.x && x < rightUpper.x && y > leftLower.y && y < rightUpper.y;
     }
 
 
-    //Ìî³ä
+    //å¡«å……
     private void FillPolygon(Texture2D tex, Vector2[] vertices, Color color) {
-        // »ñÈ¡¶à±ßĞÎ°üÎ§ºĞ
+        // è·å–å¤šè¾¹å½¢åŒ…å›´ç›’
         float minY = vertices.Min(v => v.y);
         float maxY = vertices.Max(v => v.y);
-        // É¨ÃèÏß±éÀú
+        // æ‰«æçº¿éå†
         for (int y = (int)minY; y <= maxY; y++) {
             List<float> intersections = new List<float>();
             for (int i = 0; i < vertices.Length; i++) {
@@ -301,24 +301,24 @@ public class ShapeGenerator : NoiseConfig {
         }
     }
 
-    #region ÇúÏßÂ·¾¶Éú³É
+    #region æ›²çº¿è·¯å¾„ç”Ÿæˆ
 
-    // Éú³É±´Èû¶ûÇúÏß±ß
+    // ç”Ÿæˆè´å¡å°”æ›²çº¿è¾¹
     private Vector2[] GenerateCurvedEdges(Vector2[] vertices) {
         List<Vector2> path = new List<Vector2>();
         for (int i = 0; i < vertices.Length; i++) {
             Vector2 p0 = vertices[i];
             Vector2 p3 = vertices[(i + 1) % vertexCount];
 
-            // ¼ÆËã¿ØÖÆµã£¨´¹Ö±ÓÚ±ßÖĞµã£©
-            Vector2 mid = (p0 + p3) * 0.5f;//ÖĞµã
-            Vector2 dir = (p3 - p0).normalized;//ÏòÁ¿
+            // è®¡ç®—æ§åˆ¶ç‚¹ï¼ˆå‚ç›´äºè¾¹ä¸­ç‚¹ï¼‰
+            Vector2 mid = (p0 + p3) * 0.5f;//ä¸­ç‚¹
+            Vector2 dir = (p3 - p0).normalized;//å‘é‡
             Vector2 normal = new Vector2(-dir.y, dir.x);
             Vector2 p1 = mid + normal * bezierStrength * noiseWidth;
             Vector2 p2 = mid - normal * bezierStrength * noiseWidth;
 
 
-            // Èı´Î±´Èû¶ûÇúÏß²ÉÑù
+            // ä¸‰æ¬¡è´å¡å°”æ›²çº¿é‡‡æ ·
             for (int t = 0; t <= bezierSegments; t++) {
                 float u = t / (float)bezierSegments;
                 Vector2 point = CalculateCubicBezier(p0, p1, p2, p3, u);
@@ -327,7 +327,7 @@ public class ShapeGenerator : NoiseConfig {
         }
         return path.ToArray();
     }
-    // Èı´Î±´Èû¶ûÇúÏß¼ÆËã
+    // ä¸‰æ¬¡è´å¡å°”æ›²çº¿è®¡ç®—
     private Vector2 CalculateCubicBezier(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, float t) {
         float u = 1 - t;
         return
@@ -336,7 +336,7 @@ public class ShapeGenerator : NoiseConfig {
             3 * u * t * t * p2 +
             t * t * t * p3;
     }
-    // °ØÁÖÇúÏß
+    // æŸæ—æ›²çº¿
     private Vector2[] GeneratePerlinPath(Vector2[] vertices) {
         List<Vector2> path = new List<Vector2>();
 
@@ -344,29 +344,29 @@ public class ShapeGenerator : NoiseConfig {
             Vector2 start = vertices[i];
             Vector2 end = vertices[(i + 1) % vertexCount];
 
-            // ÑØÖ±ÏßÂ·¾¶²ÉÑù£¬
+            // æ²¿ç›´çº¿è·¯å¾„é‡‡æ ·ï¼Œ
             int segments = Mathf.CeilToInt(Vector2.Distance(start, end) / perlinSegments);
             for (int t = 0; t <= segments; t++) {
                 float lerp = t / (float)segments;
                 Vector2 basePoint = Vector2.Lerp(start, end, lerp);
 
-                // ===== ·ÖĞÎÔëÉù¼ÆËã =====
+                // ===== åˆ†å½¢å™ªå£°è®¡ç®— =====
                 float noiseX = 0f;
                 float noiseY = 0f;
                 float frequency = perlinFrequency;
                 float amplitude = 1f;
                 float maxAmplitude = 0f;
-                //µş¼ÓÇúÏß
+                //å åŠ æ›²çº¿
                 for (int oct = 0; oct < octaves; oct++) {
-                    // Ã¿²ãÊ¹ÓÃ²»Í¬ÖÖ×ÓÆ«ÒÆ
+                    // æ¯å±‚ä½¿ç”¨ä¸åŒç§å­åç§»
                     float octaveSeed = seed + oct * 1000;
 
-                    // XÖáÔëÉù
+                    // Xè½´å™ªå£°
                     float nx = (basePoint.x + octaveSeed) * frequency;
                     float ny = (basePoint.y + octaveSeed) * frequency;
                     noiseX += Mathf.PerlinNoise(nx, ny) * amplitude;
 
-                    // YÖáÔëÉù£¨Ê¹ÓÃ²»Í¬²ÉÑù×ø±ê£©
+                    // Yè½´å™ªå£°ï¼ˆä½¿ç”¨ä¸åŒé‡‡æ ·åæ ‡ï¼‰
                     float nx2 = (basePoint.x + octaveSeed + 1000) * frequency;
                     float ny2 = (basePoint.y + octaveSeed + 1000) * frequency;
                     noiseY += Mathf.PerlinNoise(nx2, ny2) * amplitude;
@@ -376,11 +376,11 @@ public class ShapeGenerator : NoiseConfig {
                     frequency *= lacunarity;
                 }
 
-                //// ¹éÒ»»¯µ½[-1,1]·¶Î§£¬·ÀÖ¹ÕûÌåÍ¼ĞÎ·¢ÉúÆ«ÒÆ
+                //// å½’ä¸€åŒ–åˆ°[-1,1]èŒƒå›´ï¼Œé˜²æ­¢æ•´ä½“å›¾å½¢å‘ç”Ÿåç§»
                 noiseX = (noiseX / maxAmplitude) * 2 - 1;
                 noiseY = (noiseY / maxAmplitude) * 2 - 1;
 
-                // Ó¦ÓÃÆ«ÒÆ
+                // åº”ç”¨åç§»
                 Vector2 offset = new Vector2(
                     noiseX * perlinAmplitude,
                     noiseY * perlinAmplitude
@@ -393,12 +393,12 @@ public class ShapeGenerator : NoiseConfig {
     }
     #endregion
 
-    //GPUÌî³ä
+    //GPUå¡«å……
     public void ApplyDistortion(Vector2[] paths) {
-        // ´´½¨¿ÉĞ´ÎÆÀí
+        // åˆ›å»ºå¯å†™çº¹ç†
         RenderTextureFormat format = SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.R8) ? RenderTextureFormat.ARGB32 : RenderTextureFormat.ARGB32;
         RenderTexture resultTexture = new RenderTexture(noiseWidth, noiseHeight, 0, format) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Point };
-        resultTexture.enableRandomWrite = true; // ¹Ø¼ü²ÎÊı
+        resultTexture.enableRandomWrite = true; // å…³é”®å‚æ•°
         resultTexture.Create();
 
 
@@ -410,12 +410,12 @@ public class ShapeGenerator : NoiseConfig {
         pathPoints.SetData(paths);
 
 
-        // ÉèÖÃShader²ÎÊı
+        // è®¾ç½®Shaderå‚æ•°
         shader.SetTexture(kernel, "Result", resultTexture);
         shader.SetInt("VertexCount", pathPoints.count);
         shader.SetBuffer(kernel, pathPointsIndex, pathPoints);
 
-        // ·ÖÅÉÏß³Ì
+        // åˆ†æ´¾çº¿ç¨‹
         shader.Dispatch(kernel,
             Mathf.CeilToInt(noiseWidth / 8.0f),
             Mathf.CeilToInt(noiseHeight / 8.0f),
@@ -426,13 +426,13 @@ public class ShapeGenerator : NoiseConfig {
         
     }
 
-    //Ğı×ª
+    //æ—‹è½¬
     public Texture2D Rotate(Texture2D tex, float degress) {
 
-        // ´´½¨¿ÉĞ´ÎÆÀí
+        // åˆ›å»ºå¯å†™çº¹ç†
         RenderTextureFormat format = SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.R8) ? RenderTextureFormat.ARGB32 : RenderTextureFormat.ARGB32;
         RenderTexture resultTexture = new RenderTexture(noiseWidth, noiseHeight, 0, format) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Point };
-        resultTexture.enableRandomWrite = true; // ¹Ø¼ü²ÎÊı
+        resultTexture.enableRandomWrite = true; // ï¿½Ø¼ï¿½ï¿½ï¿½ï¿½ï¿½
         resultTexture.Create();
 
         ComputeShader shader = Resources.Load<ComputeShader>("Shader/PolygonGenerator");
@@ -442,12 +442,12 @@ public class ShapeGenerator : NoiseConfig {
         shader.SetTexture(kernel, "Result", resultTexture);
         shader.SetVector("TextureSize", new Vector2(tex.width, tex.height));
 
-        // ÉèÖÃ±ä»»²ÎÊı
+        // è®¾ç½®å˜æ¢å‚æ•°
         shader.SetVector("Offset", offset);
         shader.SetFloat("RotationAngle", degress * Mathf.Deg2Rad);
         shader.SetVector("Pivot", new Vector2(0.5f, 0.5f));
 
-        // ·ÖÅÉÏß³Ì
+        // åˆ†æ´¾çº¿ç¨‹
         shader.Dispatch(kernel,
             Mathf.CeilToInt(tex.width / 8.0f),
             Mathf.CeilToInt(tex.height / 8.0f),

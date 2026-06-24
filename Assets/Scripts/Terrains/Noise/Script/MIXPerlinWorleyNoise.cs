@@ -1,51 +1,42 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
-//°ØÁÖ-Ï¸°û»ìºÏÔëÒô
+//æ··åˆ-ç»†èƒæŸæ—å™ªå£°
 [CreateAssetMenu(fileName = "MIXPerlinWorleyNoise", menuName = "NoiseConfig/new MIXPerlinWorleyNoise")]
-public class MIXPerlinWorleyNoise : PerlinNoise {
+public class MIXPerlinWorleyNoise : TextureNoiseBase {
+
+    [SerializeField] private FBMNoiseConfig fbm = new FBMNoiseConfig();
 
     [Range(0, 1)]
     public float perlinFrequency = 0.02f;
     [Range(0, 1)]
     public float worleyFrequency = 0.02f;
     [Range(0, 1)]
-    public float weight = 0.5f;//×ó°ØÁÖÓÒÏ¸°û
-    public float scale = 1f;     // ×ø±êÅ¤ÇúÇ¿¶È£¬Ô½´óÔëÍ¼Ô½Å¤Çú
-
-    public int octaves = 4;              // ·ÖĞÎ²ãÊı£¬²ãÊıÔ½¶à£¬Ï¸½ÚÔ½·á¸»
+    public int worleyType = 0;
+    public bool worleyFlip = false;
+    [Header("æ··åˆæƒé‡ æŸæ— <-> ç»†èƒ")]
     [Range(0, 1)]
-    public float persistence = 0.5f;     // Õñ·ùË¥¼õÏµÊı£¨0-1£©£¬Ô½´ó¸ß²ãÏ¸½ÚÔ½Ç¿
-    [Min(1)]
-    public float lacunarity = 2f;        // ÆµÂÊ±¶ÔöÏµÊı£¨>1£©£¬Ô½´ó¸ß²ãÏ¸½ÚÔ½ÃÜ¼¯
+    public float weight = 0.5f; //æ··åˆæƒé‡
+
+    public int Octaves { get => fbm.octaves; set => fbm.octaves = value; }
+    public float Persistence { get => fbm.persistence; set => fbm.persistence = value; }
+    public float Lacunarity { get => fbm.lacunarity; set => fbm.lacunarity = value; }
+    public float Scale { get => fbm.scale; set => fbm.scale = value; }
+
+    protected override bool SupportsCPU => false;
 
     protected override Texture2D GenerateOnCPU() {
-        throw new System.Exception("´ËÔëÉùÉú³ÉÆ÷Î´ÊµÏÖCPUÉú³É£¡");
+        throw new Exception("æ··åˆå™ªå£°æœªå®ç°CPUç”Ÿæˆï¼");
     }
 
-
-    protected override Texture2D GenerateOnGPU() {
-        GenerateOnGPUBefore();
+    protected override void InitShader() {
+        base.InitShader();
         int kernel = shader.FindKernel("CSMain");
-
-        // ´«µİ²ÎÊı
         shader.SetFloat("PerlinFrequency", perlinFrequency);
         shader.SetFloat("WorleyFrequency", worleyFrequency);
+        shader.SetInt("WorleyReturnType", worleyType);
+        shader.SetBool("WorleyFlip", worleyFlip);
         shader.SetFloat("Weight", weight);
-        shader.SetInt("Octaves", octaves);
-        shader.SetFloat("Persistence", persistence);
-        shader.SetFloat("Lacunarity", lacunarity);
-        shader.SetFloat("Scale", scale);
-        shader.SetInt("Width", noiseWidth);
-        shader.SetInt("Height", noiseHeight);
-
-
-        // ·ÖÅäÏß³Ì×é
-        int threadGroupsX = Mathf.CeilToInt(_gpuNoiseTex.width / 8f);
-        int threadGroupsY = Mathf.CeilToInt(_gpuNoiseTex.height / 8f);
-        shader.Dispatch(kernel, threadGroupsX, threadGroupsY, 1);
-
-        return ToTexture2D(_gpuNoiseTex);
+        fbm.SetShaderParams(shader, kernel, noiseWidth, noiseHeight);
     }
 }

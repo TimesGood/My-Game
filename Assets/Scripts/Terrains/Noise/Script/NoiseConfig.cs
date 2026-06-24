@@ -3,39 +3,37 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Rendering;
-using static UnityEditor.Rendering.CameraUI;
 
 public abstract class NoiseConfig : ScriptableObject
 {
-    [Header("Êä³öÔ¤ÀÀ")]
-    [SerializeField] protected Texture2D _noiseTexture; // Ë½ÓĞ×Ö¶Î+ÊôĞÔ·â×°
+    [Header("è¾“å‡ºé¢„è§ˆ")]
+    [SerializeField] protected Texture2D _noiseTexture; // ç§æœ‰å­—æ®µ+å±æ€§å°è£…
     public Texture2D noiseTexture => _noiseTexture;
-    [Header("»ù´¡ÊôĞÔ")]
-    public int noiseWidth = 100;         // ÎÆÀí¿í¶È
-    public int noiseHeight = 100;        // ÎÆÀí¸ß¶È
-    public int seed = 1;                 // ÖÖ×Ó
+    [Header("åŸºç¡€å±æ€§")]
+    public int noiseWidth = 100;         // çº¹ç†å®½åº¦
+    public int noiseHeight = 100;        // çº¹ç†é«˜åº¦
+    public int seed = 1;                 // ç§å­
     public bool openGPU = true;
-    public bool isBinary = true;         // ¶şÖµ»¯
+    public bool isBinary = true;         // äºŒå€¼åŒ–
 
     //#if UNITY_EDITOR
     //    private void OnValidate() {
     //        if (!EditorApplication.isPlaying) {
-    //            // ÑÓ³Ùµ÷ÓÃ±ÜÃâÆµ·±Ë¢ĞÂ
+    //            // å»¶è¿Ÿè°ƒç”¨é¿å…é¢‘ç¹åˆ·æ–°
     //            EditorApplication.delayCall += GenerateNoiseWithSave;
     //        }
     //    }
     //#endif
 
-    //³õÊ¼»¯»ù´¡ÊôĞÔ
+    //åˆå§‹åŒ–åŸºç¡€å±æ€§
     public virtual void InitValidate(int width, int height, int seed) {
         noiseWidth = width;
         noiseHeight = height;
         this.seed = seed;
     }
 
-    public Texture2D InitNoise() {
-        // Ğ£Ñé³ß´çÓĞĞ§ĞÔ
+    public virtual Texture2D InitNoise() {
+        // æ ¡éªŒå°ºå¯¸æœ‰æ•ˆæ€§
         if (noiseWidth < 1 || noiseHeight < 1) return null;
         GenerateBefore();
         if(openGPU)
@@ -43,11 +41,11 @@ public abstract class NoiseConfig : ScriptableObject
         else
             _noiseTexture = GenerateOnCPU();
 
-        _noiseTexture.Apply();
+        _noiseTexture?.Apply();
 
 
 #if UNITY_EDITOR
-        // ×Ô¶¯±£´æÎÆÀí×Ê²ú
+        // è‡ªåŠ¨ä¿å­˜çº¹ç†èµ„äº§
         //if (!EditorApplication.isPlaying) SaveTextureAsset();
 
 #endif
@@ -55,9 +53,9 @@ public abstract class NoiseConfig : ScriptableObject
         return _noiseTexture;
     }
 
-    //Ö´ĞĞÉú³ÉÖ®Ç°
+    //æ‰§è¡Œç”Ÿæˆä¹‹å‰
     protected virtual void GenerateBefore() {
-        // ´´½¨/ÖØÖÃÎÆÀí
+        // åˆ›å»º/é‡ç½®çº¹ç†
         if (_noiseTexture == null ||
            _noiseTexture.width != noiseWidth ||
            _noiseTexture.height != noiseHeight) {
@@ -72,20 +70,20 @@ public abstract class NoiseConfig : ScriptableObject
     
     }
 
-    //ÓÉCPUÉú³É
+    //ç”±CPUç”Ÿæˆ
     protected virtual Texture2D GenerateOnCPU() {
         return null;
     }
 
 
-    //GPUÉú³É
+    //GPUç”Ÿæˆ
     protected virtual Texture2D GenerateOnGPU() {
         return null;
     }
 
-    //×ªÎªTexture2D²ÄÖÊ
+    //è½¬ä¸ºTexture2Dæè´¨
     protected Texture2D ToTexture2D(RenderTexture rt) {
-        TextureFormat format = SystemInfo.SupportsTextureFormat(TextureFormat.R8) ? TextureFormat.ARGB32 : TextureFormat.ARGB32;
+        TextureFormat format = SystemInfo.SupportsTextureFormat(TextureFormat.R8) ? TextureFormat.R8 : TextureFormat.ARGB32;
         Texture2D tex = new Texture2D(rt.width, rt.height, TextureFormat.RGBA32, false);
         RenderTexture.active = rt;
         tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
@@ -94,21 +92,21 @@ public abstract class NoiseConfig : ScriptableObject
         return tex;
     }
 
-    //Ïú»ÙÉú³ÉµÄÔëÍ¼
+    //é”€æ¯ç”Ÿæˆçš„å™ªå›¾
     public void DestroyNoiseTexture() {
         GameObject.DestroyImmediate(_noiseTexture, true);
     }
 
 
     //=================================================================================//
-    //»ñÈ¡Ö¸¶¨ÎÆÀí×ø±êÉÏµÄÑÕÉ«
+    //è·å–æŒ‡å®šçº¹ç†åæ ‡ä¸Šçš„é¢œè‰²
     public Color GetPixel(int x, int y) {
 
         return _noiseTexture.GetPixel(x, y);
     }
 
 
-    #region ±£´æ
+    #region ä¿å­˜
 
 #if UNITY_EDITOR
     private void SaveTextureAsset() {
@@ -116,7 +114,7 @@ public abstract class NoiseConfig : ScriptableObject
 
         string path = AssetDatabase.GetAssetPath(this);
 
-        // Èç¹ûScriptableObjectÎ´±£´æ£¬ÏÈ±£´æËü
+        // å¦‚æœScriptableObjectæœªä¿å­˜ï¼Œå…ˆä¿å­˜å®ƒ
         if (string.IsNullOrEmpty(path)) {
             string folderPath = "Assets/NoiseConfigs/";
             if (!AssetDatabase.IsValidFolder(folderPath)) {
@@ -125,9 +123,9 @@ public abstract class NoiseConfig : ScriptableObject
             path = $"{folderPath}PerlinNoise_{Guid.NewGuid().ToString("N").Substring(0, 8)}.asset";
             AssetDatabase.CreateAsset(this, path);
         }
-        // ½«Texture×÷Îª×Ó×ÊÔ´¸½¼Óµ½ScriptableObject
+        // å°†Textureä½œä¸ºå­èµ„æºé™„åŠ åˆ°ScriptableObject
         if (!AssetDatabase.IsSubAsset(_noiseTexture)) {
-            // É¾³ı¾ÉµÄTexture×Ó×ÊÔ´£¨Èç¹û´æÔÚ£©
+            // åˆ é™¤æ—§çš„Textureå­èµ„æºï¼ˆå¦‚æœå­˜åœ¨ï¼‰
             UnityEngine.Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
             foreach (var asset in assets) {
                 if (asset is Texture2D && asset != this) {
@@ -137,13 +135,13 @@ public abstract class NoiseConfig : ScriptableObject
 
             AssetDatabase.AddObjectToAsset(_noiseTexture, this);
         }
-        // ±ê¼Ç×ÊÔ´ĞèÒª±£´æ
+        // æ ‡è®°èµ„æºéœ€è¦ä¿å­˜
         EditorUtility.SetDirty(this);
         EditorUtility.SetDirty(_noiseTexture);
         AssetDatabase.SaveAssets();
     }
 
-    // ·ÖÀëµÄÑÓ³Ùµ÷ÓÃ·½·¨
+    // åˆ†ç¦»çš„å»¶è¿Ÿè°ƒç”¨æ–¹æ³•
     private void GenerateNoiseWithSave() {
         InitNoise();
         EditorApplication.delayCall -= GenerateNoiseWithSave;
