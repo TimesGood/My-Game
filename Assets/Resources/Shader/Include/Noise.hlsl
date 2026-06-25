@@ -252,16 +252,15 @@ float FBMWorleyNoise(
     return saturate(noiseValue / maxAmplitude);
 }
 
+//=======================================混合噪音========================================//
+
 //--------------------------
 // Perlin-Value噪声混合
 //--------------------------
 float MIXPerlinValueNoise(
     float2 uv,
     float perlinFrequency, //柏林频率
-    float perlinThreshold,
     float valueFrequency, //细胞频率
-    float valueThreshold,
-    bool isBinary,
     float weight, //噪声权重（0-1）
     int octaves,
     float persistence,
@@ -273,68 +272,18 @@ float MIXPerlinValueNoise(
 )
 {
     // Perlin噪声添加细节
-    float perlin = snoise((uv + float2(seed, seed)) * perlinFrequency);
+    float perlin = FBMPerlinNoise(
+       uv.xy, perlinFrequency, octaves, persistence, lacunarity, scale, width, height, seed
+    );
     
     // value噪声
-    float value = valueNoise((uv + float2(seed, seed)) * valueFrequency);
+    float value = FBMValueNoise(
+       uv.xy, valueFrequency, octaves, persistence, lacunarity, scale, width, height, seed
+    );
     
     float perlinWeight = 1 - weight;
 
     return value * weight + perlin * perlinWeight;
-}
-
-
-//--------------------------
-// Perlin-Value噪声混合
-//--------------------------
-float FBMPerlinValueNoise(
-    float2 uv,
-    float baseFrequency,//振幅
-    int octaves,
-    float persistence,//振幅衰减系数（0-1）
-    float lacunarity,//频率倍增系数（>1）
-    float warpStrength,//坐标扭曲强度
-    float warpFrequency,//坐标扭曲频率
-    float perlinWeight,//Perlin噪声权重（0-1）
-    float valueNoiseWeight,//Value噪声权重（0-1）
-    float blendFrequency,//混合噪声频率
-    int seed
-) {
-    // 域扭曲（使用不同种子偏移）
-    float2 warp = float2(
-        snoise(uv * warpFrequency + float2(seed,seed)),
-        snoise((uv + float2(100,100)) * warpFrequency + float2(seed,seed))
-    ) * warpStrength;
-
-    // 分形叠加 (FBM)
-    float pNoise = 0, vNoise = 0;
-    float frequency = baseFrequency;
-    float amplitude = 1.0;
-    float maxAmplitude = 0.0;
-
-
-    [unroll(8)] // 显式展开循环提升性能
-    for (int i = 0; i < octaves; i++) {
-        float2 samplePos = (uv + warp + float2(seed, seed)) * frequency;
-        //float2 pPos = uv * frequency * blendFrequency;
-        pNoise += snoise(samplePos) * amplitude;
-
-        float2 vPos = (uv + float2(seed, seed)) * frequency * blendFrequency;
-        vNoise += valueNoise(vPos) * amplitude;
-
-
-        maxAmplitude += amplitude;
-        amplitude *= persistence;
-        frequency *= lacunarity;
-    }
-    // 归一化
-    pNoise = saturate(pNoise / maxAmplitude);
-    vNoise = saturate(vNoise / maxAmplitude);
-    
-
-    //return lerp(pNoise, vNoise, blendFrequency);
-    float mixedNoise = (pNoise * perlinWeight) + (vNoise * valueNoiseWeight);
-    return mixedNoise;
 }
 
 //--------------------------
@@ -414,4 +363,59 @@ float MIXValueWorleyNoise(
     
 }
 
+
+//--------------------------
+// Perlin-Value噪声混合（弃用）
+//--------------------------
+float FBMPerlinValueNoise(
+    float2 uv,
+    float baseFrequency, //振幅
+    int octaves,
+    float persistence, //振幅衰减系数（0-1）
+    float lacunarity, //频率倍增系数（>1）
+    float warpStrength, //坐标扭曲强度
+    float warpFrequency, //坐标扭曲频率
+    float perlinWeight, //Perlin噪声权重（0-1）
+    float valueNoiseWeight, //Value噪声权重（0-1）
+    float blendFrequency, //混合噪声频率
+    int seed
+)
+{
+    // 域扭曲（使用不同种子偏移）
+    float2 warp = float2(
+        snoise(uv * warpFrequency + float2(seed, seed)),
+        snoise((uv + float2(100, 100)) * warpFrequency + float2(seed, seed))
+    ) * warpStrength;
+
+    // 分形叠加 (FBM)
+    float pNoise = 0, vNoise = 0;
+    float frequency = baseFrequency;
+    float amplitude = 1.0;
+    float maxAmplitude = 0.0;
+
+
+    [unroll(8)] // 显式展开循环提升性能
+    for (int i = 0; i < octaves; i++)
+    {
+        float2 samplePos = (uv + warp + float2(seed, seed)) * frequency;
+        //float2 pPos = uv * frequency * blendFrequency;
+        pNoise += snoise(samplePos) * amplitude;
+
+        float2 vPos = (uv + float2(seed, seed)) * frequency * blendFrequency;
+        vNoise += valueNoise(vPos) * amplitude;
+
+
+        maxAmplitude += amplitude;
+        amplitude *= persistence;
+        frequency *= lacunarity;
+    }
+    // 归一化
+    pNoise = saturate(pNoise / maxAmplitude);
+    vNoise = saturate(vNoise / maxAmplitude);
+    
+
+    //return lerp(pNoise, vNoise, blendFrequency);
+    float mixedNoise = (pNoise * perlinWeight) + (vNoise * valueNoiseWeight);
+    return mixedNoise;
+}
 #endif

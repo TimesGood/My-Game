@@ -8,7 +8,7 @@ using UnityEngine;
 public class OreGeneration
 {
     [field: SerializeField] public OreClass oreClass { get; private set; }
-    [field: SerializeField] public NoiseConfig noise { get; private set; }
+    public NoiseParams noiseParams = new NoiseParams();
     [Range(0, 1)] public float threshold = 0.5f;
 }
 
@@ -19,7 +19,7 @@ public class OreGeneration
 public class TreeGeneration
 {
     [field: SerializeField] public TreeClass treeClass { get; private set; }
-    [field: SerializeField] public NoiseConfig noise { get; private set; }
+    public NoiseParams noiseParams = new NoiseParams();
     [Range(0, 100)] public int spawnChance = 50;
 }
 

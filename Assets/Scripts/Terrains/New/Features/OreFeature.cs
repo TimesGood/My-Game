@@ -14,10 +14,14 @@ public class OreFeature : BiomeFeature
         for (int i = 0; i < ores.Length; i++)
         {
             var ore = ores[i];
-            if (ore?.oreClass == null || ore.noise == null) continue;
-            ore.noise.InitValidate(_biomeSize.x, _biomeSize.y, _seed + i * 100);
+            if (ore?.oreClass == null) continue;
             string key = ore.oreClass.blockId.ToString();
-            if (!_cache.ContainsKey(key)) _cache[key] = ore.noise.InitNoise();
+            if (_cache.ContainsKey(key)) continue;
+
+            // 用 NoiseSampler 生成纹理（替代 NoiseConfig SO）
+            Texture2D tex = NoiseSampler.GenerateTexture(
+                _biomeSize.x, _biomeSize.y, ore.noiseParams, _seed + i * 100);
+            _cache[key] = tex;
         }
     }
 

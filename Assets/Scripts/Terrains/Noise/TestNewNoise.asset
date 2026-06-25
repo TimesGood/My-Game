@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2744e89b74769a847b2548e634147118, type: 3}
+  m_Name: TestNewNoise
+  m_EditorClassIdentifier: 
+  _noiseTexture: {fileID: 0}
+  noiseWidth: 100
+  noiseHeight: 100
+  seed: 1
+  openGPU: 1
+  isBinary: 1
+  frequency: 0.02
+  threshold: 0.2
+  offset: 0
+  <shader>k__BackingField: {fileID: 0}
+  noiseParams:
+    type: 0
+    frequency: 0.02
+    threshold: 0.5
+    offset: 0
+    octaves: 4
+    persistence: 0.5
+    lacunarity: 2
+    scale: 1

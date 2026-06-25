@@ -12,11 +12,7 @@ public class MIXPerlinValueNoise : TextureNoiseBase {
     [Range(0, 1)]
     public float perlinFrequency = 0.02f;
     [Range(0, 1)]
-    public float perlinThreshold = 0.2f;
-    [Range(0, 1)]
     public float valueFrequency = 0.02f;
-    [Range(0, 1)]
-    public float valueThreshold = 0.2f;
 
     [Header("混合权重 柏林 <-> 值")]
     [Range(0, 1)]
@@ -38,8 +34,6 @@ public class MIXPerlinValueNoise : TextureNoiseBase {
         int kernel = shader.FindKernel("CSMain");
         shader.SetFloat("PerlinFrequency", perlinFrequency);
         shader.SetFloat("ValueFrequency", valueFrequency);
-        shader.SetFloat("PerlinThreshold", perlinThreshold);
-        shader.SetFloat("ValueThreshold", valueThreshold);
         shader.SetFloat("Weight", weight);
         fbm.SetShaderParams(shader, kernel, noiseWidth, noiseHeight);
     }

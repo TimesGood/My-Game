@@ -31,12 +31,13 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         Height,
         Seed
     );
-    float4 color;
-    if(IsBinary) {
-        color = (noiseValue > Threshold) ? float4(1,1,1,1) : float4(0,0,0,1);
-    } else {
-        color = (noiseValue > Threshold) ? float4(noiseValue,noiseValue,noiseValue,1) : float4(0,0,0,1);
-    }
+    // float4 color;
 
+    // if(IsBinary) {
+    //     color = (noiseValue > Threshold) ? float4(1,1,1,1) : float4(0,0,0,1);
+    // } else {
+    //     color = (noiseValue > Threshold) ? float4(noiseValue,noiseValue,noiseValue,1) : float4(0,0,0,1);
+    // }
+    float4 color = (noiseValue > Threshold) ? float4(noiseValue, noiseValue, noiseValue, 1) : float4(0, 0, 0, 1);
     NoiseTexture[id.xy] = color;
 }

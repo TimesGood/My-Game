@@ -22,7 +22,28 @@ MonoBehaviour:
   AllowOverlap: 0
   num: 1
   outLine: {fileID: 0}
-  _features: []
+  _features:
+  - rid: 6819191459622420482
+  - rid: 6819191459622420483
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 6819191459622420482
+      type: {class: CaveFeature, ns: , asm: Assembly-CSharp}
+      data:
+        caveNoise: {fileID: 11400000, guid: bca4264c61200404d99eb25306d24762, type: 2}
+    - rid: 6819191459622420483
+      type: {class: OreFeature, ns: , asm: Assembly-CSharp}
+      data:
+        ores:
+        - <oreClass>k__BackingField: {fileID: 0}
+          noiseParams:
+            type: 0
+            frequency: 0
+            threshold: 0
+            offset: 0
+            octaves: 0
+            persistence: 0
+            lacunarity: 0
+            scale: 0
+          threshold: 0

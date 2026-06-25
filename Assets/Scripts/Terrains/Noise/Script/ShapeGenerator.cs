@@ -104,6 +104,9 @@ public class ShapeGenerator : NoiseConfig {
                 break;
         }
 
+        // 随机旋转一下
+        float randomAngle = Random.Range(0f, 360f);  // 生成随机角度
+        vertices = RotatePoints(vertices, center, randomAngle);
 
         // 按极角排序顶点
         System.Array.Sort(vertices, (a, b) =>
@@ -111,6 +114,25 @@ public class ShapeGenerator : NoiseConfig {
             Mathf.Atan2(b.y - center.y, b.x - center.x)));
 
         return vertices;
+    }
+
+    // 旋转角度
+    private Vector2[] RotatePoints(Vector2[] points, Vector2 center, float angleDeg) {
+        float rad = angleDeg * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(rad);
+        float sin = Mathf.Sin(rad);
+        Vector2[] result = new Vector2[points.Length];
+        for (int i = 0; i < points.Length; i++) {
+            Vector2 p = points[i];
+            // 1. 平移到原点
+            Vector2 dir = p - center;
+            // 2. 旋转
+            float x = dir.x * cos - dir.y * sin;
+            float y = dir.x * sin + dir.y * cos;
+            // 3. 平移回去
+            result[i] = new Vector2(x + center.x, y + center.y);
+        }
+        return result;
     }
 
     //生成矩阵限制顶点

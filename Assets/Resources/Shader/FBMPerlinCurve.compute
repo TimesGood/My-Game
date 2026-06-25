@@ -7,7 +7,6 @@ RWStructuredBuffer<float> CurveData;
 float Frequency;
 float Threshold;
 int Seed;
-bool IsBinary;
 float HeightMult;
 float HeightAdd;
 int Octaves;

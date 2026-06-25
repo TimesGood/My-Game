@@ -13,22 +13,22 @@ MonoBehaviour:
   m_Name: MIXValueWorleyNoise
   m_EditorClassIdentifier: 
   _noiseTexture: {fileID: 0}
-  noiseWidth: 100
-  noiseHeight: 100
+  noiseWidth: 2000
+  noiseHeight: 2000
   seed: 1
   openGPU: 1
   isBinary: 1
   frequency: 0.02
-  threshold: 0.2
+  threshold: 0.469
   offset: 0
-  <shader>k__BackingField: {fileID: 0}
+  <shader>k__BackingField: {fileID: 7200000, guid: 4fcec2dae4fda0f4d804c74b77e3c2fa, type: 3}
   fbm:
-    octaves: 4
-    persistence: 0.5
-    lacunarity: 2
+    octaves: 2
+    persistence: 0.727
+    lacunarity: 1.33
     scale: 1
-  valueFrequency: 0.02
+  valueFrequency: 0.022
   worleyFrequency: 0.02
-  worleyType: 0
-  worleyFlip: 0
-  weight: 0.5
+  worleyType: 1
+  worleyFlip: 1
+  weight: 1
