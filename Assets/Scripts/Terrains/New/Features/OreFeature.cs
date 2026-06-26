@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
+
+// 矿石填充
 public class OreFeature : BiomeFeature
 {
     public OreGeneration[] ores;
@@ -28,8 +30,7 @@ public class OreFeature : BiomeFeature
     public override void Execute(BiomeContext _ctx)
     {
         if (ores == null || ores.Length == 0 || _cache == null) return;
-
-        WorldManager world = WorldManager.Instance;
+        ChunkManager chunk = ChunkManager.Instance;
         for (int y = _ctx.maxHeight; y >= 0; y--)
         {
             int wy = _ctx.LocalToWorldY(y);
@@ -44,7 +45,7 @@ public class OreFeature : BiomeFeature
                     if (ore?.oreClass == null) continue;
                     if (_cache.TryGetValue(ore.oreClass.blockId.ToString(), out var tex) && tex.GetPixel(x, y).r > ore.threshold)
                     {
-                        world.SetTileClass(ore.oreClass, Layers.Ground, wx, wy);
+                        chunk.SetBlockId(Layers.Ground, wx, wy, ore.oreClass.blockId);
                         break;
                     }
                 }

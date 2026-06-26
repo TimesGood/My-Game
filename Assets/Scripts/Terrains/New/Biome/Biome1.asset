@@ -24,7 +24,7 @@ MonoBehaviour:
   outLine: {fileID: 0}
   _features:
   - rid: 6819191459622420482
-  - rid: 6819191459622420483
+  - rid: 6819191479799119872
   references:
     version: 2
     RefIds:
@@ -32,7 +32,7 @@ MonoBehaviour:
       type: {class: CaveFeature, ns: , asm: Assembly-CSharp}
       data:
         caveNoise: {fileID: 11400000, guid: bca4264c61200404d99eb25306d24762, type: 2}
-    - rid: 6819191459622420483
+    - rid: 6819191479799119872
       type: {class: OreFeature, ns: , asm: Assembly-CSharp}
       data:
         ores:
@@ -42,8 +42,11 @@ MonoBehaviour:
             frequency: 0
             threshold: 0
             offset: 0
+            worleyType: 0
+            worleyFlip: 0
             octaves: 0
             persistence: 0
             lacunarity: 0
             scale: 0
+            useGPU: 0
           threshold: 0

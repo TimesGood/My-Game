@@ -21,6 +21,7 @@ public class PoissonDiscDistributor : DistributorBase {
 
     public override List<BiomeInstance> Distribute(GenerationContext context) {
         var results = new List<BiomeInstance>();
+        Debug.Log("采样中-------------");
         
         if (biomeDefinitions == null || biomeDefinitions.Count == 0) return results;
         // 已放置的矩形列表
@@ -28,7 +29,7 @@ public class PoissonDiscDistributor : DistributorBase {
         foreach (var item in context.claimed) {
             placed.Add(item.Bounds);
         }
-
+        Debug.Log("采样1");
         foreach (var biome in biomeDefinitions) {
 
             if (biome.suitable == null || biome.suitable.Length == 0) continue;
@@ -45,6 +46,7 @@ public class PoissonDiscDistributor : DistributorBase {
 
                 // 群落适宜区内点位采样
                 List<Vector2> pointList = PoissonDiscSampling.GeneratePoints(maxSize, suitable.SuitableMin, suitable.SuitableMax, null, 50);
+                Debug.Log("采样点数：" + pointList.Count);
                 if (pointList.Count == 0) continue;
                 points.AddRange(pointList);
                 
@@ -61,11 +63,13 @@ public class PoissonDiscDistributor : DistributorBase {
             // 随机点位
             int curRejection = 0;
             int biomeNum = biome.num;
+            Debug.Log("分配");
             while (biomeNum > 0 && points.Count > 0) {
                 curRejection++;
                 // 随机一个点位
                 int pointIndex = Random.Range(0, points.Count);
                 var point = points[pointIndex];
+                Debug.Log(point);
                 points.Remove(point);
                 Vector2Int bottomLeft = new Vector2Int((int)point.x - sizeX, (int)point.y - sizeY);
                 Vector2Int topRight = new Vector2Int((int)point.x + sizeX, (int)point.y + sizeY);

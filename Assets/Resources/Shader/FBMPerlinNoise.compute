@@ -31,6 +31,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         Height,
         Seed
     );
+    // noiseValue = saturate(noiseValue);
     // float4 color;
 
     // if(IsBinary) {

@@ -7,7 +7,8 @@ public enum NoiseType
 {
     Perlin,  // 柏林噪声
     Value,   // 值噪声
-    Worley   // 细胞噪声
+    Worley,  // 细胞噪声
+    Mix      // 混合噪声（Perlin + Worley）
 }
 
 /// <summary>
@@ -26,6 +27,8 @@ public class NoiseParams
     [Range(0, 1)]
     public float threshold = 0.5f;       // 阈值（用于二值化判断）
     public float offset;                 // 偏移
+    public int worleyType;             // worley类型 0 细胞 1 蜂窝
+    public bool worleyFlip;              // worley反转
 
     [Header("FBM 分形参数")]
     public int octaves = 4;              // 叠加层数（1 = 无分形）

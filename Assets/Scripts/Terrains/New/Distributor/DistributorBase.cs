@@ -7,9 +7,7 @@ using UnityEngine;
 
 /// <summary>
 /// 分配器职责：
-/// 1. 声明自己管理的 Y 区间
-/// 2. 从所有 BiomeDefinition 中筛选属于自己的群落
-/// 3. 为这些群落分配实际坐标 → BiomeInstance
+/// 对拥有的群落进行随机点位分配
 /// </summary>
 public abstract class DistributorBase : ScriptableObject {
 

@@ -58,6 +58,9 @@ public class ShapeGenerator : NoiseConfig {
     public float persistence = 0.4f; // 振幅衰减
     public float lacunarity = 2.2f;  // 频率倍增
 
+    [Header("工具参数")]
+    public ShapeParams shapeParams = new ShapeParams();
+
 
 
 
@@ -65,8 +68,9 @@ public class ShapeGenerator : NoiseConfig {
     protected override Texture2D GenerateOnCPU() {
         ClearTexture(_noiseTexture, Color.clear);
 
-        GenerateRandomPolygon(_noiseTexture);
-        return _noiseTexture;
+        //GenerateRandomPolygon(_noiseTexture);
+        //return _noiseTexture;
+        return ShapeSample.GenerateTexture(_noiseTexture.width, _noiseTexture.height, shapeParams, seed);
     }
 
     //=== 随机多边形生成 ===//

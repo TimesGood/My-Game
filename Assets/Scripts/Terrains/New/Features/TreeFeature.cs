@@ -3,6 +3,9 @@ using UnityEngine;
 
 public enum TreePlacement { Surface, CaveCeiling, Both }
 
+/// <summary>
+/// 植物散布
+/// </summary>
 [System.Serializable]
 public class TreeFeature : BiomeFeature
 {

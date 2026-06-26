@@ -63,15 +63,15 @@ MonoBehaviour:
   _noiseTexture: {fileID: 0}
   noiseWidth: 100
   noiseHeight: 100
-  seed: 5
+  seed: 15
   openGPU: 1
   isBinary: 1
-  frequency: 0.192
-  threshold: 0.442
+  frequency: 0.161
+  threshold: 0.38
   offset: 200
   <shader>k__BackingField: {fileID: 7200000, guid: 3ece792892767a044b7d1a276224cd60, type: 3}
   fbm:
-    octaves: 4
-    persistence: 0.777
+    octaves: 1
+    persistence: 0.488
     lacunarity: 1.21
     scale: 1

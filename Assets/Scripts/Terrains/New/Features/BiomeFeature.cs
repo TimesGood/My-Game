@@ -59,6 +59,7 @@ public class BiomeContext
 [System.Serializable]
 public abstract class BiomeFeature
 {
+    public string name;
     /// <summary>
     /// 初始化噪声等运行时资源（生成前调用）。
     /// </summary>

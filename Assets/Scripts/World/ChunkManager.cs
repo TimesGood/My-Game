@@ -76,6 +76,11 @@ public class ChunkManager : Singleton<ChunkManager> {
         return GetBlockId(layer, new Vector2Int(x, y));
     }
 
+    public bool SetBlockId(Layers layer, int x, int y, long blockId) {
+        Vector2Int worldPos = new Vector2Int(x, y);
+        return SetBlockId(layer, x, y, blockId);
+    }
+
     /// <summary>
     /// 设置指定图层在世界坐标处的 blockId。越界返回 false。
     /// </summary>

@@ -61,12 +61,12 @@ MonoBehaviour:
   m_Name: PerlinNoise
   m_EditorClassIdentifier: 
   _noiseTexture: {fileID: 0}
-  noiseWidth: 2000
-  noiseHeight: 2000
+  noiseWidth: 100
+  noiseHeight: 100
   seed: 3344
   openGPU: 1
   isBinary: 0
-  frequency: 0.038
-  threshold: 0.538
+  frequency: 0.122
+  threshold: 0
   offset: 0
   <shader>k__BackingField: {fileID: 7200000, guid: 04131f907ce580642821f7ae80021e47, type: 3}

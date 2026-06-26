@@ -29,7 +29,7 @@ public class BiomeDefinition : ScriptableObject {
     public bool AllowOverlap = false;
 
     [Header("生成数量")]
-    public int num;
+    public int num = 1;
 
     [Header("群落轮廓（可选，不规则形状）")]
     public ShapeGenerator outLine;
@@ -46,7 +46,7 @@ public class BiomeDefinition : ScriptableObject {
     /// <summary>
     /// 初始化所有 Feature 的噪声（仅执行一次）
     /// </summary>
-    public void InitFeatures(int _seed)
+    public void InitFeatures(BiomeContext _ctx, int _seed)
     {
         if (_initialized) return;
         _initialized = true;
@@ -60,6 +60,7 @@ public class BiomeDefinition : ScriptableObject {
         {
             _features[i]?.Init(biomeSize, _seed + i * 100, cache);
         }
+        _ctx.noiseCache = cache;
     }
 
     /// <summary>
@@ -67,10 +68,10 @@ public class BiomeDefinition : ScriptableObject {
     /// </summary>
     public void Generate(GenerationContext _ctx, BiomeInstance _inst)
     {
-        InitFeatures(_inst.Seed);
 
         var biomeCtx = BuildContext(_ctx, _inst);
-        DetectSurfaceRange(biomeCtx);
+        InitFeatures(biomeCtx, _inst.Seed);
+        //DetectSurfaceRange(biomeCtx);
 
         if (_features.Count == 0)
         {

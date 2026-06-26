@@ -85,8 +85,8 @@ public static class NoiseSampler
 
         // Worley 特有参数
         if (_p.type == NoiseType.Worley) {
-            shader.SetInt("ReturnType", 0);
-            shader.SetBool("IsFlip", false);
+            shader.SetInt("ReturnType", _p.worleyType);
+            shader.SetBool("IsFlip", _p.worleyFlip);
         }
 
         // 调度
@@ -237,6 +237,46 @@ public static class NoiseSampler
 
         return Mathf.Clamp01(minDist / 1.5f);
     }
+
+    // ==================== Mix Noise（CPU） ====================
+
+    /// <summary>
+    /// 混合噪声：FBM Perlin + FBM Worley，按 weight 加权混合
+    /// </summary>
+    //private static float MixNoise(int _x, int _y, NoiseParams _p, int _seed) {
+    //    // FBM Perlin
+    //    float perlinVal = 0;
+    //    float amp = 1;
+    //    float maxAmp = 0;
+    //    float freq = _p.perlinFrequency;
+    //    for (int i = 0; i < _p.octaves; i++) {
+    //        float sx = _x / _p.scale * freq + _seed + _p.offset;
+    //        float sy = _y / _p.scale * freq + _seed + _p.offset;
+    //        perlinVal += Mathf.PerlinNoise(sx, sy) * amp;
+    //        maxAmp += amp;
+    //        amp *= _p.persistence;
+    //        freq *= _p.lacunarity;
+    //    }
+    //    perlinVal /= maxAmp;
+
+    //    // FBM Worley
+    //    float worleyVal = 0;
+    //    amp = 1;
+    //    maxAmp = 0;
+    //    freq = _p.worleyFrequency;
+    //    for (int i = 0; i < _p.octaves; i++) {
+    //        float sx = _x / _p.scale * freq + _seed + _p.offset;
+    //        float sy = _y / _p.scale * freq + _seed + _p.offset;
+    //        worleyVal += WorleyNoise(sx, sy) * amp;
+    //        maxAmp += amp;
+    //        amp *= _p.persistence;
+    //        freq *= _p.lacunarity;
+    //    }
+    //    worleyVal /= maxAmp;
+
+    //    // 加权混合
+    //    return Mathf.Lerp(perlinVal, worleyVal, _p.mixWeight);
+    //}
 
     // ==================== 哈希函数 ====================
 

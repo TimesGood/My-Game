@@ -175,7 +175,8 @@ float FBMPerlinNoise(
         frequency *= lacunarity;
     }
     //归一化（0-1）
-    return saturate(noiseValue / maxAmplitude);
+    //return saturate(noiseValue / maxAmplitude);
+    return (noiseValue / maxAmplitude);
 }
 //--------------------------
 // 分形Value噪声
@@ -210,7 +211,8 @@ float FBMValueNoise(
         frequency *= lacunarity;
     }
     
-    return saturate(noiseValue / maxAmplitude);
+    //return saturate(noiseValue / maxAmplitude);
+    return (noiseValue / maxAmplitude);
 }
 
 //--------------------------
@@ -249,7 +251,9 @@ float FBMWorleyNoise(
         frequency *= lacunarity;
     }
     
-    return saturate(noiseValue / maxAmplitude);
+    //return saturate(noiseValue / maxAmplitude);
+    return (noiseValue / maxAmplitude);
+
 }
 
 //=======================================混合噪音========================================//

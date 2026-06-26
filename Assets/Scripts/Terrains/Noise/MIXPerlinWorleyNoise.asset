@@ -18,17 +18,17 @@ MonoBehaviour:
   seed: -1700
   openGPU: 1
   isBinary: 0
-  frequency: 0.034
+  frequency: 0.014
   threshold: 0.384
   offset: 0
   <shader>k__BackingField: {fileID: 7200000, guid: 23acc5389b4c18b4da602b726909bd70, type: 3}
   fbm:
-    octaves: 2
-    persistence: 0.5
+    octaves: 6
+    persistence: 0.392
     lacunarity: 2
     scale: 1
-  perlinFrequency: 0.006
-  worleyFrequency: 0.02
+  perlinFrequency: 0.002
+  worleyFrequency: 0.011
   worleyType: 0
   worleyFlip: 1
-  weight: 0.353
+  weight: 0

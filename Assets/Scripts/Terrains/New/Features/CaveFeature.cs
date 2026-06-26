@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
+
+// ¶´Ñ¨ÍÚ¾ò
 public class CaveFeature : BiomeFeature
 {
     public NoiseConfig caveNoise;
