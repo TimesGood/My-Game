@@ -24,6 +24,16 @@ public class TreeGeneration
 }
 
 /// <summary>
+/// 轮廓生成定义
+/// </summary>
+[System.Serializable]
+public class OutLineGeneration {
+    [field: SerializeField] public TileClass tileClass { get; private set; }
+    public ShapeParams shapeParams = new ShapeParams();
+}
+
+
+/// <summary>
 /// 瓦片映射 —— 定义群落地形使用的瓦片类型
 /// </summary>
 [System.Serializable]
