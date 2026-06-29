@@ -14,13 +14,44 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   biomeId: 
   BiomeName: New Biome
-  biomeSize: {x: 300, y: 100}
-  suitable: []
+  biomeSize: {x: 1000, y: 1000}
+  suitable:
+  - SuitableMin: {x: 0, y: 0}
+    SuitableMax: {x: 4000, y: 1500}
   Priority: 0
   AllowOverlap: 0
-  num: 0
+  num: 1
   outLine: {fileID: 0}
-  _features: []
+  _features:
+  - rid: 6819191498464821250
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 6819191498464821250
+      type: {class: OutLineFeature, ns: , asm: Assembly-CSharp}
+      data:
+        outLine:
+          <tileClass>k__BackingField: {fileID: 11400000, guid: ef2b46ed50cce49469606978ea1fbea6, type: 2}
+          shapeParams:
+            vertexCount: 5
+            offset: {x: 0, y: 0}
+            fillPolygon: 1
+            leftLower: {x: 0, y: 0}
+            rightUpper: {x: 100, y: 100}
+            limitType: 0
+            circleRadius: 100
+            circleRange: 0.8
+            ellipseRadius: 150
+            ellipseRange: 0.8
+            ellipseScale: {x: 1, y: 1}
+            edgeBias: 0.5
+            rectSize: {x: 100, y: 100}
+            rectRange: 0.8
+            curvesType: 0
+            segments: 0
+            bezierStrength: 0.3
+            perlinFrequency: 0.05
+            perlinAmplitude: 20
+            octaves: 1
+            persistence: 0.4
+            lacunarity: 2.2

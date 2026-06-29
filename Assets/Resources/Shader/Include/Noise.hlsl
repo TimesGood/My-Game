@@ -89,9 +89,9 @@ float valueNoise(float2 uv)
 
 //--------------------------
 // Worley噪声（细胞噪声）
-// returnType：返回类型 0 细胞 1 岩石
+// worleyType：返回类型 0 细胞 1 岩石
 //--------------------------
-float worleyNoise(float2 uv, int returnType, bool isFlip)
+float worleyNoise(float2 uv, int worleyType, bool worleyFlip)
 {
 
     float F1 = 1e5;
@@ -121,7 +121,7 @@ float worleyNoise(float2 uv, int returnType, bool isFlip)
     }
     float result;
     
-    switch (returnType) {
+    switch (worleyType){
         case 0:
             result = F1;
             break;
@@ -134,7 +134,7 @@ float worleyNoise(float2 uv, int returnType, bool isFlip)
     }
     
     // 反转
-    result = isFlip ? 1 - result : result;
+    result = worleyFlip ? 1 - result : result;
 
     return result;
 
@@ -150,14 +150,8 @@ float FBMPerlinNoise(
     uint octaves,//叠加层数
     float persistence,//持续度
     float lacunarity,//粗糙度
-    float scale,
-    uint width,
-    uint height,
     int seed
 ) {
-    //uv缩放
-    float2 scaleUv = float2((uv.x - width / 2) / scale, (uv.y - height / 2) / scale);
-    
     // 分形叠加 (FBM)
     float noiseValue = 0.0;
     float frequency = baseFrequency;
@@ -167,7 +161,7 @@ float FBMPerlinNoise(
     
     [unroll(8)] // 显式展开循环提升性能
     for (uint i = 0; i < octaves; i++) {
-        float2 samplePos = scaleUv * frequency + float2(seed, seed);
+        float2 samplePos = uv * frequency + float2(seed, seed);
         float noise = snoise(samplePos);
         noiseValue += noise * amplitude;
         maxAmplitude += amplitude;
@@ -187,14 +181,8 @@ float FBMValueNoise(
     int octaves,
     float persistence,
     float lacunarity,
-    float scale,
-    uint width,
-    uint height,
     int seed
 ) {
-    //uv缩放
-    float2 scaleUv = float2((uv.x - width / 2) / scale, (uv.y - height / 2) / scale);
-
     // 分形叠加 (FBM)
     float noiseValue = 0.0;
     float frequency = baseFrequency;
@@ -203,7 +191,7 @@ float FBMValueNoise(
 
     [unroll(8)] // 显式展开循环提升性能
     for (int i = 0; i < octaves; i++) {
-        float2 samplePos = scaleUv * frequency + float2(seed, seed);
+        float2 samplePos = uv * frequency + float2(seed, seed);
         float noise = valueNoise(samplePos);
         noiseValue += noise * amplitude;
         maxAmplitude += amplitude;
@@ -224,16 +212,10 @@ float FBMWorleyNoise(
     int octaves,
     float persistence,
     float lacunarity,
-    float scale,
-    uint width,
-    uint height,
-    int returnType,
-    bool isFlip,
+    int worleyType,
+    bool worleyFlip,
     int seed
 ) {
-    //uv缩放
-    float2 scaleUv = float2((uv.x - width / 2) / scale, (uv.y - height / 2) / scale);
-
     // 分形叠加 (FBM)
     float noiseValue = 0.0;
     float frequency = baseFrequency;
@@ -243,8 +225,8 @@ float FBMWorleyNoise(
 
     [unroll(8)] // 显式展开循环提升性能
     for (int i = 0; i < octaves; i++) {
-        float2 samplePos = scaleUv * frequency + float2(seed, seed);
-        float noise = worleyNoise(samplePos, returnType, isFlip);
+        float2 samplePos = uv * frequency + float2(seed, seed);
+        float noise = worleyNoise(samplePos, worleyType, worleyFlip);
         noiseValue += noise * amplitude;
         maxAmplitude += amplitude;
         amplitude *= persistence;
@@ -269,20 +251,17 @@ float MIXPerlinValueNoise(
     int octaves,
     float persistence,
     float lacunarity,
-    float scale,
-    uint width,
-    uint height,
     int seed
 )
 {
     // Perlin噪声添加细节
     float perlin = FBMPerlinNoise(
-       uv.xy, perlinFrequency, octaves, persistence, lacunarity, scale, width, height, seed
+       uv.xy, perlinFrequency, octaves, persistence, lacunarity, seed
     );
     
     // value噪声
     float value = FBMValueNoise(
-       uv.xy, valueFrequency, octaves, persistence, lacunarity, scale, width, height, seed
+       uv.xy, valueFrequency, octaves, persistence, lacunarity, seed
     );
     
     float perlinWeight = 1 - weight;
@@ -297,21 +276,18 @@ float MIXPerlinWorleyNoise(
     float2 uv,
     float perlinFrequency,//柏林频率
     float worleyFrequency,//细胞频率
-    int worleyReturnType,
+    int worleyType,
     bool worleyFlip,
     float weight,//噪声权重（0-1）
     int octaves,
     float persistence,
     float lacunarity,
-    float scale,
-    uint width,
-    uint height,
     int seed
 ) {
     
     // Worley噪声生成洞穴轮廓
     float worley = FBMWorleyNoise(
-       uv.xy, worleyFrequency, octaves, persistence, lacunarity, scale, width, height, worleyReturnType, worleyFlip, seed
+       uv.xy, worleyFrequency, octaves, persistence, lacunarity, worleyType, worleyFlip, seed
     );
     
     // Perlin噪声添加细节
@@ -319,7 +295,7 @@ float MIXPerlinWorleyNoise(
     //   uv.xy * perlinFrequency
     //);
     float perlin = FBMPerlinNoise(
-       uv.xy, perlinFrequency, octaves, persistence, lacunarity, scale, width, height, seed
+       uv.xy, perlinFrequency, octaves, persistence, lacunarity, seed
     );
     float perlinWeight = 1 - weight;
 
@@ -341,16 +317,13 @@ float MIXValueWorleyNoise(
     int octaves,
     float persistence,
     float lacunarity,
-    float scale,
-    uint width,
-    uint height,
     int seed
 )
 {
     
     // Worley噪声生成洞穴轮廓
     float worley = FBMWorleyNoise(
-       uv.xy, worleyFrequency, octaves, persistence, lacunarity, scale, width, height, worleyReturnType, worleyFlip, seed
+       uv.xy, worleyFrequency, octaves, persistence, lacunarity, worleyReturnType, worleyFlip, seed
     );
     
     // Perlin噪声添加细节
@@ -358,7 +331,7 @@ float MIXValueWorleyNoise(
     //   uv.xy * perlinFrequency
     //);
     float value = FBMValueNoise(
-       uv.xy, valueFrequency, octaves, persistence, lacunarity, scale, width, height, seed
+       uv.xy, valueFrequency, octaves, persistence, lacunarity, seed
     );
     float valueWeight = 1 - weight;
 

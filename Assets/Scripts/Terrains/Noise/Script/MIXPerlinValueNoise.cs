@@ -32,8 +32,8 @@ public class MIXPerlinValueNoise : TextureNoiseBase {
     protected override void InitShader() {
         base.InitShader();
         int kernel = shader.FindKernel("CSMain");
-        shader.SetFloat("PerlinFrequency", perlinFrequency);
-        shader.SetFloat("ValueFrequency", valueFrequency);
+        shader.SetFloat("LeftFrequency", perlinFrequency);
+        shader.SetFloat("RightFrequency", valueFrequency);
         shader.SetFloat("Weight", weight);
         fbm.SetShaderParams(shader, kernel, noiseWidth, noiseHeight);
     }

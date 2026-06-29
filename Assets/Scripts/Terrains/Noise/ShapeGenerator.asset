@@ -61,17 +61,17 @@ MonoBehaviour:
   m_Name: ShapeGenerator
   m_EditorClassIdentifier: 
   _noiseTexture: {fileID: 0}
-  noiseWidth: 200
-  noiseHeight: 200
+  noiseWidth: 1000
+  noiseHeight: 1000
   seed: 15
   openGPU: 0
   isBinary: 1
-  vertexCount: 3
+  vertexCount: 8
   offset: {x: 0, y: 0}
   fillPolygon: 1
-  limitType: 0
+  limitType: 1
   circleRadius: 100
-  circleRange: 0.35
+  circleRange: 0.073
   ellipseRadius: 150
   ellipseRange: 0.821
   ellipseScale: {x: 1, y: 1}
@@ -79,7 +79,7 @@ MonoBehaviour:
   rectSize: {x: 150, y: 150}
   rectRange: 0.001
   leftLower: {x: 0, y: 0}
-  rightUpper: {x: 2000, y: 600}
+  rightUpper: {x: 100, y: 100}
   bezierStrength: 0.215
   bezierSegments: 8
   useBezierCurves: 0
@@ -90,3 +90,26 @@ MonoBehaviour:
   octaves: 3
   persistence: 0.23
   lacunarity: 6.05
+  shapeParams:
+    vertexCount: 8
+    offset: {x: 0, y: 0}
+    fillPolygon: 1
+    leftLower: {x: 0, y: 0}
+    rightUpper: {x: 1000, y: 1000}
+    limitType: 2
+    circleRadius: 100
+    circleRange: 0.935
+    ellipseRadius: 150
+    ellipseRange: 0.819
+    ellipseScale: {x: 1, y: 1}
+    edgeBias: 0.526
+    rectSize: {x: 500, y: 500}
+    rectRange: 0.438
+    curvesType: 0
+    segments: 18
+    bezierStrength: 0.199
+    perlinFrequency: 0.44
+    perlinAmplitude: 19.61
+    octaves: 2
+    persistence: 2.6
+    lacunarity: 2.76

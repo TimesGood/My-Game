@@ -13,24 +13,25 @@ MonoBehaviour:
   m_Name: TestNewNoise
   m_EditorClassIdentifier: 
   _noiseTexture: {fileID: 0}
-  noiseWidth: 500
-  noiseHeight: 500
+  noiseWidth: 6000
+  noiseHeight: 2000
   seed: 1
   openGPU: 1
   isBinary: 1
   frequency: 0.02
-  threshold: 0.2
+  threshold: 0.7
   offset: 0
   <shader>k__BackingField: {fileID: 0}
   noiseParams:
     type: 0
-    frequency: 0.095
-    threshold: 0.28
+    frequency: 0.007
+    isBinary: 1
+    threshold: 0.731
     offset: 0
-    worleyType: 1
-    worleyFlip: 1
+    worleyType: 0
+    worleyFlip: 0
     octaves: 1
-    persistence: 0.365
-    lacunarity: 2.45
-    scale: 5.75
+    persistence: 0.195
+    lacunarity: 2
+    scale: 1
     useGPU: 1

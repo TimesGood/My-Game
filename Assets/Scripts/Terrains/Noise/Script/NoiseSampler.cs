@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 /// <summary>
@@ -67,26 +68,33 @@ public static class NoiseSampler
 
         // 设置公共参数
         shader.SetTexture(kernel, "NoiseTexture", rt);
+        shader.SetInt("Width", _width);
+        shader.SetInt("Height", _height);
         shader.SetFloat("Frequency", _p.frequency);
-        shader.SetFloat("Threshold", _p.threshold); // shader 内部不用阈值（IsBinary=false），但保留绑定
+        shader.SetBool("IsBinary", _p.isBinary);
+        shader.SetFloat("Threshold", _p.threshold);
         shader.SetFloat("Offset", _p.offset);
+        shader.SetFloat("Scale", _p.scale);
         shader.SetInt("Seed", _seed);
-        shader.SetBool("IsBinary", false); // 始终输出原始值
 
         // FBM 参数
         if (_p.UseFBM) {
-            shader.SetInt("Octaves", _p.octaves);
-            shader.SetFloat("Persistence", _p.persistence);
-            shader.SetFloat("Lacunarity", _p.lacunarity);
-            shader.SetFloat("Scale", _p.scale);
-            shader.SetInt("Width", _width);
-            shader.SetInt("Height", _height);
+            shader.SetInt("Octaves", _p.fbmParams.octaves);
+            shader.SetFloat("Persistence", _p.fbmParams.persistence);
+            shader.SetFloat("Lacunarity", _p.fbmParams.lacunarity);
         }
 
         // Worley 特有参数
-        if (_p.type == NoiseType.Worley) {
-            shader.SetInt("ReturnType", _p.worleyType);
-            shader.SetBool("IsFlip", _p.worleyFlip);
+        if (_p.type == NoiseType.Worley || _p.type == NoiseType.MixPerlinWorley || _p.type == NoiseType.MixValueWorley) {
+            shader.SetInt("WorleyType", _p.worleyType);
+            shader.SetBool("WorleyFlip", _p.worleyFlip);
+        }
+
+        // MIX 参数
+        if (_p.type == NoiseType.MixPerlinValue || _p.type == NoiseType.MixPerlinWorley || _p.type == NoiseType.MixValueWorley) {
+            shader.SetFloat("LeftFrequency", _p.mixParams.leftFrequency);
+            shader.SetFloat("RightFrequency", _p.mixParams.rightFrequency);
+            shader.SetFloat("Weight", _p.mixParams.weight);
         }
 
         // 调度
@@ -128,6 +136,12 @@ public static class NoiseSampler
                 return _useFBM ? "FBMValueNoise" : "ValueNoise";
             case NoiseType.Worley:
                 return _useFBM ? "FBMWorleyNoise" : "WorleyNoise";
+            case NoiseType.MixPerlinValue:
+                return "MIXPerlinValueNoise";
+            case NoiseType.MixPerlinWorley:
+                return "MIXPerlinWorleyNoise";
+            case NoiseType.MixValueWorley:
+                return "MIXValueWorleyNoise";
             default:
                 return _useFBM ? "FBMPerlinNoise" : "PerlinNoise";
         }
@@ -161,11 +175,11 @@ public static class NoiseSampler
         float maxAmplitude = 0;
         float freq = _p.frequency;
 
-        for (int i = 0; i < _p.octaves; i++) {
+        for (int i = 0; i < _p.fbmParams.octaves; i++) {
             total += SampleRaw(_x, _y, _p, _seed, freq) * amplitude;
             maxAmplitude += amplitude;
-            amplitude *= _p.persistence;
-            freq *= _p.lacunarity;
+            amplitude *= _p.fbmParams.persistence;
+            freq *= _p.fbmParams.lacunarity;
         }
 
         return total / maxAmplitude;

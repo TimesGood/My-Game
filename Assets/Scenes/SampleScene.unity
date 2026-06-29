@@ -917,11 +917,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _config: {fileID: 11400000, guid: 4813548f7ac52e049a2496b45819ef35, type: 2}
-  chunkManager: {fileID: 0}
+  chunkManager: {fileID: 530379993}
+  _baseTerrain: {fileID: 11400000, guid: abbfc39f97a248140801ee25a86a20b4, type: 2}
   _distributors:
   - {fileID: 11400000, guid: bced9cc61435301448e326403ca51f53, type: 2}
-  - {fileID: 11400000, guid: 212f744dc5fd11d4abd8536648c93bd0, type: 2}
-  - {fileID: 11400000, guid: 43c06730b4f70374bae84eeaf3497347, type: 2}
   _postProcessors: []
 --- !u!4 &660398701
 Transform:

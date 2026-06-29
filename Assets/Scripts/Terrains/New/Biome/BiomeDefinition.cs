@@ -98,6 +98,10 @@ public class BiomeDefinition : ScriptableObject {
         };
     }
 
+    /// <summary>
+    /// 初始化实际群落在地表露出的范围（基于地平线）
+    /// </summary>
+    /// <param name="_ctx"></param>
     private void DetectSurfaceRange(BiomeContext _ctx)
     {
         int baseHeight = WorldManager.Instance.baseHeight;

@@ -1,25 +1,37 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Éú³ÉÉÏÏÂÎÄ - ÔÚ¹ÜÏß¸÷½×¶Î¼ä´«µİµÄ¹²ÏíÊı¾İ
+/// ç”Ÿæˆä¸Šä¸‹æ–‡ â€” åœ¨å„é˜¶æ®µé—´ä¼ é€’çš„å…±äº«æ•°æ®
 /// </summary>
-public class GenerationContext {
-
-    // »ù´¡ÅäÖÃ
+public class GenerationContext
+{
+    // å…¨å±€é…ç½®
     public MapConfig Config { get; }
-    // Çø¿éÊı¾İ¹ÜÀíÆ÷
+    // åŒºå—æ•°æ®ç®¡ç†å™¨
     public ChunkManager ChunkManager { get; }
-    // ÒÑ½øĞĞ·ÖÅäµÄÈºÂä
+    // å·²åˆ†é…çš„ç¾¤è½å®ä¾‹
     public HashSet<BiomeInstance> claimed { get; private set; }
-    // µØ±í¸ß¶È
-    public int[] SurfaceHeightMap { get; private set; }
 
-    public GenerationContext(MapConfig config, ChunkManager chunkManager) {
-        Config = config;
-        ChunkManager = chunkManager;
+    /// <summary>ç”Ÿæˆä½¿ç”¨çš„ç§å­</summary>
+    public int Seed { get; }
+
+    // ========== åŸºç¡€åœ°å½¢æ•°æ®ï¼ˆç”± BaseTerrainPassConfig å¡«å……ï¼‰ ==========
+
+    /// <summary>æ¯åˆ—åœ°è¡¨é«˜åº¦ [0..Width)</summary>
+    public int[] SurfaceHeightMap { get; set; }
+
+    /// <summary>æ¯åˆ—çŸ³å¤´å±‚è¾¹ç•Œé«˜åº¦ [0..Width)</summary>
+    public float[] StoneHeightMap { get; set; }
+
+    /// <summary>æ¯åˆ—åœ°è¡¨æ›²çº¿åŸå§‹åç§» [0..Width)</summary>
+    public float[] TerrainCurveData { get; set; }
+
+    public GenerationContext(MapConfig _config, ChunkManager _chunkManager)
+    {
+        Config = _config;
+        ChunkManager = _chunkManager;
+        Seed = _config.ResolveSeed();
         claimed = new HashSet<BiomeInstance>();
     }
-
 }

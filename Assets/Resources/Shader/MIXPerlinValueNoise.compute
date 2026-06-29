@@ -3,8 +3,8 @@
 #include "Include/Noise.hlsl"
 
 RWTexture2D<float4> NoiseTexture;
-float PerlinFrequency;
-float ValueFrequency;
+float LeftFrequency;
+float RightFrequency;
 float Threshold;
 float Weight;
 float Scale;
@@ -20,31 +20,26 @@ float Offset;
 [numthreads(8, 8, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-
+    float2 uv = (id.xy + float2(Offset, Offset));
+    uv = float2((uv.x - Width / 2) / Scale, (uv.y - Height / 2) / Scale);
     float noiseValue = MIXPerlinValueNoise(
-        id.xy + float2(Offset, Offset),
-        PerlinFrequency,
-        ValueFrequency,
+        uv,
+        LeftFrequency,
+        RightFrequency,
         Weight,
         Octaves,
         Persistence,
         Lacunarity,
-        Scale,
-        Width,
-        Height,
         Seed
     );
     
-    // float4 color;
-    // if (IsBinary)
-    // {
-    //     color = (noiseValue > Threshold) ? float4(1, 1, 1, 1) : float4(0, 0, 0, 1);
-    // }
-    // else
-    // {
-    //     color = (noiseValue > Threshold) ? float4(noiseValue, noiseValue, noiseValue, 1) : float4(0, 0, 0, 1);
-    // }
-    float4 color = (noiseValue > Threshold) ? float4(noiseValue, noiseValue, noiseValue, 1) : float4(0, 0, 0, 1);
+    float4 color;
+
+    if (IsBinary){
+        color = (noiseValue > Threshold) ? float4(1, 1, 1, 1) : float4(0, 0, 0, 1);
+    } else {
+        color = float4(noiseValue, noiseValue, noiseValue, 1);
+    }
 
     NoiseTexture[id.xy] = color;
 

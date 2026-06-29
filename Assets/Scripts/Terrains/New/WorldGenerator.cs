@@ -1,6 +1,6 @@
 // =============================================
 //  WorldGenerator.cs — 地图生成总控制器
-//  流程：Phase1 分配 → Phase2 生成（BiomeDefinition 内联 Feature）→ Phase3 后处理
+//  流程：基础地形 → 分配 → 生成（BiomeDefinition 内联 Feature）→ 后处理
 // =============================================
 using System;
 using System.Collections.Generic;
@@ -13,6 +13,9 @@ public class WorldGenerator : MonoBehaviour
 
     [Header("区块数据管理器")]
     [SerializeField] private ChunkManager chunkManager;
+
+    [Header("基础地形（地壳分层、洞穴、矿石）")]
+    [SerializeField] private BaseTerrainPassConfig _baseTerrain;
 
     [Header("分配器")]
     [SerializeField] private DistributorBase[] _distributors;
@@ -30,14 +33,21 @@ public class WorldGenerator : MonoBehaviour
 
         GenerationContext context = new GenerationContext(_config, chunkManager);
 
-        // Phase 1: 分配
+        // Phase 1: 基础地形（地壳分层、洞穴、全局矿石）
+        if (_baseTerrain != null)
+        {
+            _baseTerrain.Execute(context);
+            Debug.Log("[MapGen] 基础地形生成完成");
+        }
+
+        // Phase 2: 分配
         BiomeInstances = DistributeAll(context);
         Debug.Log($"[MapGen] 分配完成 共 {BiomeInstances.Count} 个群落实例");
 
-        // Phase 2: 生成（BiomeDefinition 内联 Feature，直接调用）
+        // Phase 3: 生成（BiomeDefinition 内联 Feature，直接调用）
         GenerateAll(context);
 
-        // Phase 3: 后处理
+        // Phase 4: 后处理
         PostProcessAll(context);
 
         Debug.Log("[MapGen] 地图生成完成");
