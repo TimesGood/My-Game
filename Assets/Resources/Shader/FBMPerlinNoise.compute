@@ -4,6 +4,10 @@
 #include "Include/Noise.hlsl"
 
 RWTexture2D<float4> NoiseTexture;
+RWStructuredBuffer<float> CurveData;
+bool IsCurve;
+float HeightMult;
+float HeightAdd;
 float Frequency;
 float Threshold;
 float Scale;
@@ -19,7 +23,9 @@ bool IsBinary;
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    float2 uv = (id.xy + float2(Offset, Offset));
+    if (id.x >= Width || id.y >= Height)
+        return;
+    float2 uv = IsCurve ? float2(id.x + Offset, (Height * 0.5) + Offset) : (id.xy + float2(Offset, Offset));
     uv = float2((uv.x - Width / 2) / Scale, (uv.y - Height / 2) / Scale);
     
     
@@ -31,13 +37,21 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         Lacunarity,
         Seed
     );
-    float4 color;
-
-    if (IsBinary) {
-        color = (noiseValue > Threshold) ? float4(1, 1, 1, 1) : float4(0, 0, 0, 1);
-    } else {
-        color = float4(noiseValue, noiseValue, noiseValue, 1);
-    }
     
-    NoiseTexture[id.xy] = color;
+    if (IsCurve) {
+        int curveValue = (int) floor(noiseValue * HeightMult + HeightAdd);
+    
+        CurveData[id.y * Width + id.x] = curveValue;
+        OutputCurve(id, curveValue, Height, HeightMult, HeightAdd, NoiseTexture);
+
+    } else {
+        float4 color;
+        if (IsBinary) {
+            color = (noiseValue > Threshold) ? float4(1, 1, 1, 1) : float4(0, 0, 0, 1);
+        } else {
+            color = float4(noiseValue, noiseValue, noiseValue, 1);
+        }
+        
+        NoiseTexture[id.xy] = color;
+    }
 }

@@ -10,7 +10,7 @@ public class BaseTerrainPassConfig : ScriptableObject
 {
     [Header("地表曲线")]
     [Tooltip("定义地表高度起伏的曲线（相对于 SurfaceY 的偏移）")]
-    public CurveConfig terrainCurve;
+    public NoiseParams terrainCurve;
 
     [Header("地壳分层")]
     [Range(0.5f, 0.95f)]
@@ -35,9 +35,10 @@ public class BaseTerrainPassConfig : ScriptableObject
     public OreGeneration[] globalOres;
 
     // ========== 运行时纹理（Execute 期间临时使用） ==========
-    [System.NonSerialized] private Texture2D _dirtMixTex;
-    [System.NonSerialized] private Texture2D _stoneMixTex;
-    [SerializeField] public Texture2D _caveTex;
+    [System.NonSerialized] private SamplerResult _terrainTex;
+    [System.NonSerialized] private SamplerResult _dirtMixTex;
+    [System.NonSerialized] private SamplerResult _stoneMixTex;
+    [SerializeField] public SamplerResult _caveTex;
 
     /// <summary>
     /// 执行基础地形生成
@@ -72,7 +73,7 @@ public class BaseTerrainPassConfig : ScriptableObject
         for (int x = 0; x < width; x++)
         {
             // 地表高度 = SurfaceY + 曲线偏移
-            float curveOffset = terrainCurve != null ? terrainCurve.GetHeight(x) : 0f;
+            float curveOffset = terrainCurve != null ? _terrainTex.curveData[x] : 0f;
             int surfaceHeight = surfaceY + (int)curveOffset;
             surfaceHeightMap[x] = surfaceHeight;
             terrainCurveData[x] = curveOffset;
@@ -86,7 +87,7 @@ public class BaseTerrainPassConfig : ScriptableObject
             for (int y = 0; y <= surfaceHeight && y < height; y++)
             {
                 // 洞穴雕刻：噪声值 <= 阈值则挖空
-                if (_caveTex != null && _caveTex.GetPixel(x, y).r == 1)
+                if (_caveTex != null && _caveTex.tex.GetPixel(x, y).r == 1)
                 {
                     //if (t < 10000) {
                         //Debug.Log(_caveTex.GetPixel(x, y).r);
@@ -113,7 +114,7 @@ public class BaseTerrainPassConfig : ScriptableObject
                 OreGeneration ore = globalOres[i];
                 if (ore.oreClass == null) continue;
 
-                Texture2D oreTex = NoiseSampler.GenerateTexture(width, height, ore.noiseParams, seed + 100 + i);
+                SamplerResult oreTex = NoiseSampler.GenerateTexture(width, height, ore.noiseParams, seed + 100 + i);
                 if (oreTex == null) continue;
 
                 for (int x = 0; x < width; x++)
@@ -124,7 +125,7 @@ public class BaseTerrainPassConfig : ScriptableObject
                     // 矿石只在石头层以下放置
                     for (int y = 0; y < (int)stoneH && y < surfaceH; y++)
                     {
-                        if (oreTex.GetPixel(x, y).r > ore.threshold)
+                        if (oreTex.tex.GetPixel(x, y).r > ore.threshold)
                         {
                             world.SetTileClass(ore.oreClass, Layers.Ground, x, y);
                         }
@@ -164,16 +165,10 @@ public class BaseTerrainPassConfig : ScriptableObject
     /// </summary>
     private void InitNoises(int _width, int _height, int _seed)
     {
-        if (terrainCurve != null)
-        {
-            terrainCurve.InitValidate(_width, _height, _seed);
-            terrainCurve.InitNoise();
-        }
-
+        _terrainTex = NoiseSampler.GenerateTexture(_width, _height, terrainCurve, _seed);
         _dirtMixTex = NoiseSampler.GenerateTexture(_width, _height, dirtMixNoise, _seed);
         _stoneMixTex = NoiseSampler.GenerateTexture(_width, _height, stoneMixNoise, _seed + 1);
         _caveTex = NoiseSampler.GenerateTexture(_width, _height, caveNoise, _seed + 2);
-        _caveTex.Apply();
     }
 
     /// <summary>
@@ -181,10 +176,10 @@ public class BaseTerrainPassConfig : ScriptableObject
     /// </summary>
     private void DestroyNoises()
     {
-        if (_dirtMixTex != null) { DestroyImmediate(_dirtMixTex); _dirtMixTex = null; }
-        if (_stoneMixTex != null) { DestroyImmediate(_stoneMixTex); _stoneMixTex = null; }
-        if (_caveTex != null) { DestroyImmediate(_caveTex); _caveTex = null; }
-        if (terrainCurve != null) terrainCurve.DestroyNoiseTexture();
+        if (_dirtMixTex != null) { DestroyImmediate(_dirtMixTex.tex); _dirtMixTex = null; }
+        if (_stoneMixTex != null) { DestroyImmediate(_stoneMixTex.tex); _stoneMixTex = null; }
+        if (_caveTex != null) { DestroyImmediate(_caveTex.tex); _caveTex = null; }
+        if (_terrainTex != null) { DestroyImmediate(_terrainTex.tex); _terrainTex = null; }
     }
 
     /// <summary>
@@ -211,13 +206,13 @@ public class BaseTerrainPassConfig : ScriptableObject
         // 深层区：偏石头，dirtMixNoise > 0.5 时出现泥土口袋
         if (_worldY < _stoneHeight)
         {
-            if (_dirtMixTex != null && _dirtMixTex.GetPixel(_x, _worldY).r > 0.5f)
+            if (_dirtMixTex != null && _dirtMixTex.tex.GetPixel(_x, _worldY).r > 0.5f)
                 return tileMapping.dirtTile;
             return tileMapping.stoneTile;
         }
 
         // 浅层区：偏泥土，stoneMixNoise > 0.5 时出现石头口袋
-        if (_stoneMixTex != null && _stoneMixTex.GetPixel(_x, _worldY).r > 0.5f)
+        if (_stoneMixTex != null && _stoneMixTex.tex.GetPixel(_x, _worldY).r > 0.5f)
             return tileMapping.stoneTile;
         return tileMapping.dirtTile;
     }

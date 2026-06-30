@@ -11,8 +11,8 @@ public class SurfaceBiome : BaseBiome {
     public int surfaceStart;//群落出现在地表上的开始坐标
     public int surfaceEnd;//群落出现在地表上结束坐标
 
-    [field: SerializeField] public CurveConfig terrain { get; private set; }//地表地形曲线
-    [field: SerializeField] public PerlinNoise cave { get; private set; }//群落洞穴噪图
+    //[field: SerializeField] public CurveConfig terrain { get; private set; }//地表地形曲线
+    //[field: SerializeField] public PerlinNoise cave { get; private set; }//群落洞穴噪图
     [field: SerializeField] public OreClass[] ores { get; private set; }//群落中可生成的矿物
     [field: SerializeField] public TileClass grassBlock { get; private set; }//群落地表瓦片
     [field: SerializeField] public TileClass dirtBlock { get; private set; }//土层瓦片
@@ -41,18 +41,18 @@ public class SurfaceBiome : BaseBiome {
         surfaceStart = 0;
         surfaceEnd = 0;
         for (int x = 0; x < biomeSize.x; x++) {
-            if (!isReversal && outLine.noiseTexture.GetPixel(x, baseHeight).r > 0.5) {
+            if (!isReversal/* && outLine.noiseTexture.GetPixel(x, baseHeight).r > 0.5*/) {
                 int worldX = LocalToWorldPosX(x);
                 surfaceStart = worldX;
                 break;
             }
         }
         for (int x = biomeSize.x; x > 0; x--) {
-            if (outLine.noiseTexture.GetPixel(x, baseHeight).r > 0.5) {
-                int worldX = LocalToWorldPosX(x);
-                surfaceEnd = worldX;
-                break;
-            }
+            //if (outLine.noiseTexture.GetPixel(x, baseHeight).r > 0.5) {
+            //    int worldX = LocalToWorldPosX(x);
+            //    surfaceEnd = worldX;
+            //    break;
+            //}
         }
     }
 
@@ -60,40 +60,40 @@ public class SurfaceBiome : BaseBiome {
     protected override void InitNoise(int seed) {
         base.InitNoise(seed);
         //地形噪图生成
-        terrain.InitValidate(biomeSize.x,biomeSize.y,seed);
-        cave.InitValidate(biomeSize.x, biomeSize.y, seed);
-        terrain.InitNoise();
-        cave.InitNoise();
+        //terrain.InitValidate(biomeSize.x,biomeSize.y,seed);
+        //cave.InitValidate(biomeSize.x, biomeSize.y, seed);
+        //terrain.InitNoise();
+        //cave.InitNoise();
 
         //矿石瓦片噪图生成
         int t = 0;
         foreach (OreClass tileClass in ores) {
-            tileClass.noise.InitValidate(biomeSize.x, biomeSize.y, seed + t * 100);
-            Texture2D noiseTexture = tileClass.noise.InitNoise();
-            noises.Add(tileClass.blockId.ToString(), noiseTexture);
+            //tileClass.noise.InitValidate(biomeSize.x, biomeSize.y, seed + t * 100);
+            //Texture2D noiseTexture = tileClass.noise.InitNoise();
+            //noises.Add(tileClass.blockId.ToString(), noiseTexture);
             t++;
         }
 
         //树木
         for (int i = 0; i < trees.Length; i++) {
             TreeClass treeClass = trees[i];
-            treeClass.noise.InitValidate(biomeSize.x, biomeSize.y, seed);
-            treeClass.noise.frequency = treeClass.frequency;//密度
-            treeClass.noise.threshold = treeClass.threshold;//范围（每撮大小）
+            //treeClass.noise.InitValidate(biomeSize.x, biomeSize.y, seed);
+            //treeClass.noise.frequency = treeClass.frequency;//密度
+            //treeClass.noise.threshold = treeClass.threshold;//范围（每撮大小）
             //可能存在使用同一种树的情况
-            if (!noises.ContainsKey(treeClass.blockId.ToString())) {
-                noises.Add(treeClass.blockId.ToString(), treeClass.noise.InitNoise());
-            }
+            //if (!noises.ContainsKey(treeClass.blockId.ToString())) {
+            //    noises.Add(treeClass.blockId.ToString(), treeClass.noise.InitNoise());
+            //}
         }
 
         for (int i = 0; i < caveTrees.Length; i++) {
-            TreeClass treeClass = caveTrees[i];
-            treeClass.noise.InitValidate(biomeSize.x, biomeSize.y, seed);
-            treeClass.noise.frequency = treeClass.frequency;
-            treeClass.noise.threshold = treeClass.threshold;
-            if (!noises.ContainsKey(treeClass.blockId.ToString())) {
-                noises.Add(treeClass.blockId.ToString(), treeClass.noise.InitNoise());
-            }
+            //TreeClass treeClass = caveTrees[i];
+            //treeClass.noise.InitValidate(biomeSize.x, biomeSize.y, seed);
+            //treeClass.noise.frequency = treeClass.frequency;
+            //treeClass.noise.threshold = treeClass.threshold;
+            //if (!noises.ContainsKey(treeClass.blockId.ToString())) {
+            //    noises.Add(treeClass.blockId.ToString(), treeClass.noise.InitNoise());
+            //}
         }
     }
 
@@ -106,14 +106,14 @@ public class SurfaceBiome : BaseBiome {
         //从上往下-左往右生成（生成树的时候方便）
         for (int x = 0; x < biomeSize.x; x++) {
             
-            int terrainHeight = baseHeight + (int)terrain.GetHeight(x);
+            //int terrainHeight = baseHeight + (int)terrain.GetHeight(x);
 
-            terrainHeights[x] = terrainHeight;
-            int worldX = LocalToWorldPosX(x);
-            worldXs[x] = worldX;
-            if (terrainHeight > maxHeight) maxHeight = terrainHeight;
-            //群落地形调整
-            EraseTopTile(worldX, terrainHeight);
+            //terrainHeights[x] = terrainHeight;
+            //int worldX = LocalToWorldPosX(x);
+            //worldXs[x] = worldX;
+            //if (terrainHeight > maxHeight) maxHeight = terrainHeight;
+            ////群落地形调整
+            //EraseTopTile(worldX, terrainHeight);
         }
 
 
@@ -153,10 +153,10 @@ public class SurfaceBiome : BaseBiome {
                     }
 
                     //挖洞穴
-                    if (cave.noiseTexture.GetPixel(x, y).r <= 0) {
-                        world.SetTileClass(null, Layers.Ground, worldX, worldY);
-                        tileClass = null;
-                    }
+                    //if (cave.noiseTexture.GetPixel(x, y).r <= 0) {
+                    //    world.SetTileClass(null, Layers.Ground, worldX, worldY);
+                    //    tileClass = null;
+                    //}
 
                 }
 
@@ -164,7 +164,7 @@ public class SurfaceBiome : BaseBiome {
                     world.SetTileClass(tileClass, tileClass.layer, worldX, worldY);
                 }
                 //地表
-                if (worldY == terrainHeight && IsSurfaceRange(worldX) && !(cave.noiseTexture.GetPixel(x, y - 1).r <= 0)) {
+                if (worldY == terrainHeight && IsSurfaceRange(worldX)/* && !(cave.noiseTexture.GetPixel(x, y - 1).r <= 0) */) {
                     TileClass tileBase = world.GetTileClass(Layers.Ground, worldX, worldY);
                     if (tileBase != null && (tileBase == dirtBlock || tileBase == grassBlock)) {
                         for (int i = 0; i < trees.Length; i++) {
@@ -203,22 +203,22 @@ public class SurfaceBiome : BaseBiome {
                 //地底洞穴
                 if (isOutLine(x, y)) {
                     //挖洞穴
-                    if (cave.noiseTexture.GetPixel(x, y).r <= 0) {
-                        //洞穴树
-                        if (!(cave.noiseTexture.GetPixel(x, y - 1).r <= 0) && world.GetTileClass(Layers.Ground, worldX, worldY - 1) != null) {
-                            if (caveTrees.Length != 0 && Random.Range(0, 100) > 60) {
-                                int caveIndex = Random.Range(0, caveTrees.Length);
-                                TreeClass tree = caveTrees[caveIndex];
-                                if (tree.CheckSpawn(worldX, worldY)) {
-                                    tree.PlanceSelf(worldX, worldY);
-                                }
-                            }
-                        }
+                    //if (cave.noiseTexture.GetPixel(x, y).r <= 0) {
+                    //    //洞穴树
+                    //    if (!(cave.noiseTexture.GetPixel(x, y - 1).r <= 0) && world.GetTileClass(Layers.Ground, worldX, worldY - 1) != null) {
+                    //        if (caveTrees.Length != 0 && Random.Range(0, 100) > 60) {
+                    //            int caveIndex = Random.Range(0, caveTrees.Length);
+                    //            TreeClass tree = caveTrees[caveIndex];
+                    //            if (tree.CheckSpawn(worldX, worldY)) {
+                    //                tree.PlanceSelf(worldX, worldY);
+                    //            }
+                    //        }
+                    //    }
 
-                    }
+                    //}
                 }
                 //地表
-                if (worldY == terrainHeight && IsSurfaceRange(worldX) && !(cave.noiseTexture.GetPixel(x, y - 1).r <= 0)) {
+                if (worldY == terrainHeight && IsSurfaceRange(worldX) /* && !(cave.noiseTexture.GetPixel(x, y - 1).r <= 0) */) {
                     TileClass tileBase = world.GetTileClass(Layers.Ground, worldX, worldY);
                     if (tileBase != null && (tileBase == dirtBlock || tileBase == grassBlock)) {
                         for (int i = 0; i < trees.Length; i++) {

@@ -12,7 +12,6 @@ public class TreeClass : TileClass
     public float threshold = 0.6f;//控制树的稀有度
     public float prob = 0.7f;//生成概率
     public bool isSurface = false;//生成于地表
-    public PerlinNoise noise;//噪图
 
     #region 编辑器
     [Header("Grid Settings")]

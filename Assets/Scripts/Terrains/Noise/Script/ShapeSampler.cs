@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 using Color = UnityEngine.Color;
 
-public class ShapeSample
+public class ShapeSampler
 {
 
     /// <summary>
@@ -35,6 +35,7 @@ public class ShapeSample
         // 绘制并填充
         DrawShape(tex, vertices, Color.white, _width, _height, _p, _seed);
 
+        tex.Apply();
         return tex;
         //ApplyDistortion();
         Random.state = originalState;

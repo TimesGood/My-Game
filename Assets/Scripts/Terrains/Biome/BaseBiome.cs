@@ -18,8 +18,8 @@ public abstract class BaseBiome : ScriptableObject
     protected Vector2Int maxPos;//群落最大点位
 
     //群落噪图配置
-    [field: SerializeField] public ShapeGenerator outLine { get; private set; }//群落轮廓
-    [field: SerializeField] public PerlinNoise distributionNoise { get; private set; }//群落分布噪图
+    //[field: SerializeField] public ShapeGenerator outLine { get; private set; }//群落轮廓
+    //[field: SerializeField] public PerlinNoise distributionNoise { get; private set; }//群落分布噪图
 
     //初始化群落
     public virtual void InitBiome(Vector2Int worldPosition, int seed) {
@@ -34,28 +34,29 @@ public abstract class BaseBiome : ScriptableObject
     //初始化噪图数据
     protected virtual void InitNoise(int seed) {
         //群落轮廓
-        outLine?.InitValidate(biomeSize.x, biomeSize.y, seed);
-        outLine?.InitNoise();
+        //outLine?.InitValidate(biomeSize.x, biomeSize.y, seed);
+        //outLine?.InitNoise();
     }
 
     //初始化群落分布噪图
     public void InitDistributionNoise() {
-        distributionNoise?.InitValidate(world.worldSize.x, world.worldSize.y, world.seed);
-        distributionNoise?.InitNoise();
+        //distributionNoise?.InitValidate(world.worldSize.x, world.worldSize.y, world.seed);
+        //distributionNoise?.InitNoise();
     }
 
     //点位是否在轮廓内
     public virtual bool isOutLine(int localX, int localY) {
-        if (outLine == null) return true;
-        return outLine.noiseTexture.GetPixel(localX, localY).r > 0.5f;
+        //if (outLine == null) return true;
+        //return outLine.noiseTexture.GetPixel(localX, localY).r > 0.5f;
+        return false;
     }
 
     //目标点是否符合生成条件
     public virtual bool isConformGenerator(Vector2Int targetDot) {
-        if (distributionNoise == null) return true;
-        if (distributionNoise.GetPixel(targetDot.x, targetDot.y).r > 0) {
-            return true;
-        }
+        //if (distributionNoise == null) return true;
+        //if (distributionNoise.GetPixel(targetDot.x, targetDot.y).r > 0) {
+        //    return true;
+        //}
         return false;
     }
 

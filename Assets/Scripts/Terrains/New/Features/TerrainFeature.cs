@@ -9,18 +9,17 @@ using UnityEngine;
 public class TerrainFeature : BiomeFeature
 {
     public TerrainBlendMode blendMode = TerrainBlendMode.EraseTop;
-    public CurveConfig terrainCurve;
+    public NoiseParams terrainNoise;
     public TileMapping tileMapping;
+
+    // ========== 运行时纹理（Execute 期间临时使用） ==========
+    [System.NonSerialized] private SamplerResult _terrainTex;
 
     public bool IsValid => tileMapping != null && tileMapping.IsValid;
 
     public override void Init(Vector2Int _biomeSize, int _seed, Dictionary<string, Texture2D> _noiseCache)
     {
-        if (terrainCurve != null)
-        {
-            terrainCurve.InitValidate(_biomeSize.x, _biomeSize.y, _seed);
-            terrainCurve.InitNoise();
-        }
+        _terrainTex = NoiseSampler.GenerateTexture(_biomeSize.x, _biomeSize.y, terrainNoise, _seed);
     }
 
     public override void Execute(BiomeContext _ctx)
@@ -40,8 +39,8 @@ public class TerrainFeature : BiomeFeature
             int worldX = _ctx.LocalToWorldX(x);
             _ctx.worldXs[x] = worldX;
 
-            _ctx.terrainHeights[x] = terrainCurve != null
-                ? baseHeight + (int)terrainCurve.GetHeight(x)
+            _ctx.terrainHeights[x] = _terrainTex != null
+                ? baseHeight + (int)_terrainTex.curveData[x]
                 : world.surfaceHeights[worldX];
 
             if (_ctx.terrainHeights[x] > _ctx.maxHeight)

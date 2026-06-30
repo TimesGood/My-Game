@@ -8,14 +8,18 @@ public class BorderBlendFeature : BiomeFeature
     public int blendDistance = 50;
     public bool blendStoneCurve;
     public int heightAdd;
-    public CurveConfig terrainCurve;
+    public NoiseParams terrainNoise;
+
+
+    // ========== 运行时纹理（Execute 期间临时使用） ==========
+    [System.NonSerialized] private SamplerResult _terrainTex;
+
 
     public override void Init(Vector2Int _biomeSize, int _seed, Dictionary<string, Texture2D> _noiseCache)
     {
-        if (mode == BorderBlendMode.CurveBlend && terrainCurve != null)
+        if (mode == BorderBlendMode.CurveBlend)
         {
-            terrainCurve.InitValidate(_biomeSize.x, _biomeSize.y, _seed);
-            terrainCurve.InitNoise();
+            _terrainTex = NoiseSampler.GenerateTexture(_biomeSize.x, _biomeSize.y, terrainNoise, _seed);
         }
     }
 
@@ -25,7 +29,7 @@ public class BorderBlendFeature : BiomeFeature
         WorldManager w = WorldManager.Instance;
 
         if (mode == BorderBlendMode.HeightBlend) BlendByHeight(w, _ctx);
-        else if (mode == BorderBlendMode.CurveBlend && terrainCurve != null) BlendByCurve(w, _ctx);
+        else if (mode == BorderBlendMode.CurveBlend && _terrainTex != null) BlendByCurve(w, _ctx);
     }
 
     private void BlendByHeight(WorldManager w, BiomeContext ctx)
@@ -47,8 +51,8 @@ public class BorderBlendFeature : BiomeFeature
     private void BlendByCurve(WorldManager w, BiomeContext ctx)
     {
         int start = ctx.LocalToWorldX(0);
-        BlendData(w.terrainCurveData, terrainCurve.GetCurveData(), start);
-        if (blendStoneCurve) BlendData(w.stoneCurveData, terrainCurve.GetCurveData(), start, 100);
+        BlendData(w.terrainCurveData, _terrainTex.curveData, start);
+        if (blendStoneCurve) BlendData(w.stoneCurveData, _terrainTex.curveData, start, 100);
     }
 
     private void BlendData(float[] m, float[] s, int start, int add = 0)

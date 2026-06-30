@@ -152,6 +152,8 @@ float FBMPerlinNoise(
     float lacunarity,//粗糙度
     int seed
 ) {
+    if (octaves < 1)
+        octaves = 1;
     // 分形叠加 (FBM)
     float noiseValue = 0.0;
     float frequency = baseFrequency;
@@ -183,6 +185,8 @@ float FBMValueNoise(
     float lacunarity,
     int seed
 ) {
+    if (octaves < 1)
+        octaves = 1;
     // 分形叠加 (FBM)
     float noiseValue = 0.0;
     float frequency = baseFrequency;
@@ -216,6 +220,8 @@ float FBMWorleyNoise(
     bool worleyFlip,
     int seed
 ) {
+    if (octaves < 1)
+        octaves = 1;
     // 分形叠加 (FBM)
     float noiseValue = 0.0;
     float frequency = baseFrequency;
@@ -255,15 +261,12 @@ float MIXPerlinValueNoise(
 )
 {
     // Perlin噪声添加细节
-    float perlin = FBMPerlinNoise(
-       uv.xy, perlinFrequency, octaves, persistence, lacunarity, seed
-    );
+    float perlin = FBMPerlinNoise(uv, perlinFrequency, octaves, persistence, lacunarity, seed);
+    
     
     // value噪声
-    float value = FBMValueNoise(
-       uv.xy, valueFrequency, octaves, persistence, lacunarity, seed
-    );
-    
+    float value = FBMValueNoise(uv, valueFrequency, octaves, persistence, lacunarity, seed);
+
     float perlinWeight = 1 - weight;
 
     return value * weight + perlin * perlinWeight;
@@ -338,6 +341,40 @@ float MIXValueWorleyNoise(
     return worley * weight + value * valueWeight;
     
     
+}
+
+//--------------------------
+// 输出曲线图
+// 注意噪声图Y轴采样要指定一行：float2 uv = float2(id.x, Height * 0.5);
+//--------------------------
+void OutputCurve(uint3 id, int curveValue, int height, int heightMult, int heightAdd, RWTexture2D<float4> noiseTexture)
+{
+    
+
+    int dist = abs((int) id.y - curveValue);
+
+    if (dist == 0)
+    {
+        // 曲线主体
+        noiseTexture[id.xy] = float4(1.0, 0.3, 0.2, 1.0);
+    }
+    else if (dist <= 1)
+    {
+        // 曲线边缘（抗锯齿）
+        noiseTexture[id.xy] = float4(0.8, 0.2, 0.15, 0.7);
+    }
+    else if (id.y > curveValue)
+    {
+        // 曲线下方填充
+        float fill = 1.0 - (float) (id.y - curveValue) / (float) (height - curveValue);
+        fill = saturate(fill) * 0.25;
+        noiseTexture[id.xy] = float4(fill * 0.4, fill * 0.6, fill, 1.0);
+    }
+    else
+    {
+        // 曲线上方背景
+        noiseTexture[id.xy] = float4(0.04, 0.04, 0.05, 1.0);
+    }
 }
 
 

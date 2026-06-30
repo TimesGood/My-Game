@@ -2,6 +2,12 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
+public class SamplerResult {
+    public Texture2D tex;             // 采样图
+    public float[] curveData;         // 曲线数据
+}
+
+
 /// <summary>
 /// 噪声采样工具类，支持 CPU 和 GPU 两种路径。
 /// 根据 NoiseParams 内联参数在指定坐标采样噪声值，无需 SO 资产。
@@ -37,10 +43,10 @@ public static class NoiseSampler
     /// 优先使用 GPU（ComputeShader），失败时自动回退到 CPU。
     /// 调用方在读取时自行判断阈值：tex.GetPixel(x,y).r > threshold
     /// </summary>
-    public static Texture2D GenerateTexture(int _width, int _height, NoiseParams _p, int _seed) {
+    public static SamplerResult GenerateTexture(int _width, int _height, NoiseParams _p, int _seed) {
         // 尝试 GPU 路径
         if (_p.useGPU) {
-            Texture2D gpuResult = GenerateTextureGPU(_width, _height, _p, _seed);
+            SamplerResult gpuResult = GenerateTextureGPU(_width, _height, _p, _seed);
             if (gpuResult != null) return gpuResult;
         }
         // 回退到 CPU 路径
@@ -52,7 +58,7 @@ public static class NoiseSampler
     /// <summary>
     /// 通过 ComputeShader 生成噪声纹理。如果 shader 不可用返回 null。
     /// </summary>
-    private static Texture2D GenerateTextureGPU(int _width, int _height, NoiseParams _p, int _seed) {
+    private static SamplerResult GenerateTextureGPU(int _width, int _height, NoiseParams _p, int _seed) {
         ComputeShader shader = LoadShader(_p.type, _p.UseFBM);
         if (shader == null) return null;
 
@@ -77,6 +83,16 @@ public static class NoiseSampler
         shader.SetFloat("Scale", _p.scale);
         shader.SetInt("Seed", _seed);
 
+        // 曲线参数
+        ComputeBuffer curveBuffer = new ComputeBuffer(_width, sizeof(int));
+        shader.SetBuffer(kernel, "CurveData", curveBuffer);
+        shader.SetBool("IsCurve", _p.isCurve);
+        if (_p.isCurve) {
+            shader.SetInt("HeightMult", _p.heightMult);
+            shader.SetInt("HeightAdd", _p.heightAdd);
+        }
+
+
         // FBM 参数
         if (_p.UseFBM) {
             shader.SetInt("Octaves", _p.fbmParams.octaves);
@@ -96,6 +112,10 @@ public static class NoiseSampler
             shader.SetFloat("RightFrequency", _p.mixParams.rightFrequency);
             shader.SetFloat("Weight", _p.mixParams.weight);
         }
+        // 域扭曲参数
+        shader.SetFloat("WarpFrequency", _p.warpFrequency);
+        shader.SetFloat("WarpStrength", _p.warpStrength);
+
 
         // 调度
         int groupsX = Mathf.CeilToInt(_width / 8f);
@@ -114,7 +134,16 @@ public static class NoiseSampler
 
         rt.Release();
         Object.DestroyImmediate(rt);
-        return tex;
+
+        SamplerResult result = new SamplerResult();
+        result.tex = tex;
+        if (_p.isCurve) {
+            float[] curveData = new float[_width];
+            curveBuffer.GetData(curveData);
+            result.curveData = curveData;
+        }
+        
+        return result;
     }
 
     // ==================== Shader 加载 ====================
@@ -149,7 +178,7 @@ public static class NoiseSampler
 
     // ==================== CPU 纹理生成 ====================
 
-    private static Texture2D GenerateTextureCPU(int _width, int _height, NoiseParams _p, int _seed) {
+    private static SamplerResult GenerateTextureCPU(int _width, int _height, NoiseParams _p, int _seed) {
         Texture2D tex = new Texture2D(_width, _height, TextureFormat.RGBA32, false) {
             wrapMode = TextureWrapMode.Clamp,
             filterMode = FilterMode.Point
@@ -163,7 +192,9 @@ public static class NoiseSampler
             }
         }
         tex.Apply();
-        return tex;
+        SamplerResult result = new SamplerResult();
+        result.tex = tex;
+        return result;
     }
 
 

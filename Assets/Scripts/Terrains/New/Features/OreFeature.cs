@@ -7,11 +7,11 @@ using UnityEngine;
 public class OreFeature : BiomeFeature
 {
     public OreGeneration[] ores;
-    [System.NonSerialized] private Dictionary<string, Texture2D> _cache;
+    [System.NonSerialized] private Dictionary<string, SamplerResult> _cache;
 
     public override void Init(Vector2Int _biomeSize, int _seed, Dictionary<string, Texture2D> _noiseCache)
     {
-        _cache = new Dictionary<string, Texture2D>();
+        _cache = new Dictionary<string, SamplerResult>();
         if (ores == null) return;
         for (int i = 0; i < ores.Length; i++)
         {
@@ -21,7 +21,7 @@ public class OreFeature : BiomeFeature
             if (_cache.ContainsKey(key)) continue;
 
             // 用 NoiseSampler 生成纹理（替代 NoiseConfig SO）
-            Texture2D tex = NoiseSampler.GenerateTexture(
+            SamplerResult tex = NoiseSampler.GenerateTexture(
                 _biomeSize.x, _biomeSize.y, ore.noiseParams, _seed + i * 100);
             _cache[key] = tex;
         }
@@ -43,7 +43,7 @@ public class OreFeature : BiomeFeature
                 foreach (var ore in ores)
                 {
                     if (ore?.oreClass == null) continue;
-                    if (_cache.TryGetValue(ore.oreClass.blockId.ToString(), out var tex) && tex.GetPixel(x, y).r > ore.threshold)
+                    if (_cache.TryGetValue(ore.oreClass.blockId.ToString(), out var tex) && tex.tex.GetPixel(x, y).r > ore.threshold)
                     {
                         chunk.SetBlockId(Layers.Ground, wx, wy, ore.oreClass.blockId);
                         break;

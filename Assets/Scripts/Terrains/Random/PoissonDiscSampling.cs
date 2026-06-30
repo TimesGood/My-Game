@@ -205,16 +205,15 @@ public static List<Vector2> GenerateGridPoints(Vector2Int cell, Vector2Int world
     }
 
     //噪图随机算法
-    public static List<Vector2> GenerateNoisePoints(Vector2Int biome, Vector2Int world, PerlinNoise noise, int seed) {
+    public static List<Vector2> GenerateNoisePoints(Vector2Int biome, Vector2Int world, NoiseParams noiseParams, int seed) {
         List<Vector2> points = new List<Vector2>();
         // 计算可能的群落数量
         int cols = Mathf.FloorToInt(biome.x / world.x);
         int rows = Mathf.FloorToInt(biome.y / world.y);
-        noise.InitValidate(cols, rows, seed);
-        noise.InitNoise();
+        SamplerResult result = NoiseSampler.GenerateTexture(world.x, world.y, noiseParams, seed);
         for (int x = 0; x < cols; x++) {
             for (int y = 0; y < rows; y++) {
-                if (noise.GetPixel(x, y).r > 0.5) {
+                if (result.tex.GetPixel(x, y).r > 0.5) {
                     Vector2Int spawnPos = new Vector2Int(
                         x * biome.x + Random.Range(0, biome.x),
                         y * biome.y + Random.Range(0, biome.y)

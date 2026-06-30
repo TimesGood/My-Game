@@ -15,7 +15,7 @@ public class OutLineFeature : BiomeFeature {
 
     public override void Init(Vector2Int _biomeSize, int _seed, Dictionary<string, Texture2D> _noiseCache) {
 
-        Texture2D tex = ShapeSample.GenerateTexture(_biomeSize.x, _biomeSize.y, outLine.shapeParams, _seed);
+        Texture2D tex = ShapeSampler.GenerateTexture(_biomeSize.x, _biomeSize.y, outLine.shapeParams, _seed);
         _noiseCache["OutLineFeature"] = tex;
     }
     public override void Execute(BiomeContext _ctx) {

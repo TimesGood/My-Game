@@ -12,11 +12,11 @@ public class TreeFeature : BiomeFeature
     public TreePlacement placement = TreePlacement.Surface;
     public TreeGeneration[] trees;
     [Range(0, 100)] public int spawnChance = 50;
-    [System.NonSerialized] private Dictionary<string, Texture2D> _cache;
+    [System.NonSerialized] private Dictionary<string, SamplerResult> _cache;
 
     public override void Init(Vector2Int _biomeSize, int _seed, Dictionary<string, Texture2D> _noiseCache)
     {
-        _cache = new Dictionary<string, Texture2D>();
+        _cache = new Dictionary<string, SamplerResult>();
         if (trees == null) return;
         for (int i = 0; i < trees.Length; i++)
         {
@@ -31,7 +31,7 @@ public class TreeFeature : BiomeFeature
             if (t.treeClass.threshold > 0) p.threshold = t.treeClass.threshold;
 
             // 用 NoiseSampler 生成纹理（替代 NoiseConfig SO）
-            Texture2D tex = NoiseSampler.GenerateTexture(
+            SamplerResult tex = NoiseSampler.GenerateTexture(
                 _biomeSize.x, _biomeSize.y, p, _seed + i * 100);
             _cache[key] = tex;
         }
@@ -58,7 +58,7 @@ public class TreeFeature : BiomeFeature
             foreach (var tg in trees)
             {
                 if (tg?.treeClass == null || !tg.treeClass.CheckSpawn(wx, ty)) continue;
-                if (_cache.TryGetValue(tg.treeClass.blockId.ToString(), out var tex) && tex.GetPixel(x, ty).r > 0.5f && Random.Range(0, 100) < spawnChance)
+                if (_cache.TryGetValue(tg.treeClass.blockId.ToString(), out var tex) && tex.tex.GetPixel(x, ty).r > 0.5f && Random.Range(0, 100) < spawnChance)
                 { tg.treeClass.PlanceSelf(wx, ty); break; }
             }
         }

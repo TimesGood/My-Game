@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0545d047fc70f6343ac8bd1c8c0ee932, type: 3}
+  m_Name: New Shape
+  m_EditorClassIdentifier: 
+  width: 1000
+  height: 1000
+  seed: 28
+  shapeParams:
+    vertexCount: 8
+    offset: {x: 0, y: 0}
+    fillPolygon: 1
+    leftLower: {x: 0, y: 0}
+    rightUpper: {x: 1000, y: 1000}
+    limitType: 2
+    circleRadius: 100
+    circleRange: 0.935
+    ellipseRadius: 150
+    ellipseRange: 0.819
+    ellipseScale: {x: 1, y: 1}
+    edgeBias: 0.526
+    rectSize: {x: 500, y: 500}
+    rectRange: 0.438
+    curvesType: 0
+    segments: 18
+    bezierStrength: 0.199
+    perlinFrequency: 0.44
+    perlinAmplitude: 19.61
+    octaves: 2
+    persistence: 2.6
+    lacunarity: 2.76

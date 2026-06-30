@@ -15,7 +15,8 @@ public enum NoiseType
 
 [System.Serializable]
 public class FBMParams {
-    public int octaves = 4;              // 叠加层数（1 = 无分形）
+    [Min(1)]
+    public int octaves = 1;              // 叠加层数（1 = 无分形）
     [Range(0, 1)]
     public float persistence = 0.5f;     // 振幅衰减
     [Min(1)]
@@ -50,6 +51,11 @@ public class NoiseParams
     public float offset;                 // 偏移
     public float scale = 1f;             // 缩放
 
+    [Header("曲线参数")]
+    public bool isCurve;
+    public int heightMult;               // 
+    public int heightAdd;                // 
+
     [Header("worley噪声专属")]
     public int worleyType;               // worley类型 0 细胞 1 蜂窝
     public bool worleyFlip;              // worley反转
@@ -61,6 +67,9 @@ public class NoiseParams
     [Header("MIX 混合参数")]
     public MIXParams mixParams;          // 混合参数
 
+    [Header("域扭曲参数")]
+    public float warpFrequency;
+    public float warpStrength;
 
     public bool useGPU = true;           // 生成方式
 

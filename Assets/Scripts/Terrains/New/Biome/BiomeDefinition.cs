@@ -32,7 +32,7 @@ public class BiomeDefinition : ScriptableObject {
     public int num = 1;
 
     [Header("群落轮廓（可选，不规则形状）")]
-    public ShapeGenerator outLine;
+    //public ShapeGenerator outLine;
 
     [Header("Feature 列表（按顺序执行）")]
     [SerializeReference]
@@ -53,8 +53,8 @@ public class BiomeDefinition : ScriptableObject {
 
         var cache = new Dictionary<string, Texture2D>();
 
-        outLine?.InitValidate(biomeSize.x, biomeSize.y, _seed);
-        outLine?.InitNoise();
+        //outLine?.InitValidate(biomeSize.x, biomeSize.y, _seed);
+        //outLine?.InitNoise();
 
         for (int i = 0; i < _features.Count; i++)
         {
@@ -107,24 +107,24 @@ public class BiomeDefinition : ScriptableObject {
         int baseHeight = WorldManager.Instance.baseHeight;
         int start = 0, end = 0;
 
-        if (outLine != null)
-        {
-            for (int x = 0; x < _ctx.biomeSize.x; x++)
-            {
-                if (outLine.noiseTexture.GetPixel(x, baseHeight).r > 0.5f)
-                { start = _ctx.LocalToWorldX(x); break; }
-            }
-            for (int x = _ctx.biomeSize.x - 1; x >= 0; x--)
-            {
-                if (outLine.noiseTexture.GetPixel(x, baseHeight).r > 0.5f)
-                { end = _ctx.LocalToWorldX(x); break; }
-            }
-        }
-        else
-        {
-            start = _ctx.minPos.x;
-            end = _ctx.maxPos.x;
-        }
+        //if (outLine != null)
+        //{
+        //    for (int x = 0; x < _ctx.biomeSize.x; x++)
+        //    {
+        //        if (outLine.noiseTexture.GetPixel(x, baseHeight).r > 0.5f)
+        //        { start = _ctx.LocalToWorldX(x); break; }
+        //    }
+        //    for (int x = _ctx.biomeSize.x - 1; x >= 0; x--)
+        //    {
+        //        if (outLine.noiseTexture.GetPixel(x, baseHeight).r > 0.5f)
+        //        { end = _ctx.LocalToWorldX(x); break; }
+        //    }
+        //}
+        //else
+        //{
+        //    start = _ctx.minPos.x;
+        //    end = _ctx.maxPos.x;
+        //}
 
         _ctx.surfaceStart = start;
         _ctx.surfaceEnd = end;
