@@ -12,17 +12,17 @@ public class NestedBiomeFeature : BiomeFeature
     public float sampleRadius = 30f;
     public int maxCount = 10;
 
-    public override void Init(Vector2Int _biomeSize, int _seed, Dictionary<string, Texture2D> _noiseCache) { }
+    public override void Init(GenerationContext _ctx, RectInt region) { }
 
-    public override void Execute(BiomeContext _ctx)
+    public override void Execute(GenerationContext _ctx, RectInt region)
     {
         if (childBiomes == null || childBiomes.Length == 0) return;
 
         WorldManager world = WorldManager.Instance;
-        Vector2 regionSize = new Vector2(_ctx.biomeSize.x, _ctx.biomeSize.y);
+        Vector2 regionSize = new Vector2(region.width, region.height);
 
         Vector2 parentLocalMin = new Vector2(0, 0);
-        Vector2 parentLocalMax = new Vector2(_ctx.biomeSize.x, _ctx.biomeSize.y);
+        Vector2 parentLocalMax = new Vector2(region.width, region.height);
         List<Vector2> points = PoissonDiscSampling.GeneratePoints(sampleRadius, parentLocalMin, parentLocalMax, null, 30);
 
         int placed = 0;
@@ -30,8 +30,8 @@ public class NestedBiomeFeature : BiomeFeature
         {
             if (placed >= maxCount) break;
 
-            int wx = _ctx.LocalToWorldX((int)pt.x);
-            int wy = _ctx.LocalToWorldY((int)pt.y);
+            int wx = region.x + (int)pt.x;
+            int wy = region.y + (int)pt.y;
 
             int idx = Random.Range(0, childBiomes.Length);
             BiomeDefinition childDef = childBiomes[idx];

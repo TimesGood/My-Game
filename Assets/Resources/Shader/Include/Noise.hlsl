@@ -363,7 +363,7 @@ void OutputCurve(uint3 id, int curveValue, int height, int heightMult, int heigh
         // 曲线边缘（抗锯齿）
         noiseTexture[id.xy] = float4(0.8, 0.2, 0.15, 0.7);
     }
-    else if (id.y > curveValue)
+    else if ((int) id.y > curveValue)
     {
         // 曲线下方填充
         float fill = 1.0 - (float) (id.y - curveValue) / (float) (height - curveValue);

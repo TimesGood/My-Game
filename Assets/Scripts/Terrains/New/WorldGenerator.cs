@@ -14,8 +14,8 @@ public class WorldGenerator : MonoBehaviour
     [Header("区块数据管理器")]
     [SerializeField] private ChunkManager chunkManager;
 
-    [Header("基础地形（地壳分层、洞穴、矿石）")]
-    [SerializeField] private BaseTerrainPassConfig _baseTerrain;
+    [Header("全局群落")]
+    [SerializeField] private BaseTerrainPassConfig _globalBiome;
 
     [Header("分配器")]
     [SerializeField] private DistributorBase[] _distributors;
@@ -31,12 +31,12 @@ public class WorldGenerator : MonoBehaviour
         int seed = _config.ResolveSeed();
         Debug.Log($"[MapGen] 开始 Seed={seed} Size={_config.Width}x{_config.Height}");
 
-        GenerationContext context = new GenerationContext(_config, chunkManager);
+        GenerationContext context = new GenerationContext(_config.Width, _config.Height, _config.Seed);
 
-        // Phase 1: 基础地形（地壳分层、洞穴、全局矿石）
-        if (_baseTerrain != null)
+        // Phase 1: 全局地形生成
+        if (_globalBiome != null)
         {
-            _baseTerrain.Execute(context);
+            _globalBiome.Execute(context, new RectInt(0, 0, _config.Width, _config.Height));
             Debug.Log("[MapGen] 基础地形生成完成");
         }
 

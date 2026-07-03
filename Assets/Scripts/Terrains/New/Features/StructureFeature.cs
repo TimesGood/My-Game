@@ -11,19 +11,19 @@ public class StructureFeature : BiomeFeature
     public int count = 3;
     public int randomOffset = 10;
 
-    public override void Init(Vector2Int _biomeSize, int _seed, Dictionary<string, Texture2D> _noiseCache) { }
+    public override void Init(GenerationContext _ctx, RectInt region) { }
 
-    public override void Execute(BiomeContext _ctx)
+    public override void Execute(GenerationContext _ctx, RectInt region)
     {
         if (structureTile == null) return;
 
         WorldManager world = WorldManager.Instance;
         for (int i = 0; i < count; i++)
         {
-            int lx = Random.Range(0, _ctx.biomeSize.x);
-            int ly = Random.Range(0, _ctx.biomeSize.y);
-            int wx = _ctx.LocalToWorldX(lx) + Random.Range(-randomOffset, randomOffset + 1);
-            int wy = _ctx.LocalToWorldY(ly) + Random.Range(-randomOffset, randomOffset + 1);
+            int lx = Random.Range(0, region.width);
+            int ly = Random.Range(0, region.height);
+            int wx = region.x + lx;
+            int wy = region.y + ly;
             world.SetTileClass(structureTile, structureTile.layer, wx, wy);
         }
     }

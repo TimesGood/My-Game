@@ -62,10 +62,10 @@ public abstract class BiomeFeature
     /// <summary>
     /// 初始化噪声等运行时资源（生成前调用）。
     /// </summary>
-    public virtual void Init(Vector2Int _biomeSize, int _seed, Dictionary<string, Texture2D> _noiseCache) { }
+    public virtual void Init(GenerationContext _ctx, RectInt region) { }
 
     /// <summary>
     /// 执行该 Feature 的生成逻辑（非协程！新架构不使用协程）
     /// </summary>
-    public abstract void Execute(BiomeContext _ctx);
+    public abstract void Execute(GenerationContext _ctx, RectInt region);
 }

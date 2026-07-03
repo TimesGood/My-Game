@@ -14,34 +14,34 @@ public class TreeFeature : BiomeFeature
     [Range(0, 100)] public int spawnChance = 50;
     [System.NonSerialized] private Dictionary<string, SamplerResult> _cache;
 
-    public override void Init(Vector2Int _biomeSize, int _seed, Dictionary<string, Texture2D> _noiseCache)
+    public override void Init(GenerationContext _ctx, RectInt region)
     {
-        _cache = new Dictionary<string, SamplerResult>();
-        if (trees == null) return;
-        for (int i = 0; i < trees.Length; i++)
-        {
-            var t = trees[i];
-            if (t?.treeClass == null) continue;
-            string key = t.treeClass.blockId.ToString();
-            if (_cache.ContainsKey(key)) continue;
+        //_cache = new Dictionary<string, SamplerResult>();
+        //if (trees == null) return;
+        //for (int i = 0; i < trees.Length; i++)
+        //{
+        //    var t = trees[i];
+        //    if (t?.treeClass == null) continue;
+        //    string key = t.treeClass.blockId.ToString();
+        //    if (_cache.ContainsKey(key)) continue;
 
-            // 从 TreeClass 读取可选的频率/阈值覆盖
-            NoiseParams p = t.noiseParams;
-            if (t.treeClass.frequency > 0) p.frequency = t.treeClass.frequency;
-            if (t.treeClass.threshold > 0) p.threshold = t.treeClass.threshold;
+        //    // 从 TreeClass 读取可选的频率/阈值覆盖
+        //    NoiseParams p = t.noiseParams;
+        //    if (t.treeClass.frequency > 0) p.frequency = t.treeClass.frequency;
+        //    if (t.treeClass.threshold > 0) p.threshold = t.treeClass.threshold;
 
-            // 用 NoiseSampler 生成纹理（替代 NoiseConfig SO）
-            SamplerResult tex = NoiseSampler.GenerateTexture(
-                _biomeSize.x, _biomeSize.y, p, _seed + i * 100);
-            _cache[key] = tex;
-        }
+        //    // 用 NoiseSampler 生成纹理（替代 NoiseConfig SO）
+        //    SamplerResult tex = NoiseSampler.GenerateTexture(
+        //        _biomeSize.x, _biomeSize.y, p, _seed + i * 100);
+        //    _cache[key] = tex;
+        //}
     }
 
-    public override void Execute(BiomeContext _ctx)
+    public override void Execute(GenerationContext _ctx, RectInt region)
     {
-        if (trees == null || trees.Length == 0 || _cache == null) return;
-        if (placement == TreePlacement.Surface || placement == TreePlacement.Both) PlaceSurface(_ctx);
-        if (placement == TreePlacement.CaveCeiling || placement == TreePlacement.Both) PlaceCave(_ctx);
+        //if (trees == null || trees.Length == 0 || _cache == null) return;
+        //if (placement == TreePlacement.Surface || placement == TreePlacement.Both) PlaceSurface(_ctx);
+        //if (placement == TreePlacement.CaveCeiling || placement == TreePlacement.Both) PlaceCave(_ctx);
     }
 
     private void PlaceSurface(BiomeContext _ctx)

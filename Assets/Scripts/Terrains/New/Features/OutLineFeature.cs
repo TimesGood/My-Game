@@ -13,23 +13,22 @@ public class OutLineFeature : BiomeFeature {
     public OutLineGeneration outLine;
 
 
-    public override void Init(Vector2Int _biomeSize, int _seed, Dictionary<string, Texture2D> _noiseCache) {
+    public override void Init(GenerationContext _ctx, RectInt region) {
 
-        Texture2D tex = ShapeSampler.GenerateTexture(_biomeSize.x, _biomeSize.y, outLine.shapeParams, _seed);
-        _noiseCache["OutLineFeature"] = tex;
     }
-    public override void Execute(BiomeContext _ctx) {
+    public override void Execute(GenerationContext _ctx, RectInt region) {
+        Texture2D tex = ShapeSampler.GenerateTexture(region.width, region.height, outLine.shapeParams, _ctx.Seed);
         ChunkManager chunk = ChunkManager.Instance;
-        if (_ctx.noiseCache.TryGetValue("OutLineFeature", out Texture2D tex)) {
-            for (int x = 0; x <= _ctx.biomeSize.x; x++) {
-                for (int y = 0; y <= _ctx.biomeSize.y; y++) {
-                    if (tex.GetPixel(x, y).r > 0) {
-                        Vector2Int worldPos = _ctx.LocalToWorld(x, y);
-                        chunk.SetBlockId(Layers.Ground, worldPos, outLine.tileClass.blockId);
-                    
-                    }
+        for (int x = 0; x < region.width; x++) {
+            for (int y = 0; y <= region.height; y++) {
+                if (tex.GetPixel(x, y).r > 0) {
+                    int wx = region.x + x;
+                    int wy = region.y + y;
+                    chunk.SetBlockId(Layers.Ground, new Vector2Int(wx, wy), outLine.tileClass.blockId);
+                
                 }
             }
         }
+        
     }
 }

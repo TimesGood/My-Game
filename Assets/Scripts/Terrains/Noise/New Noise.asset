@@ -12,26 +12,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68f6ef7fc19f3094381d2cc9b3012c45, type: 3}
   m_Name: New Noise
   m_EditorClassIdentifier: 
-  width: 6000
+  width: 1000
   height: 1000
-  seed: 58
+  seed: 3
   noiseParames:
     type: 3
-    frequency: 0.066
+    frequency: 0.008
     isBinary: 0
-    threshold: 0.272
+    threshold: 0.205
     offset: 0
-    scale: 33.34
+    scale: 1
+    isCurve: 1
+    heightMult: 400
+    heightAdd: 600
     worleyType: 0
     worleyFlip: 0
     fbmParams:
-      octaves: 3
-      persistence: 0.171
-      lacunarity: 10.29
+      octaves: 1
+      persistence: 0.069
+      lacunarity: 5.58
     mixParams:
-      leftFrequency: 0.618
-      rightFrequency: 0.205
-      weight: 0.113
+      leftFrequency: 0.009
+      rightFrequency: 0.006
+      weight: 0
     warpFrequency: 6.75
     warpStrength: 27.65
     useGPU: 1

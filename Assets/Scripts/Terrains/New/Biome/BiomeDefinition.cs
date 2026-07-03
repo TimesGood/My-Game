@@ -46,7 +46,7 @@ public class BiomeDefinition : ScriptableObject {
     /// <summary>
     /// 初始化所有 Feature 的噪声（仅执行一次）
     /// </summary>
-    public void InitFeatures(BiomeContext _ctx, int _seed)
+    public void InitFeatures(GenerationContext _ctx, RectInt region)
     {
         if (_initialized) return;
         _initialized = true;
@@ -58,9 +58,8 @@ public class BiomeDefinition : ScriptableObject {
 
         for (int i = 0; i < _features.Count; i++)
         {
-            _features[i]?.Init(biomeSize, _seed + i * 100, cache);
+            _features[i]?.Init(_ctx, region);
         }
-        _ctx.noiseCache = cache;
     }
 
     /// <summary>
@@ -68,9 +67,7 @@ public class BiomeDefinition : ScriptableObject {
     /// </summary>
     public void Generate(GenerationContext _ctx, BiomeInstance _inst)
     {
-
-        var biomeCtx = BuildContext(_ctx, _inst);
-        InitFeatures(biomeCtx, _inst.Seed);
+        InitFeatures(_ctx, _inst.Bounds);
         //DetectSurfaceRange(biomeCtx);
 
         if (_features.Count == 0)
@@ -84,7 +81,7 @@ public class BiomeDefinition : ScriptableObject {
             var f = _features[i];
             if (f == null) continue;
             Debug.Log($"  → [{BiomeName}] Feature[{i}] {f.GetType().Name}");
-            f.Execute(biomeCtx);
+            f.Execute(_ctx, _inst.Bounds);
         }
     }
 

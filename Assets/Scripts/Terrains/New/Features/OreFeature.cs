@@ -9,7 +9,7 @@ public class OreFeature : BiomeFeature
     public OreGeneration[] ores;
     [System.NonSerialized] private Dictionary<string, SamplerResult> _cache;
 
-    public override void Init(Vector2Int _biomeSize, int _seed, Dictionary<string, Texture2D> _noiseCache)
+    public override void Init(GenerationContext _ctx, RectInt region)
     {
         _cache = new Dictionary<string, SamplerResult>();
         if (ores == null) return;
@@ -22,33 +22,33 @@ public class OreFeature : BiomeFeature
 
             // 用 NoiseSampler 生成纹理（替代 NoiseConfig SO）
             SamplerResult tex = NoiseSampler.GenerateTexture(
-                _biomeSize.x, _biomeSize.y, ore.noiseParams, _seed + i * 100);
+                region.width, region.height, ore.noiseParams, _ctx.Seed + i * 100);
             _cache[key] = tex;
         }
     }
 
-    public override void Execute(BiomeContext _ctx)
+    public override void Execute(GenerationContext _ctx, RectInt region)
     {
         if (ores == null || ores.Length == 0 || _cache == null) return;
         ChunkManager chunk = ChunkManager.Instance;
-        for (int y = _ctx.maxHeight; y >= 0; y--)
+        for (int y = region.height; y >= 0; y--)
         {
-            int wy = _ctx.LocalToWorldY(y);
-            for (int x = 0; x < _ctx.biomeSize.x; x++)
+            int wy = y + region.y;
+            for (int x = 0; x < region.width; x++)
             {
-                int th = _ctx.terrainHeights != null ? _ctx.terrainHeights[x] : _ctx.biomeSize.y;
-                int wx = _ctx.worldXs != null ? _ctx.worldXs[x] : _ctx.LocalToWorldX(x);
-                if (wy > th) continue;
+                //int th = _ctx.terrainHeights != null ? _ctx.terrainHeights[x] : _ctx.biomeSize.y;
+                //int wx = _ctx.worldXs != null ? _ctx.worldXs[x] : _ctx.LocalToWorldX(x);
+                //if (wy > th) continue;
 
-                foreach (var ore in ores)
-                {
-                    if (ore?.oreClass == null) continue;
-                    if (_cache.TryGetValue(ore.oreClass.blockId.ToString(), out var tex) && tex.tex.GetPixel(x, y).r > ore.threshold)
-                    {
-                        chunk.SetBlockId(Layers.Ground, wx, wy, ore.oreClass.blockId);
-                        break;
-                    }
-                }
+                //foreach (var ore in ores)
+                //{
+                //    if (ore?.oreClass == null) continue;
+                //    if (_cache.TryGetValue(ore.oreClass.blockId.ToString(), out var tex) && tex.tex.GetPixel(x, y).r > ore.threshold)
+                //    {
+                //        chunk.SetBlockId(Layers.Ground, wx, wy, ore.oreClass.blockId);
+                //        break;
+                //    }
+                //}
             }
         }
     }

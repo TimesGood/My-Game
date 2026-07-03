@@ -15,21 +15,20 @@ public class BorderBlendFeature : BiomeFeature
     [System.NonSerialized] private SamplerResult _terrainTex;
 
 
-    public override void Init(Vector2Int _biomeSize, int _seed, Dictionary<string, Texture2D> _noiseCache)
+    public override void Init(GenerationContext _ctx, RectInt region)
     {
-        if (mode == BorderBlendMode.CurveBlend)
-        {
-            _terrainTex = NoiseSampler.GenerateTexture(_biomeSize.x, _biomeSize.y, terrainNoise, _seed);
-        }
+        //if (mode == BorderBlendMode.CurveBlend)
+        //{
+        //    _terrainTex = NoiseSampler.GenerateTexture(_biomeSize.x, _biomeSize.y, terrainNoise, _seed);
+        //}
     }
 
-    public override void Execute(BiomeContext _ctx)
-    {
-        if (_ctx.surfaceStart == 0 || _ctx.surfaceEnd == 0) return;
-        WorldManager w = WorldManager.Instance;
+    public override void Execute(GenerationContext _ctx, RectInt region) {
+        //if (_ctx.surfaceStart == 0 || _ctx.surfaceEnd == 0) return;
+        //WorldManager w = WorldManager.Instance;
 
-        if (mode == BorderBlendMode.HeightBlend) BlendByHeight(w, _ctx);
-        else if (mode == BorderBlendMode.CurveBlend && _terrainTex != null) BlendByCurve(w, _ctx);
+        //if (mode == BorderBlendMode.HeightBlend) BlendByHeight(w, _ctx);
+        //else if (mode == BorderBlendMode.CurveBlend && _terrainTex != null) BlendByCurve(w, _ctx);
     }
 
     private void BlendByHeight(WorldManager w, BiomeContext ctx)

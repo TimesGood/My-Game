@@ -26,7 +26,7 @@ public class PoissonDiscDistributor : DistributorBase {
         if (biomeDefinitions == null || biomeDefinitions.Count == 0) return results;
         // 已放置的矩形列表
         var placed = new List<RectInt>();
-        foreach (var item in context.claimed) {
+        foreach (var item in context.Placements) {
             placed.Add(item.Bounds);
         }
         Debug.Log("采样1");
@@ -42,7 +42,7 @@ public class PoissonDiscDistributor : DistributorBase {
             foreach (var suitable in biome.suitable) {
                 // 查找群落适宜区内已放置的群落
                 RectInt suitableRect = new RectInt(suitable.SuitableMin, suitable.SuitableMax);
-                List<BiomeInstance> clashBiomes = GetBiomeOverlaps(context.claimed, suitableRect);
+                List<BiomeInstance> clashBiomes = GetBiomeOverlaps(context.Placements, suitableRect);
 
                 // 群落适宜区内点位采样
                 List<Vector2> pointList = PoissonDiscSampling.GeneratePoints(maxSize, suitable.SuitableMin, suitable.SuitableMax, null, 50);
