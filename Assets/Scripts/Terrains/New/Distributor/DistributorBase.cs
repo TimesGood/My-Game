@@ -15,7 +15,7 @@ public abstract class DistributorBase : ScriptableObject {
     public int Priority = 0;
 
     [Header("群落")]
-    public List<BiomeDefinition> biomeDefinitions;
+    public List<LocalDefinition> biomeDefinitions;
 
 
     /// <summary>入口：执行分配</summary>

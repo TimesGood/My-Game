@@ -13,11 +13,13 @@ public class OutLineFeature : BiomeFeature {
     public OutLineGeneration outLine;
 
 
-    public override void Init(GenerationContext _ctx, RectInt region) {
+    public override void Init(BiomeContext _ctx) {
 
     }
-    public override void Execute(GenerationContext _ctx, RectInt region) {
-        Texture2D tex = ShapeSampler.GenerateTexture(region.width, region.height, outLine.shapeParams, _ctx.Seed);
+    public override void Execute(BiomeContext _ctx) {
+        RectInt region = _ctx.Bounds;
+        Debug.Log("OutLineFeatureÖ´ÐÐÉú³É" + region.width +":" + region.height);
+        Texture2D tex = ShapeSampler.GenerateTexture(region.width, region.height, outLine.shapeParams, _ctx.Instance.Seed);
         ChunkManager chunk = ChunkManager.Instance;
         for (int x = 0; x < region.width; x++) {
             for (int y = 0; y <= region.height; y++) {

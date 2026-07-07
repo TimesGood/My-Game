@@ -17,12 +17,12 @@ public class TerrainFeature : BiomeFeature
 
     public bool IsValid => tileMapping != null && tileMapping.IsValid;
 
-    public override void Init(GenerationContext _ctx, RectInt region)
+    public override void Init(BiomeContext _ctx)
     {
         
     }
 
-    public override void Execute(GenerationContext _ctx, RectInt region)
+    public override void Execute(BiomeContext _ctx)
     {
         //_terrainTex = NoiseSampler.GenerateTexture(region.width, region.height, terrainNoise, _ctx.Seed);
         //if (!IsValid) return;
@@ -80,11 +80,11 @@ public class TerrainFeature : BiomeFeature
     private void EraseTop(WorldManager w, BiomeContext ctx, int x, int h)
     {
         int old = w.surfaceHeights[x];
-        if (old > h && ctx.IsSurfaceRange(x))
-        {
-            for (int y = h; y < old; y++) w.SetTileClass(null, Layers.Ground, x, y);
-            w.surfaceHeights[x] = h;
-        }
+        //if (old > h && ctx.IsSurfaceRange(x))
+        //{
+        //    for (int y = h; y < old; y++) w.SetTileClass(null, Layers.Ground, x, y);
+        //    w.surfaceHeights[x] = h;
+        //}
     }
 
     private void AdjustHeight(WorldManager w, BiomeContext ctx, int x, int h)

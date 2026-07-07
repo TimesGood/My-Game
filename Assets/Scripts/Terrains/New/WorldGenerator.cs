@@ -4,6 +4,7 @@
 // =============================================
 using System;
 using System.Collections.Generic;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class WorldGenerator : MonoBehaviour
@@ -15,7 +16,7 @@ public class WorldGenerator : MonoBehaviour
     [SerializeField] private ChunkManager chunkManager;
 
     [Header("全局群落")]
-    [SerializeField] private BaseTerrainPassConfig _globalBiome;
+    [SerializeField] private GobalDefinition _globalBiome;
 
     [Header("分配器")]
     [SerializeField] private DistributorBase[] _distributors;
@@ -36,7 +37,8 @@ public class WorldGenerator : MonoBehaviour
         // Phase 1: 全局地形生成
         if (_globalBiome != null)
         {
-            _globalBiome.Execute(context, new RectInt(0, 0, _config.Width, _config.Height));
+            var biomeCtx = new BiomeContext(context, _globalBiome);
+            _globalBiome.Generate(biomeCtx);
             Debug.Log("[MapGen] 基础地形生成完成");
         }
 
@@ -69,8 +71,9 @@ public class WorldGenerator : MonoBehaviour
     {
         foreach (var inst in BiomeInstances)
         {
+            var biomeCtx = new BiomeContext(context, inst);
             // 直接调用 BiomeDefinition.Generate()，Feature 在定义中内联
-            inst.Def.Generate(context, inst);
+            inst.Def.Generate(biomeCtx);
         }
     }
 

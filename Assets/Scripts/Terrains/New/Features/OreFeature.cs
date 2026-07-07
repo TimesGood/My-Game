@@ -9,8 +9,9 @@ public class OreFeature : BiomeFeature
     public OreGeneration[] ores;
     [System.NonSerialized] private Dictionary<string, SamplerResult> _cache;
 
-    public override void Init(GenerationContext _ctx, RectInt region)
+    public override void Init(BiomeContext _ctx)
     {
+        RectInt region = _ctx.Bounds;
         _cache = new Dictionary<string, SamplerResult>();
         if (ores == null) return;
         for (int i = 0; i < ores.Length; i++)
@@ -22,14 +23,15 @@ public class OreFeature : BiomeFeature
 
             // 用 NoiseSampler 生成纹理（替代 NoiseConfig SO）
             SamplerResult tex = NoiseSampler.GenerateTexture(
-                region.width, region.height, ore.noiseParams, _ctx.Seed + i * 100);
+                region.width, region.height, ore.noiseParams, _ctx.Instance.Seed + i * 100);
             _cache[key] = tex;
         }
     }
 
-    public override void Execute(GenerationContext _ctx, RectInt region)
+    public override void Execute(BiomeContext _ctx)
     {
         if (ores == null || ores.Length == 0 || _cache == null) return;
+        RectInt region = _ctx.Bounds;
         ChunkManager chunk = ChunkManager.Instance;
         for (int y = region.height; y >= 0; y--)
         {

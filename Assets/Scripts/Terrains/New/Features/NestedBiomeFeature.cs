@@ -8,14 +8,15 @@ using UnityEngine;
 [System.Serializable]
 public class NestedBiomeFeature : BiomeFeature
 {
-    public BiomeDefinition[] childBiomes;
+    public LocalDefinition[] childBiomes;
     public float sampleRadius = 30f;
     public int maxCount = 10;
 
-    public override void Init(GenerationContext _ctx, RectInt region) { }
+    public override void Init(BiomeContext _ctx) { }
 
-    public override void Execute(GenerationContext _ctx, RectInt region)
+    public override void Execute(BiomeContext _ctx)
     {
+        RectInt region = _ctx.Bounds;
         if (childBiomes == null || childBiomes.Length == 0) return;
 
         WorldManager world = WorldManager.Instance;
@@ -35,25 +36,26 @@ public class NestedBiomeFeature : BiomeFeature
 
             int idx = Random.Range(0, childBiomes.Length);
             BiomeDefinition childDef = childBiomes[idx];
+            
 
             // 创建子群落实例
-            int sx = wx - childDef.biomeSize.x / 2;
-            int sy = wy - childDef.biomeSize.y / 2;
-            RectInt bounds = new RectInt(sx, sy, childDef.biomeSize.x, childDef.biomeSize.y);
+            //int sx = wx - childDef.biomeSize.x / 2;
+            //int sy = wy - childDef.biomeSize.y / 2;
+            //RectInt bounds = new RectInt(sx, sy, childDef.biomeSize.x, childDef.biomeSize.y);
 
-            BiomeInstance childInst = new BiomeInstance
-            {
-                Def = childDef,
-                Bounds = bounds,
-                Seed = world.seed + placed * 100
-            };
+            //BiomeInstance childInst = new BiomeInstance
+            //{
+            //    Def = childDef,
+            //    Bounds = bounds,
+            //    Seed = world.seed + placed * 100
+            //};
 
-            // 通过 WorldManager 找到 WorldGenerator 来调用生成器
-            // 此处需要 WorldGenerator 的引用——可通过 GenerationContext 传递
-            // 当前为简化实现，标记待完善
-            Debug.Log($"[NestedBiome] 子群落 {childDef.BiomeName} 位置=({sx},{sy})");
+            //// 通过 WorldManager 找到 WorldGenerator 来调用生成器
+            //// 此处需要 WorldGenerator 的引用——可通过 GenerationContext 传递
+            //// 当前为简化实现，标记待完善
+            //Debug.Log($"[NestedBiome] 子群落 {childDef.BiomeName} 位置=({sx},{sy})");
 
-            placed++;
+            //placed++;
         }
     }
 }

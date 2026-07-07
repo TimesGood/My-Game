@@ -15,7 +15,7 @@ public class BorderBlendFeature : BiomeFeature
     [System.NonSerialized] private SamplerResult _terrainTex;
 
 
-    public override void Init(GenerationContext _ctx, RectInt region)
+    public override void Init(BiomeContext _ctx)
     {
         //if (mode == BorderBlendMode.CurveBlend)
         //{
@@ -23,7 +23,7 @@ public class BorderBlendFeature : BiomeFeature
         //}
     }
 
-    public override void Execute(GenerationContext _ctx, RectInt region) {
+    public override void Execute(BiomeContext _ctx) {
         //if (_ctx.surfaceStart == 0 || _ctx.surfaceEnd == 0) return;
         //WorldManager w = WorldManager.Instance;
 
@@ -33,18 +33,18 @@ public class BorderBlendFeature : BiomeFeature
 
     private void BlendByHeight(WorldManager w, BiomeContext ctx)
     {
-        int lsY = w.surfaceHeights[ctx.surfaceStart], rsY = w.surfaceHeights[ctx.surfaceEnd];
-        int lbX = Mathf.Max(ctx.surfaceStart - blendDistance, 0);
-        int reX = Mathf.Min(ctx.surfaceEnd + blendDistance, w.worldSize.x - 1);
-        int lbY = w.surfaceHeights[lbX], reY = w.surfaceHeights[reX];
+        //int lsY = w.surfaceHeights[ctx.surfaceStart], rsY = w.surfaceHeights[ctx.surfaceEnd];
+        //int lbX = Mathf.Max(ctx.surfaceStart - blendDistance, 0);
+        //int reX = Mathf.Min(ctx.surfaceEnd + blendDistance, w.worldSize.x - 1);
+        //int lbY = w.surfaceHeights[lbX], reY = w.surfaceHeights[reX];
 
-        for (int x = 0; x < blendDistance; x++)
-        {
-            float t = (float)x / (blendDistance - 1);
-            float n = Mathf.PerlinNoise(x * 0.05f, 0) * 2 - 1;
-            FillErase(w, x + lbX, (int)(Mathf.Lerp(lbY, lsY, t) + n * 3f));
-            FillErase(w, x + reX - blendDistance, (int)(Mathf.Lerp(rsY, reY, t) + n * 3f));
-        }
+        //for (int x = 0; x < blendDistance; x++)
+        //{
+        //    float t = (float)x / (blendDistance - 1);
+        //    float n = Mathf.PerlinNoise(x * 0.05f, 0) * 2 - 1;
+        //    FillErase(w, x + lbX, (int)(Mathf.Lerp(lbY, lsY, t) + n * 3f));
+        //    FillErase(w, x + reX - blendDistance, (int)(Mathf.Lerp(rsY, reY, t) + n * 3f));
+        //}
     }
 
     private void BlendByCurve(WorldManager w, BiomeContext ctx)

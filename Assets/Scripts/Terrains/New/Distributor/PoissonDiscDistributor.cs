@@ -31,13 +31,13 @@ public class PoissonDiscDistributor : DistributorBase {
         }
         Debug.Log("采样1");
         foreach (var biome in biomeDefinitions) {
-
+            Debug.Log(biome.suitable);
             if (biome.suitable == null || biome.suitable.Length == 0) continue;
 
             // 根据群落最大宽度进行采样
             int maxSize = Mathf.Max(biome.biomeSize.x, biome.biomeSize.y);
-            var sizeX = biome.biomeSize.x / 2;
-            var sizeY = biome.biomeSize.y / 2;
+
+            Debug.Log("采样2");
             List<Vector2> points = new List<Vector2>();
             foreach (var suitable in biome.suitable) {
                 // 查找群落适宜区内已放置的群落
@@ -63,6 +63,7 @@ public class PoissonDiscDistributor : DistributorBase {
             // 随机点位
             int curRejection = 0;
             int biomeNum = biome.num;
+            var biomeCenter = new Vector2Int(biome.biomeSize.x / 2, biome.biomeSize.y / 2);
             Debug.Log("分配");
             while (biomeNum > 0 && points.Count > 0) {
                 curRejection++;
@@ -71,10 +72,10 @@ public class PoissonDiscDistributor : DistributorBase {
                 var point = points[pointIndex];
                 Debug.Log(point);
                 points.Remove(point);
-                Vector2Int bottomLeft = new Vector2Int((int)point.x - sizeX, (int)point.y - sizeY);
-                Vector2Int topRight = new Vector2Int((int)point.x + sizeX, (int)point.y + sizeY);
+                //Vector2Int bottomLeft = new Vector2Int((int)point.x - sizeX, (int)point.y - sizeY);
+                //Vector2Int topRight = new Vector2Int((int)point.x + sizeX, (int)point.y + sizeY);
                 // 实际矩阵
-                RectInt bounds = new RectInt(bottomLeft, topRight);
+                RectInt bounds = new RectInt((int)point.x - biomeCenter.x, (int)point.y - biomeCenter.y, biome.biomeSize.x, biome.biomeSize.y);
 
                 // 查看是否符合群落之间的最小间距
                 if (!CheckSpacing(bounds, placed)) continue;

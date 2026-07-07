@@ -18,10 +18,10 @@ public class GenerationContext {
     public List<BiomeInstance> Placements { get; } = new();
 
 
-    // 跨群落共享浮点图（高度图、密度图、温度图等）
+    // 跨群落共享浮点图
     private readonly Dictionary<string, float[,]> _floatMaps = new();
 
-    // 跨群落共享元数据（海平面、地表曲线、矿脉表等）
+    // 跨群落共享元数据
     private readonly Dictionary<string, object> _metadata = new();
     public GenerationContext(int width, int height, int seed) {
         Width = width;

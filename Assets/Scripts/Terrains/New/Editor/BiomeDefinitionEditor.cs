@@ -7,7 +7,7 @@ using UnityEngine;
 /// BiomeDefinition 自定义 Inspector：
 /// Features 列表支持通过下拉菜单添加任意 BiomeFeature 子类型。
 /// </summary>
-[CustomEditor(typeof(BiomeDefinition))]
+[CustomEditor(typeof(BiomeDefinition), true, isFallback = true)]
 public class BiomeDefinitionEditor : Editor
 {
     private ReorderableList _featuresList;
@@ -29,6 +29,8 @@ public class BiomeDefinitionEditor : Editor
                 }
             }
         }
+
+        Debug.Log("测试："+_featureTypes.Count);
     }
 
     public override void OnInspectorGUI()
@@ -41,6 +43,7 @@ public class BiomeDefinitionEditor : Editor
         // ── Features 自定义列表 ──
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Feature 列表（按顺序执行）", EditorStyles.boldLabel);
+
 
         var featuresProp = serializedObject.FindProperty("_features");
         if (featuresProp == null)

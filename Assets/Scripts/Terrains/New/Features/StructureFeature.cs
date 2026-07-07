@@ -11,11 +11,13 @@ public class StructureFeature : BiomeFeature
     public int count = 3;
     public int randomOffset = 10;
 
-    public override void Init(GenerationContext _ctx, RectInt region) { }
+    public override void Init(BiomeContext _ctx) { }
 
-    public override void Execute(GenerationContext _ctx, RectInt region)
+    public override void Execute(BiomeContext _ctx)
     {
         if (structureTile == null) return;
+
+        RectInt region = _ctx.Bounds;
 
         WorldManager world = WorldManager.Instance;
         for (int i = 0; i < count; i++)

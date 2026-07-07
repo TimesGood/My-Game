@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 
 // ======================================================================
 // BiomeContext —— 运行时上下文（适配新架构 GenerationContext + BiomeInstance）
@@ -14,37 +16,46 @@ public class BiomeContext
 {
     /// <summary>全局生成上下文</summary>
     public GenerationContext genContext;
+    /// <summary> 当前群落定义 </summary>
+    public BiomeDefinition Definition;
     /// <summary>当前群落实例</summary>
-    public BiomeInstance instance;
+    public BiomeInstance Instance;
+
+    /// <summary>当前执行区域（全局群落 = 整张地图，分配群落 = 其 Bounds）</summary>
+    public RectInt Bounds { get; }
 
     /// <summary>群落最小世界坐标</summary>
-    public Vector2Int minPos => new Vector2Int(instance.X, instance.Y);
+    public Vector2Int minPos => new Vector2Int(Bounds.xMin, Bounds.yMin);
     /// <summary>群落最大世界坐标</summary>
-    public Vector2Int maxPos => new Vector2Int(instance.Right, instance.Top);
+    public Vector2Int maxPos => new Vector2Int(Bounds.xMax, Bounds.yMax);
     /// <summary>群落大小</summary>
-    public Vector2Int biomeSize => new Vector2Int(instance.Width, instance.Height);
-
-    /// <summary>每列的地形高度（由 TerrainFeature 设置）</summary>
-    public int[] terrainHeights;
-    /// <summary>每列的世界 X 坐标缓存</summary>
-    public int[] worldXs;
-    /// <summary>群落内最大地形高度</summary>
-    public int maxHeight;
-
-    /// <summary>地表范围</summary>
-    public int surfaceStart;
-    public int surfaceEnd;
+    public Vector2Int biomeSize => new Vector2Int(Bounds.width, Bounds.height);
 
     /// <summary>噪声纹理缓存，Feature 间共享</summary>
     public Dictionary<string, Texture2D> noiseCache = new Dictionary<string, Texture2D>();
     /// <summary>通用共享状态</summary>
     public Dictionary<string, object> shared = new Dictionary<string, object>();
 
+    /// <summary>用于分配群落</summary>
+    public BiomeContext(GenerationContext global, BiomeInstance instance) {
+        genContext = global;
+        Instance = instance;
+        Definition = instance.Def;
+        Bounds = instance.Bounds;
+    }
+
+    /// <summary>用于全局群落（没有 Placement）</summary>
+    public BiomeContext(GenerationContext global, BiomeDefinition globalBiome) {
+        genContext = global;
+        Instance = null;
+        Definition = globalBiome;
+        Bounds = new RectInt(0, 0, global.Width, global.Height); ;
+    }
+
     // 便捷方法
     public int LocalToWorldX(int _x) => _x + minPos.x;
     public int LocalToWorldY(int _y) => _y + minPos.y;
     public Vector2Int LocalToWorld(int _x, int _y) => new Vector2Int(LocalToWorldX(_x), LocalToWorldY(_y));
-    public bool IsSurfaceRange(int _x) => _x >= surfaceStart && _x <= surfaceEnd;
 }
 
 // ======================================================================
@@ -62,10 +73,10 @@ public abstract class BiomeFeature
     /// <summary>
     /// 初始化噪声等运行时资源（生成前调用）。
     /// </summary>
-    public virtual void Init(GenerationContext _ctx, RectInt region) { }
+    public virtual void Init(BiomeContext _ctx) { }
 
     /// <summary>
     /// 执行该 Feature 的生成逻辑（非协程！新架构不使用协程）
     /// </summary>
-    public abstract void Execute(GenerationContext _ctx, RectInt region);
+    public abstract void Execute(BiomeContext _ctx);
 }

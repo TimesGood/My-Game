@@ -11,14 +11,15 @@ public class CaveFeature : BiomeFeature
     // ========== 运行时纹理（Execute 期间临时使用） ==========
     [System.NonSerialized] private SamplerResult _caveTex;
 
-    public override void Init(GenerationContext _ctx, RectInt region)
+    public override void Init(BiomeContext _ctx)
     {
         
     }
 
-    public override void Execute(GenerationContext _ctx, RectInt region)
+    public override void Execute(BiomeContext _ctx)
     {
-        _caveTex = NoiseSampler.GenerateTexture(region.width, region.height, caveNoise, _ctx.Seed);
+        RectInt region = _ctx.Bounds;
+        _caveTex = NoiseSampler.GenerateTexture(region.width, region.height, caveNoise, _ctx.Instance.Seed);
         if (caveNoise == null) return;
 
         WorldManager world = WorldManager.Instance;
