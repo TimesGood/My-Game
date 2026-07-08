@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Priority: 0
   biomeDefinitions:
-  - {fileID: 11400000, guid: 7d1519cc1c479794681536358e4d038e, type: 2}
+  - {fileID: 11400000, guid: 78a5855009244b042b54842d7af80edc, type: 2}
   MinSpacing: 30
   MaxAttempts: 200

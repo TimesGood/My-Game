@@ -78,7 +78,7 @@ public class ChunkManager : Singleton<ChunkManager> {
 
     public bool SetBlockId(Layers layer, int x, int y, long blockId) {
         Vector2Int worldPos = new Vector2Int(x, y);
-        return SetBlockId(layer, x, y, blockId);
+        return SetBlockId(layer, worldPos, blockId);
     }
 
     /// <summary>

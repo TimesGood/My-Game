@@ -48,11 +48,11 @@ public class NoiseParams
     public bool isBinary = false;        // 是否二值化
     [Range(0, 1)]
     public float threshold = 0.5f;       // 阈值（用于二值化判断）
-    public float offset;                 // 偏移
+    public float offset = 0;                 // 偏移
     public float scale = 1f;             // 缩放
 
     [Header("曲线参数")]
-    public bool isCurve;
+    public bool isCurve = false;
     public int heightMult;               // 
     public int heightAdd;                // 
 

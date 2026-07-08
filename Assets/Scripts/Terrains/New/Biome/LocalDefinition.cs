@@ -19,8 +19,6 @@ public class LocalDefinition : BiomeDefinition
     [Header("生成数量")]
     public int num = 1;
 
-    //[Header("群落轮廓（可选，不规则形状）")]
-    //public ShapeGenerator outLine;
 
     // -------- 生成 --------
 

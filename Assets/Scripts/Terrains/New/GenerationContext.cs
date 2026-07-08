@@ -12,6 +12,9 @@ public class GenerationContext {
     public readonly int Height;
     public readonly int Seed;
     public readonly System.Random RNG;
+
+    // 地表高度
+    public float[] SurfaceProfile;
     // 区块数据管理器
     public ChunkManager ChunkManager { get; }
     // 已分配的群落实例

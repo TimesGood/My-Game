@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 [System.Serializable]
 
@@ -7,15 +9,18 @@ using UnityEngine;
 public class OreFeature : BiomeFeature
 {
     public OreGeneration[] ores;
-    [System.NonSerialized] private Dictionary<string, SamplerResult> _cache;
 
     public override void Init(BiomeContext _ctx)
     {
+        
+    }
+
+    public override void Execute(BiomeContext _ctx)
+    {
+        if (ores == null || ores.Length == 0) return;
         RectInt region = _ctx.Bounds;
-        _cache = new Dictionary<string, SamplerResult>();
-        if (ores == null) return;
-        for (int i = 0; i < ores.Length; i++)
-        {
+        var _cache = new Dictionary<string, Texture2D>();
+        for (int i = 0; i < ores.Length; i++) {
             var ore = ores[i];
             if (ore?.oreClass == null) continue;
             string key = ore.oreClass.blockId.ToString();
@@ -24,34 +29,28 @@ public class OreFeature : BiomeFeature
             // 用 NoiseSampler 生成纹理（替代 NoiseConfig SO）
             SamplerResult tex = NoiseSampler.GenerateTexture(
                 region.width, region.height, ore.noiseParams, _ctx.Instance.Seed + i * 100);
-            _cache[key] = tex;
+            _cache[key] = tex.tex;
         }
-    }
-
-    public override void Execute(BiomeContext _ctx)
-    {
-        if (ores == null || ores.Length == 0 || _cache == null) return;
-        RectInt region = _ctx.Bounds;
+        Debug.Log("矿石群落生成");
         ChunkManager chunk = ChunkManager.Instance;
-        for (int y = region.height; y >= 0; y--)
-        {
-            int wy = y + region.y;
-            for (int x = 0; x < region.width; x++)
-            {
-                //int th = _ctx.terrainHeights != null ? _ctx.terrainHeights[x] : _ctx.biomeSize.y;
-                //int wx = _ctx.worldXs != null ? _ctx.worldXs[x] : _ctx.LocalToWorldX(x);
-                //if (wy > th) continue;
+        // 在轮廓内布置
+        
+        for (int x = 0; x < region.width; x++) {
+            for (int y = 0; y < region.height; y++) {
+                // 只处理轮廓内
+                if (_ctx.noiseCache.TryGetValue("outLine", out Texture2D outLineTex)) {
+                    if (outLineTex.GetPixel(x, y).r < 1) continue;
+                }
+                foreach (var ore in ores) {
+                    _cache.TryGetValue(ore.oreClass.blockId.ToString(), out Texture2D tex);
+                    if (tex.GetPixel(x, y).r > (ore.noiseParams.isBinary ? 0 : ore.noiseParams.threshold)) {
+                        Vector2Int worldPos = _ctx.LocalToWorld(x, y);
+                        chunk.SetBlockId(Layers.Ground, worldPos, ore.oreClass.blockId);
 
-                //foreach (var ore in ores)
-                //{
-                //    if (ore?.oreClass == null) continue;
-                //    if (_cache.TryGetValue(ore.oreClass.blockId.ToString(), out var tex) && tex.tex.GetPixel(x, y).r > ore.threshold)
-                //    {
-                //        chunk.SetBlockId(Layers.Ground, wx, wy, ore.oreClass.blockId);
-                //        break;
-                //    }
-                //}
+                    }
+                }
             }
         }
+
     }
 }

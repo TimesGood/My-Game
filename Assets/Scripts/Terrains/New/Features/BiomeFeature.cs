@@ -20,7 +20,6 @@ public class BiomeContext
     public BiomeDefinition Definition;
     /// <summary>当前群落实例</summary>
     public BiomeInstance Instance;
-
     /// <summary>当前执行区域（全局群落 = 整张地图，分配群落 = 其 Bounds）</summary>
     public RectInt Bounds { get; }
 

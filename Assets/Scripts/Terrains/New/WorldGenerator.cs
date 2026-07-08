@@ -4,6 +4,7 @@
 // =============================================
 using System;
 using System.Collections.Generic;
+using Unity.Entities;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
@@ -16,7 +17,10 @@ public class WorldGenerator : MonoBehaviour
     [SerializeField] private ChunkManager chunkManager;
 
     [Header("全局群落")]
-    [SerializeField] private GobalDefinition _globalBiome;
+    [SerializeField] private List<GobalDefinition> _globalBiome;
+
+    [Header("局部群落")]
+    [SerializeField] private List<LocalDefinition> _localBiome;
 
     [Header("分配器")]
     [SerializeField] private DistributorBase[] _distributors;
@@ -34,25 +38,25 @@ public class WorldGenerator : MonoBehaviour
 
         GenerationContext context = new GenerationContext(_config.Width, _config.Height, _config.Seed);
 
-        // Phase 1: 全局地形生成
-        if (_globalBiome != null)
-        {
-            var biomeCtx = new BiomeContext(context, _globalBiome);
-            _globalBiome.Generate(biomeCtx);
-            Debug.Log("[MapGen] 基础地形生成完成");
-        }
 
-        // Phase 2: 分配
-        BiomeInstances = DistributeAll(context);
-        Debug.Log($"[MapGen] 分配完成 共 {BiomeInstances.Count} 个群落实例");
+        var pipeline = new GenerationPipeline();
 
-        // Phase 3: 生成（BiomeDefinition 内联 Feature，直接调用）
-        GenerateAll(context);
+        // Phase 1: 地形基底
+        pipeline.AddPhase(new TerrainBasePhase());
 
-        // Phase 4: 后处理
-        PostProcessAll(context);
+        // Phase 2: 全局群落
+        pipeline.AddPhase(new GlobalBiomePhase(_globalBiome));
 
-        Debug.Log("[MapGen] 地图生成完成");
+        // Phase 3: 局部群落分配
+        pipeline.AddPhase(new BiomeAllocationPhase(_localBiome));
+
+        // Phase 4: Feature生成
+        pipeline.AddPhase(new FeatureGenerationPhase());
+
+        // Phase 5: 后处理
+
+        // ---- 6. 执行 Pipeline ----
+        pipeline.Run(context);
     }
 
     private List<BiomeInstance> DistributeAll(GenerationContext context)
