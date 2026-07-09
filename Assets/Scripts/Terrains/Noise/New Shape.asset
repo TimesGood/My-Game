@@ -12,29 +12,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0545d047fc70f6343ac8bd1c8c0ee932, type: 3}
   m_Name: New Shape
   m_EditorClassIdentifier: 
-  width: 1000
-  height: 1000
+  width: 500
+  height: 500
   seed: 28
   shapeParams:
     vertexCount: 8
     offset: {x: 0, y: 0}
     fillPolygon: 1
     leftLower: {x: 0, y: 0}
-    rightUpper: {x: 1000, y: 1000}
-    limitType: 2
-    circleRadius: 100
-    circleRange: 0.935
+    rightUpper: {x: 500, y: 500}
+    limitType: 0
+    circleRadius: 250
+    circleRange: 0.432
     ellipseRadius: 150
     ellipseRange: 0.819
     ellipseScale: {x: 1, y: 1}
     edgeBias: 0.526
     rectSize: {x: 500, y: 500}
     rectRange: 0.438
-    curvesType: 0
-    segments: 18
+    curvesType: 2
+    segments: 3
     bezierStrength: 0.199
     perlinFrequency: 0.44
     perlinAmplitude: 19.61
-    octaves: 2
-    persistence: 2.6
-    lacunarity: 2.76
+    octaves: 4
+    persistence: 1.5
+    lacunarity: 0.26

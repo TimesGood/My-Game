@@ -8,7 +8,7 @@ using UnityEngine;
 public class BiomeAllocationPhase : IGenerator {
     public int Order => 0;
 
-    public string Name => "BiomeAllocationPhase";
+    public string Name => "BiomeAllocation";
 
     private readonly List<LocalDefinition> _localBiomes;
     public BiomeAllocationPhase(List<LocalDefinition> biomeDefs) {

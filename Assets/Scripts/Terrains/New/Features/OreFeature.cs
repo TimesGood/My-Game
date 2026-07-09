@@ -10,11 +10,6 @@ public class OreFeature : BiomeFeature
 {
     public OreGeneration[] ores;
 
-    public override void Init(BiomeContext _ctx)
-    {
-        
-    }
-
     public override void Execute(BiomeContext _ctx)
     {
         if (ores == null || ores.Length == 0) return;

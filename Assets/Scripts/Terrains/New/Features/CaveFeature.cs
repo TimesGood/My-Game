@@ -6,31 +6,24 @@ using UnityEngine;
 // 洞穴挖掘
 public class CaveFeature : BiomeFeature
 {
-    public NoiseParams caveNoise;
-
-    // ========== 运行时纹理（Execute 期间临时使用） ==========
-    [System.NonSerialized] private SamplerResult _caveTex;
-
-    public override void Init(BiomeContext _ctx)
-    {
-        
-    }
+    public NoiseParams saveParams;
 
     public override void Execute(BiomeContext _ctx)
     {
         RectInt region = _ctx.Bounds;
-        _caveTex = NoiseSampler.GenerateTexture(region.width, region.height, caveNoise, _ctx.Instance.Seed);
-        if (caveNoise == null) return;
+        if (saveParams == null) return;
+        SamplerResult sampleResult = NoiseSampler.GenerateTexture(region.width, region.height, saveParams, _ctx.Instance.Seed);
 
-        WorldManager world = WorldManager.Instance;
+        ChunkManager chunk = ChunkManager.Instance;
         for (int y = region.height; y >= 0; y--)
         {
             for (int x = 0; x < region.width; x++)
             {
-                int wx = region.x + x;
-                int wy = region.y + y;
-                if (_caveTex.tex.GetPixel(x, y).r <= 0)
-                    world.SetTileClass(null, Layers.Ground, wx, wy);
+                if (sampleResult.tex.GetPixel(x, y).r > saveParams.threshold) {
+                    Vector2Int worldPos = _ctx.LocalToWorld(x, y);
+                    chunk.SetBlockId(Layers.Ground, worldPos, 0);
+                }
+                    
             }
         }
     }

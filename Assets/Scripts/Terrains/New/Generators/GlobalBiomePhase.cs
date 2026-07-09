@@ -10,7 +10,7 @@ using UnityEngine;
 public class GlobalBiomePhase : IGenerator {
     public int Order => 0;
 
-    public string Name => "GlobalBiomePhase";
+    public string Name => "GlobalBiome";
 
     private readonly List<GobalDefinition> _globalBiomes;
 

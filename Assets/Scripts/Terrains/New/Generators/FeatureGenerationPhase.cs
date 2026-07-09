@@ -6,7 +6,7 @@ using UnityEngine;
 public class FeatureGenerationPhase : IGenerator {
     public int Order => 0;
 
-    public string Name => "FeatureGenerationPhase";
+    public string Name => "FeatureGeneration";
 
     public void Generate(GenerationContext context) {
         foreach (var placement in context.Placements) {

@@ -15,14 +15,6 @@ public class BorderBlendFeature : BiomeFeature
     [System.NonSerialized] private SamplerResult _terrainTex;
 
 
-    public override void Init(BiomeContext _ctx)
-    {
-        //if (mode == BorderBlendMode.CurveBlend)
-        //{
-        //    _terrainTex = NoiseSampler.GenerateTexture(_biomeSize.x, _biomeSize.y, terrainNoise, _seed);
-        //}
-    }
-
     public override void Execute(BiomeContext _ctx) {
         //if (_ctx.surfaceStart == 0 || _ctx.surfaceEnd == 0) return;
         //WorldManager w = WorldManager.Instance;

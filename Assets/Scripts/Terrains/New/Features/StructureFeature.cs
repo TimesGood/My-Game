@@ -11,8 +11,6 @@ public class StructureFeature : BiomeFeature
     public int count = 3;
     public int randomOffset = 10;
 
-    public override void Init(BiomeContext _ctx) { }
-
     public override void Execute(BiomeContext _ctx)
     {
         if (structureTile == null) return;

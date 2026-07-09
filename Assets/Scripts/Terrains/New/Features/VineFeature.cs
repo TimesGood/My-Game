@@ -9,8 +9,6 @@ public class VineFeature : BiomeFeature
     public int minLength = 3;
     public int maxLength = 10;
 
-    public override void Init(BiomeContext _ctx) { }
-
     public override void Execute(BiomeContext _ctx)
     {
         if (vineTile == null) return;

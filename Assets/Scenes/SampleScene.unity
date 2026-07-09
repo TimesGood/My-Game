@@ -676,7 +676,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 96.69783, y: 32.294678, z: 0.20973015}
+  m_LocalPosition: {x: 96.69783, y: 532.2947, z: 0.20973015}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -918,7 +918,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _config: {fileID: 11400000, guid: 4813548f7ac52e049a2496b45819ef35, type: 2}
   chunkManager: {fileID: 530379993}
-  _baseTerrain: {fileID: 11400000, guid: abbfc39f97a248140801ee25a86a20b4, type: 2}
+  _globalBiome: []
+  _localBiome:
+  - {fileID: 11400000, guid: 78a5855009244b042b54842d7af80edc, type: 2}
   _distributors:
   - {fileID: 11400000, guid: bced9cc61435301448e326403ca51f53, type: 2}
   _postProcessors: []
@@ -2272,7 +2274,7 @@ Transform:
   m_GameObject: {fileID: 1531841075}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 180, y: 1500, z: 0}
+  m_LocalPosition: {x: 180, y: 2000, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2705,7 +2707,7 @@ Transform:
   m_GameObject: {fileID: 1785749020}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 96.69783, y: 32.294678, z: 0.20973015}
+  m_LocalPosition: {x: 96.69783, y: 532.2947, z: 0.20973015}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

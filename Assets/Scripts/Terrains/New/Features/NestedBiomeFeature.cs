@@ -12,8 +12,6 @@ public class NestedBiomeFeature : BiomeFeature
     public float sampleRadius = 30f;
     public int maxCount = 10;
 
-    public override void Init(BiomeContext _ctx) { }
-
     public override void Execute(BiomeContext _ctx)
     {
         RectInt region = _ctx.Bounds;

@@ -17,10 +17,6 @@ public class TerrainFeature : BiomeFeature
 
     public bool IsValid => tileMapping != null && tileMapping.IsValid;
 
-    public override void Init(BiomeContext _ctx)
-    {
-        
-    }
 
     public override void Execute(BiomeContext _ctx)
     {

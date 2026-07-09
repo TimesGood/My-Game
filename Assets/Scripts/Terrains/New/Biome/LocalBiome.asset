@@ -17,7 +17,9 @@ MonoBehaviour:
   Priority: 0
   _features:
   - rid: 2871954225949835264
-  biomeSize: {x: 1000, y: 1000}
+  - rid: 2871954248265629696
+  - rid: 2871954248265629697
+  biomeSize: {x: 500, y: 500}
   suitable:
   - SuitableMin: {x: 0, y: 0}
     SuitableMax: {x: 4000, y: 1000}
@@ -30,27 +32,107 @@ MonoBehaviour:
       type: {class: OutLineFeature, ns: , asm: Assembly-CSharp}
       data:
         outLine:
-          <tileClass>k__BackingField: {fileID: 11400000, guid: ea7c6f3bacb8d344284e14c8709e33d8, type: 2}
+          <tileClass>k__BackingField: {fileID: 11400000, guid: f6dbf9a303e4a2a4eadcad51112d7e7b, type: 2}
           shapeParams:
             vertexCount: 8
             offset: {x: 0, y: 0}
             fillPolygon: 1
             leftLower: {x: 0, y: 0}
-            rightUpper: {x: 1000, y: 1000}
-            limitType: 2
-            circleRadius: 100
-            circleRange: 0.935
+            rightUpper: {x: 500, y: 500}
+            limitType: 0
+            circleRadius: 250
+            circleRange: 0.432
             ellipseRadius: 150
             ellipseRange: 0.819
             ellipseScale: {x: 1, y: 1}
             edgeBias: 0.526
             rectSize: {x: 500, y: 500}
             rectRange: 0.438
-            curvesType: 0
-            segments: 18
+            curvesType: 2
+            segments: 3
             bezierStrength: 0.199
             perlinFrequency: 0.44
             perlinAmplitude: 19.61
-            octaves: 2
-            persistence: 2.6
-            lacunarity: 2.76
+            octaves: 4
+            persistence: 1.5
+            lacunarity: 0.26
+    - rid: 2871954248265629696
+      type: {class: OreFeature, ns: , asm: Assembly-CSharp}
+      data:
+        ores:
+        - <oreClass>k__BackingField: {fileID: 11400000, guid: a3964655559cb0a47bd9f7bf8d9a77e7, type: 2}
+          noiseParams:
+            type: 0
+            frequency: 0.019
+            isBinary: 0
+            threshold: 0.829
+            offset: 0
+            scale: 1
+            isCurve: 0
+            heightMult: 100
+            heightAdd: 1000
+            worleyType: 0
+            worleyFlip: 0
+            fbmParams:
+              octaves: 4
+              persistence: 0.091
+              lacunarity: 4.97
+            mixParams:
+              leftFrequency: 0.009
+              rightFrequency: 0.006
+              weight: 0
+            warpFrequency: 6.75
+            warpStrength: 27.65
+            useGPU: 1
+          threshold: 0
+        - <oreClass>k__BackingField: {fileID: 11400000, guid: acee65c48accda74f8f3f2ebb3dcf195, type: 2}
+          noiseParams:
+            type: 0
+            frequency: 0.019
+            isBinary: 0
+            threshold: 0.829
+            offset: 0
+            scale: 1
+            isCurve: 0
+            heightMult: 100
+            heightAdd: 1000
+            worleyType: 0
+            worleyFlip: 0
+            fbmParams:
+              octaves: 4
+              persistence: 0.091
+              lacunarity: 4.97
+            mixParams:
+              leftFrequency: 0.009
+              rightFrequency: 0.006
+              weight: 0
+            warpFrequency: 6.75
+            warpStrength: 27.65
+            useGPU: 1
+          threshold: 0
+    - rid: 2871954248265629697
+      type: {class: CaveFeature, ns: , asm: Assembly-CSharp}
+      data:
+        saveParams:
+          type: 5
+          frequency: 0.019
+          isBinary: 0
+          threshold: 0.749
+          offset: 0
+          scale: 1
+          isCurve: 0
+          heightMult: 100
+          heightAdd: 1000
+          worleyType: 0
+          worleyFlip: 0
+          fbmParams:
+            octaves: 1
+            persistence: 0.091
+            lacunarity: 4.97
+          mixParams:
+            leftFrequency: 0.266
+            rightFrequency: 0.036
+            weight: 0.872
+          warpFrequency: 6.75
+          warpStrength: 27.65
+          useGPU: 1

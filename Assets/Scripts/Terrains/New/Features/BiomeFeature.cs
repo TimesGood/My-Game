@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.SocialPlatforms;
 
 // ======================================================================
-// BiomeContext —— 运行时上下文（适配新架构 GenerationContext + BiomeInstance）
+// BiomeContext —— 运行时上下文
 // ======================================================================
 
 /// <summary>
@@ -70,12 +70,7 @@ public class BiomeContext
 public abstract class BiomeFeature
 {
     /// <summary>
-    /// 初始化噪声等运行时资源（生成前调用）。
-    /// </summary>
-    public virtual void Init(BiomeContext _ctx) { }
-
-    /// <summary>
-    /// 执行该 Feature 的生成逻辑（非协程！新架构不使用协程）
+    /// 执行该 Feature 的生成逻辑
     /// </summary>
     public abstract void Execute(BiomeContext _ctx);
 }

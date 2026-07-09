@@ -11,7 +11,7 @@ using UnityEngine;
 public class TerrainBasePhase : IGenerator {
     public int Order => 0;
 
-    public string Name => "TerrainBasePhase";
+    public string Name => "TerrainBase";
 
     public void Generate(GenerationContext context) {
         NoiseParams p = new NoiseParams() {

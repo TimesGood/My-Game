@@ -11,11 +11,6 @@ using UnityEngine.UI;
 public class OutLineFeature : BiomeFeature {
 
     public OutLineGeneration outLine;
-
-
-    public override void Init(BiomeContext _ctx) {
-
-    }
     public override void Execute(BiomeContext _ctx) {
         RectInt region = _ctx.Bounds;
         Debug.Log("OutLineFeatureÖ´ÐÐÉú³É" + region.width +":" + region.height);
