@@ -28,13 +28,14 @@ public class TreeTileDataEditor : Editor {
     private bool showPixelGrid = true;//是否现实精灵所占网格
     private float pixelsPerUnit = 100f;
     private Vector2 spriteSizeInUnits;
+    //轴心自定义
     private bool useCustomPivot = false;//是否自定义轴心
     private Vector2 customPivot = Vector2.one * 0.5f;//自定义轴心
 
     private void OnEnable() {
         treeClass = (TreeClass)target;
-        if (treeClass.clearMap == null || treeClass.clearMap.Length != treeClass.gridWidth * treeClass.gridHeight) {
-            treeClass.InitializeGrid();
+        if (treeClass.footprint.clearMap == null || treeClass.footprint.clearMap.Length != treeClass.footprint.gridWidth * treeClass.footprint.gridHeight) {
+            treeClass.footprint.Initialize();
         }
 
         InitializeEditMap();
@@ -45,11 +46,13 @@ public class TreeTileDataEditor : Editor {
 
     //初始化编辑器网格数据
     private void InitializeEditMap() {
-        editMap = new bool[treeClass.gridWidth, treeClass.gridHeight];
-        for (int x = 0; x < treeClass.gridWidth; x++) {
-            for (int y = 0; y < treeClass.gridHeight; y++) {
-                int index = y * treeClass.gridWidth + x;
-                editMap[x, y] = treeClass.clearMap[index];
+        int gridWidth = treeClass.footprint.gridWidth;
+        int gridHeight = treeClass.footprint.gridHeight;
+        editMap = new bool[gridWidth, gridHeight];
+        for (int x = 0; x < gridWidth; x++) {
+            for (int y = 0; y < gridHeight; y++) {
+                int index = y * gridWidth + x;
+                editMap[x, y] = treeClass.footprint.clearMap[index];
             }
         }
     }
@@ -112,25 +115,25 @@ public class TreeTileDataEditor : Editor {
 
         // 网格尺寸控制
         EditorGUI.BeginChangeCheck();
-        int newWidth = Mathf.Clamp(EditorGUILayout.IntField("Grid Width", treeClass.gridWidth), 3, 15);
-        int newHeight = Mathf.Clamp(EditorGUILayout.IntField("Grid Height", treeClass.gridHeight), 3, 15);
+        int newWidth = Mathf.Clamp(EditorGUILayout.IntField("Grid Width", treeClass.footprint.gridWidth), 3, 15);
+        int newHeight = Mathf.Clamp(EditorGUILayout.IntField("Grid Height", treeClass.footprint.gridHeight), 3, 15);
 
         if (EditorGUI.EndChangeCheck()) {
-            treeClass.gridWidth = newWidth;
-            treeClass.gridHeight = newHeight;
-            treeClass.InitializeGrid();
+            treeClass.footprint.gridWidth = newWidth;
+            treeClass.footprint.gridHeight = newHeight;
+            treeClass.footprint.Initialize();
             InitializeEditMap();
         }
 
         // 原点位置控制
-        Vector2Int newOrigin = EditorGUILayout.Vector2IntField("Origin Point", treeClass.originPoint);
+        Vector2Int newOrigin = EditorGUILayout.Vector2IntField("Origin Point", treeClass.footprint.originPoint);
         if (newOrigin.x < 0) newOrigin.x = 0;
         if (newOrigin.y < 0) newOrigin.y = 0;
-        if (newOrigin.x >= treeClass.gridWidth) newOrigin.x = treeClass.gridWidth - 1;
-        if (newOrigin.y >= treeClass.gridHeight) newOrigin.y = treeClass.gridHeight - 1;
+        if (newOrigin.x >= treeClass.footprint.gridWidth) newOrigin.x = treeClass.footprint.gridWidth - 1;
+        if (newOrigin.y >= treeClass.footprint.gridHeight) newOrigin.y = treeClass.footprint.gridHeight - 1;
 
-        if (newOrigin != treeClass.originPoint) {
-            treeClass.originPoint = newOrigin;
+        if (newOrigin != treeClass.footprint.originPoint) {
+            treeClass.footprint.originPoint = newOrigin;
             EditorUtility.SetDirty(treeClass);
         }
 
@@ -163,11 +166,10 @@ public class TreeTileDataEditor : Editor {
 
         // 工具按钮
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Clear All")) ClearAllCells();
-        if (GUILayout.Button("Fill All")) FillAllCells();
-        if (GUILayout.Button("Invert")) InvertCells();
-        if (GUILayout.Button("Save Changes")) SaveChanges();
-        if (GUILayout.Button("Reset Pivot")) ResetPivot();
+        if (GUILayout.Button("清空")) ClearAllCells();
+        if (GUILayout.Button("反选")) InvertCells();
+        if (GUILayout.Button("保存更改")) SaveChanges();
+        if (GUILayout.Button("重置轴心")) ResetPivot();
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.HelpBox("Click to toggle cells. Drag to paint multiple cells.", MessageType.Info);
@@ -185,8 +187,8 @@ public class TreeTileDataEditor : Editor {
 
     private void DrawGridEditor() {
         // 计算网格区域大小
-        float gridWidth = treeClass.gridWidth * (cellSize + Padding);
-        float gridHeight = treeClass.gridHeight * (cellSize + Padding);
+        float gridWidth = treeClass.footprint.gridWidth * (cellSize + Padding);
+        float gridHeight = treeClass.footprint.gridHeight * (cellSize + Padding);
 
         // 开始滚动视图
         scrollPosition = EditorGUILayout.BeginScrollView(
@@ -217,8 +219,8 @@ public class TreeTileDataEditor : Editor {
             );
 
             // 计算精灵位置（网格原点对应精灵轴心点）
-            float spriteX = gridArea.x + treeClass.originPoint.x * (cellSize + Padding) - spriteDisplayWidth * effectivePivot.x + cellSize / 2;
-            float spriteY = gridArea.y + (treeClass.gridHeight - 1 - treeClass.originPoint.y) * (cellSize + Padding) + spriteDisplayHeight * (effectivePivot.y - 1) + cellSize / 2;
+            float spriteX = gridArea.x + treeClass.footprint.originPoint.x * (cellSize + Padding) - spriteDisplayWidth * effectivePivot.x + cellSize / 2;
+            float spriteY = gridArea.y + (treeClass.footprint.gridHeight - 1 - treeClass.footprint.originPoint.y) * (cellSize + Padding) + spriteDisplayHeight * (effectivePivot.y - 1) + cellSize / 2;
             Rect spriteRect = new Rect(spriteX, spriteY, spriteDisplayWidth, spriteDisplayHeight);
 
             // 绘制精灵
@@ -256,11 +258,11 @@ public class TreeTileDataEditor : Editor {
 
         // 绘制网格单元
         
-        for (int y = 0; y < treeClass.gridHeight; y++) {
-            for (int x = 0; x < treeClass.gridWidth; x++) {
+        for (int y = 0; y < treeClass.footprint.gridHeight; y++) {
+            for (int x = 0; x < treeClass.footprint.gridWidth; x++) {
                 Rect cellRect = new Rect(
                     gridArea.x + x * (cellSize + Padding),
-                    gridArea.y + (treeClass.gridHeight - 1 - y) * (cellSize + Padding),
+                    gridArea.y + (treeClass.footprint.gridHeight - 1 - y) * (cellSize + Padding),
                     cellSize,
                     cellSize
                 );
@@ -272,8 +274,8 @@ public class TreeTileDataEditor : Editor {
 
         // 绘制原点标记
         Rect originRect = new Rect(
-           gridArea.x + treeClass.originPoint.x * (cellSize + Padding),
-           gridArea.y + (treeClass.gridHeight - 1 - treeClass.originPoint.y) * (cellSize + Padding),
+           gridArea.x + treeClass.footprint.originPoint.x * (cellSize + Padding),
+           gridArea.y + (treeClass.footprint.gridHeight - 1 - treeClass.footprint.originPoint.y) * (cellSize + Padding),
            cellSize,
            cellSize
        );
@@ -283,6 +285,7 @@ public class TreeTileDataEditor : Editor {
         EditorGUILayout.EndScrollView();
     }
 
+    // 绘制sprite背景网格
     private void DrawPixelGrid(Rect spriteRect) {
         Sprite previewSprite = ((CustomTile)treeClass.tile)?.m_DefaultSprite;
         if (previewSprite == null) return;
@@ -315,6 +318,7 @@ public class TreeTileDataEditor : Editor {
         Handles.EndGUI();
     }
 
+    // 绘制单元格
     private void DrawCell(Rect cellRect, int x, int y) {
         // 绘制单元格背景
         if (editMap[x, y]) {
@@ -354,6 +358,7 @@ public class TreeTileDataEditor : Editor {
         }
     }
 
+    // 绘制网格
     private void DrawGridCell(Rect rect) {
         // 绘制单元格边框
         Handles.BeginGUI();
@@ -383,44 +388,40 @@ public class TreeTileDataEditor : Editor {
         Handles.EndGUI();
     }
 
+    // 清理所有
     private void ClearAllCells() {
-        for (int x = 0; x < treeClass.gridWidth; x++) {
-            for (int y = 0; y < treeClass.gridHeight; y++) {
+        for (int x = 0; x < treeClass.footprint.gridWidth; x++) {
+            for (int y = 0; y < treeClass.footprint.gridHeight; y++) {
                 editMap[x, y] = false;
             }
         }
         SaveChanges();
     }
 
-    private void FillAllCells() {
-        for (int x = 0; x < treeClass.gridWidth; x++) {
-            for (int y = 0; y < treeClass.gridHeight; y++) {
-                editMap[x, y] = true;
-            }
-        }
-        SaveChanges();
-    }
-
+    // 反选
     private void InvertCells() {
-        for (int x = 0; x < treeClass.gridWidth; x++) {
-            for (int y = 0; y < treeClass.gridHeight; y++) {
+        for (int x = 0; x < treeClass.footprint.gridWidth; x++) {
+            for (int y = 0; y < treeClass.footprint.gridHeight; y++) {
                 editMap[x, y] = !editMap[x, y];
             }
         }
         SaveChanges();
     }
 
+    // 重置
     private void ResetPivot() {
         useCustomPivot = false;
         customPivot = Vector2.one * 0.5f;
         GUI.changed = true;
     }
 
+
+    // 保存改动
     private new void SaveChanges() {
-        for (int x = 0; x < treeClass.gridWidth; x++) {
-            for (int y = 0; y < treeClass.gridHeight; y++) {
-                int index = y * treeClass.gridWidth + x;
-                treeClass.clearMap[index] = editMap[x, y];
+        for (int x = 0; x < treeClass.footprint.gridWidth; x++) {
+            for (int y = 0; y < treeClass.footprint.gridHeight; y++) {
+                int index = y * treeClass.footprint.gridWidth + x;
+                treeClass.footprint.clearMap[index] = editMap[x, y];
             }
         }
         EditorUtility.SetDirty(treeClass);

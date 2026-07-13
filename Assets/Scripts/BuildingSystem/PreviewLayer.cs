@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -15,7 +16,7 @@ public class PreviewLayer : TilemapLayer
         TileData tileData = GetSpriteWithoutPlacing(item.tile, coords);
         _previewRernder.enabled = true;
         _previewRernder.transform.position = _tilemap.CellToWorld(coords) + _tilemap.cellSize / 2;
-        _previewRernder.sprite = item.previewSprite;
+        _previewRernder.sprite = item.previewSprite == null ? item.tile.m_DefaultSprite : item.previewSprite;
         //_previewRernder.transform.localRotation = tileData.transform.rotation;
         _previewRernder.color = isValid ? new Color(0, 1, 0, 0.5f) : new Color(1, 0, 0, 0.5f);
     }

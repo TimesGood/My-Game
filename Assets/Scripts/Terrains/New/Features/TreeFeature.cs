@@ -4,7 +4,7 @@ using UnityEngine;
 public enum TreePlacement { Surface, CaveCeiling, Both }
 
 /// <summary>
-/// 植物散布
+/// 植物放置
 /// </summary>
 [System.Serializable]
 public class TreeFeature : BiomeFeature
@@ -16,49 +16,83 @@ public class TreeFeature : BiomeFeature
 
     public override void Execute(BiomeContext _ctx)
     {
-        //if (trees == null || trees.Length == 0 || _cache == null) return;
-        //if (placement == TreePlacement.Surface || placement == TreePlacement.Both) PlaceSurface(_ctx);
-        //if (placement == TreePlacement.CaveCeiling || placement == TreePlacement.Both) PlaceCave(_ctx);
+        if (trees == null || trees.Length == 0) return;
+        // 噪图生成
+        _cache = new Dictionary<string, SamplerResult>();
+        foreach (var tg in trees) {
+            SamplerResult result = NoiseSampler.GenerateTexture(_ctx.biomeSize.x, _ctx.biomeSize.y, tg.noiseParams, _ctx.Seed);
+            _cache.Add(tg.treeClass.blockId.ToString(), result);
+        }
+        if (placement == TreePlacement.Surface || placement == TreePlacement.Both) PlaceSurface(_ctx);
+        if (placement == TreePlacement.CaveCeiling || placement == TreePlacement.Both) PlaceCave(_ctx);
     }
 
+    // 放置地表植株
     private void PlaceSurface(BiomeContext _ctx)
     {
-        //WorldManager world = WorldManager.Instance;
-        //for (int x = 0; x < _ctx.biomeSize.x; x++)
-        //{
-        //    int wx = _ctx.worldXs != null ? _ctx.worldXs[x] : _ctx.LocalToWorldX(x);
-        //    int th = _ctx.terrainHeights != null ? _ctx.terrainHeights[x] : world.surfaceHeights[wx];
-        //    if (!_ctx.IsSurfaceRange(wx)) continue;
-        //    TileClass tb = world.GetTileClass(Layers.Ground, wx, th);
-        //    if (tb == null) continue;
-        //    int ty = th + 1;
-        //    foreach (var tg in trees)
-        //    {
-        //        if (tg?.treeClass == null || !tg.treeClass.CheckSpawn(wx, ty)) continue;
-        //        if (_cache.TryGetValue(tg.treeClass.blockId.ToString(), out var tex) && tex.tex.GetPixel(x, ty).r > 0.5f && Random.Range(0, 100) < spawnChance)
-        //        { tg.treeClass.PlanceSelf(wx, ty); break; }
-        //    }
-        //}
+
+
+        ChunkManager chunk = ChunkManager.Instance;
+
+        float[] surface = _ctx.genContext.SurfaceProfile;
+        
+        for (int x = 0; x < _ctx.biomeSize.x; x++) {
+            var wx = _ctx.LocalToWorldX(x);
+            int th = (int)surface[wx];
+            TileClass tileClass = chunk.GetTileClass(Layers.Ground, wx, th);
+            if (tileClass == null) continue;
+            int ty = th + 1;
+            foreach (var tg in trees) {
+                if (tg?.treeClass == null || !tg.treeClass.CheckSpawn(wx, ty)) continue;
+                if (_cache.TryGetValue(tg.treeClass.blockId.ToString(), out var tex)) {
+                    float noiseValue = tex.tex.GetPixel(x, 0).r;
+
+                    if (noiseValue > tg.noiseParams.threshold) {
+                        
+                        // 重新返回到0到1的范围
+                        float v = (noiseValue - tg.noiseParams.threshold) / (1f - tg.noiseParams.threshold);
+                        // 越接近1生成概率越高
+                        if (Random.value < v) {
+                            tg.treeClass.PlanceSelf(wx, ty);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
+    // 放置洞穴植株
     private void PlaceCave(BiomeContext _ctx)
     {
-        WorldManager world = WorldManager.Instance;
-        //for (int y = _ctx.maxHeight; y >= 0; y--)
-        //{
-        //    int wy = _ctx.LocalToWorldY(y);
-        //    for (int x = 0; x < _ctx.biomeSize.x; x++)
-        //    {
-        //        int wx = _ctx.worldXs != null ? _ctx.worldXs[x] : _ctx.LocalToWorldX(x);
-        //        int th = _ctx.terrainHeights != null ? _ctx.terrainHeights[x] : _ctx.biomeSize.y;
-        //        if (wy > th) continue;
-        //        if (world.GetTileClass(Layers.Ground, wx, wy) != null || world.GetTileClass(Layers.Ground, wx, wy + 1) == null) continue;
-        //        if (Random.Range(0, 100) > 60) continue;
-        //        int idx = Random.Range(0, trees.Length);
-        //        var tg = trees[idx];
-        //        if (tg?.treeClass != null && tg.treeClass.CheckSpawn(wx, wy))
-        //            tg.treeClass.PlanceSelf(wx, wy);
-        //    }
-        //}
+        ChunkManager chunk = ChunkManager.Instance;
+        for (int x = 0; x < _ctx.biomeSize.x; x++) {
+            for (int y = 0; y < _ctx.biomeSize.y; y++) {
+                Vector2Int worldPos = _ctx.LocalToWorld(x, y);
+                TileClass tile = chunk.GetTileClass(Layers.Ground, worldPos);
+                if (tile != null) continue;
+
+                TileClass downTile = chunk.GetTileClass(Layers.Ground, worldPos - Vector2Int.down);
+                if (downTile != null) {
+                    foreach (var tg in trees) {
+                        if (tg?.treeClass == null || !tg.treeClass.CheckSpawn(worldPos.x, worldPos.y)) continue;
+                        if (_cache.TryGetValue(tg.treeClass.blockId.ToString(), out var tex)) {
+                            float noiseValue = tex.tex.GetPixel(x, y).r;
+
+                            if (noiseValue > tg.noiseParams.threshold) {
+
+                                // 重新返回到0到1的范围
+                                float v = (noiseValue - tg.noiseParams.threshold) / (1f - tg.noiseParams.threshold);
+                                // 越接近1生成概率越高
+                                if (Random.value < v) {
+                                    tg.treeClass.PlanceSelf(worldPos.x, worldPos.y);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

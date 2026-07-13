@@ -19,8 +19,8 @@ public class TileClass : ScriptableObject
     private List<ItemData> dropList = new List<ItemData>();//实际掉落列表
 
 
-    private void OnValidate() {
-        //TileBase与TileClass的Id必须对应
+    protected void OnValidate() {
+        // 设置实际tile的blockId，主要用于自定义笔刷实现相关瓦片的自有逻辑
         if (tile != null && tile.blockId != blockId) {
             tile.blockId = blockId;
         }

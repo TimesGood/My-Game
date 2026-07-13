@@ -10,7 +10,7 @@ public class WorldManager : Singleton<WorldManager>, IMapSaveManager {
     public Vector2Int worldSize = new Vector2Int(6000, 2000);
     public Vector2Int chunkCount = new Vector2Int(20, 20);
 
-    // 图层 Tilemap 注册表（用于渲染——每个图层仍有一个 Unity Tilemap GameObject）
+    // 图层 Tilemap 注册表（用于渲染——每个图层拥有一个 Unity Tilemap GameObject）
     private Dictionary<Layers, TilemapLayer> tileLayers = new Dictionary<Layers, TilemapLayer>();
     private ChunkManager chunkManager;
 

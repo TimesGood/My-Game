@@ -117,7 +117,7 @@ MonoBehaviour:
           type: 5
           frequency: 0.019
           isBinary: 0
-          threshold: 0.749
+          threshold: 0.633
           offset: 0
           scale: 1
           isCurve: 0
@@ -126,13 +126,13 @@ MonoBehaviour:
           worleyType: 0
           worleyFlip: 0
           fbmParams:
-            octaves: 1
+            octaves: 4
             persistence: 0.091
             lacunarity: 4.97
           mixParams:
-            leftFrequency: 0.266
-            rightFrequency: 0.036
-            weight: 0.872
+            leftFrequency: 0.134
+            rightFrequency: 0.033
+            weight: 0.743
           warpFrequency: 6.75
           warpStrength: 27.65
           useGPU: 1

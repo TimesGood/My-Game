@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using static WorldManager;
 
 /// <summary>
 /// 区块数据管理中心——世界图块数据的唯一权威来源。
@@ -62,6 +63,24 @@ public class ChunkManager : Singleton<ChunkManager> {
 
     public TileData GetTileData(int x, int y) {
         return GetTileData(new Vector2Int(x, y));
+    }
+
+    public TileClass GetTileClass(Layers layer, Vector2Int worldPos) {
+        TileData tile = GetTileData(worldPos);
+        return TileRegistry.GetTile(tile.GetBlockId(layer));
+    }
+
+    public TileClass GetTileClass(Layers layer, int x, int y) {
+        return GetTileClass(layer, new Vector2Int(x, y));
+    }
+
+    public bool SetTileClass(Layers layer, Vector2Int worldPos, TileClass tile) {
+        long blockId = tile == null ? 0 : tile.blockId;
+        return SetBlockId(layer, worldPos, blockId);
+    }
+
+    public bool SetTileClass(Layers layer, int x, int y, TileClass tile) {
+        return SetTileClass(layer, new Vector2Int(x, y), tile);
     }
 
     /// <summary>

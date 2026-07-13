@@ -22,6 +22,7 @@ public class BiomeContext
     public BiomeInstance Instance;
     /// <summary>当前执行区域（全局群落 = 整张地图，分配群落 = 其 Bounds）</summary>
     public RectInt Bounds { get; }
+    public int Seed { get; }
 
     /// <summary>群落最小世界坐标</summary>
     public Vector2Int minPos => new Vector2Int(Bounds.xMin, Bounds.yMin);
@@ -41,6 +42,7 @@ public class BiomeContext
         Instance = instance;
         Definition = instance.Def;
         Bounds = instance.Bounds;
+        Seed = global.Seed;
     }
 
     /// <summary>用于全局群落（没有 Placement）</summary>
@@ -48,7 +50,8 @@ public class BiomeContext
         genContext = global;
         Instance = null;
         Definition = globalBiome;
-        Bounds = new RectInt(0, 0, global.Width, global.Height); ;
+        Bounds = new RectInt(0, 0, global.Width, global.Height);
+        Seed = global.Seed;
     }
 
     // 便捷方法
@@ -58,7 +61,7 @@ public class BiomeContext
 }
 
 // ======================================================================
-// BiomeFeature —— Feature 抽象基类（内联配置，非 ScriptableObject）
+// BiomeFeature —— Feature 抽象基类
 // ======================================================================
 
 /// <summary>

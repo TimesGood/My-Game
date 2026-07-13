@@ -7,7 +7,7 @@ using UnityEngine;
 
 /// <summary>
 /// 群落定义 = "是什么" + "怎么生成"。
-/// 通过 [SerializeReference] 内联 Feature 列表，自定义该群落的生成规则。
+/// 通过 [SerializeReference] 内联 Feature 列表，自定义组合该群落的生成规则。
 /// </summary>
 public abstract class BiomeDefinition : ScriptableObject {
 

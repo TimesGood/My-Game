@@ -37,12 +37,12 @@ namespace BuildingSystem {
 
             // 鼠标移动时更新预览
             if (_mouseUser.MousePosition != lastMousePos) {
-                _previewLayer.ShowPreview(ActionBuildable, mousePos, IsEmpty(mousePos));
+                _previewLayer.ShowPreview(ActionBuildable, mousePos, CheckValid(mousePos, ActionBuildable));
                 lastMousePos = mousePos2Int;
             }
 
             // 左键：建造
-            if (_mouseUser.IsMouseButtonPressed(MouseButton.Left) && IsEmpty(mousePos)) {
+            if (_mouseUser.IsMouseButtonPressed(MouseButton.Left) && CheckValid(mousePos, ActionBuildable)) {
                 BuildTile(mousePos2Int, ActionBuildable);
             }
         }
@@ -70,8 +70,18 @@ namespace BuildingSystem {
 
         private bool IsEmpty(Vector3 worldCoords) {
             var cellPos = _constructionLayer._tilemap.WorldToCell(worldCoords);
-            TileData tileData = WorldManager.Instance.GetTileData(cellPos.x, cellPos.y);
+            TileData tileData = ChunkManager.Instance.GetTileData(cellPos.x, cellPos.y);
             return tileData.IsEmpty && _constructionLayer._tilemap.GetTile(cellPos) == null;
+        }
+
+        private bool CheckValid(Vector3 worldCoords, TileClass tileClass) {
+            var cellPos = _constructionLayer._tilemap.WorldToCell(worldCoords);
+            bool flag = false;
+            if (tileClass is TreeClass) {
+                flag = ((TreeClass)tileClass).CheckSpawn(cellPos.x, cellPos.y);
+            }
+
+            return IsEmpty(worldCoords) && flag;
         }
 
         private bool IsMouseWithinBuildableRange() {
