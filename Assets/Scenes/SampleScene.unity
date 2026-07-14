@@ -2424,6 +2424,7 @@ MonoBehaviour:
   _buildables:
   - {fileID: 11400000, guid: ef2b46ed50cce49469606978ea1fbea6, type: 2}
   - {fileID: 11400000, guid: d17025596157bbf43b0c12608c058574, type: 2}
+  - {fileID: 11400000, guid: cd1564e2bb72c744f84de26ec6864371, type: 2}
   _buildingPlacer: {fileID: 1531841081}
 --- !u!61 &1531841083
 BoxCollider2D:
@@ -2508,30 +2509,30 @@ Tilemap:
   m_TileMatrixArray:
   - m_RefCount: 0
     m_Data:
-      e00: -1.7629833e+18
+      e00: 0
       e01: 0
-      e02: -1.1020282e-38
-      e03: -1.1020282e-38
-      e10: 8.18e-43
+      e02: -1.0285598e-38
+      e03: -1.0285598e-38
+      e10: 6.15e-43
       e11: 0
-      e12: 8.14e-43
-      e13: 8.14e-43
-      e20: -1.374895e-23
-      e21: 1e-45
-      e22: 1.2925596e-15
-      e23: 2.831654e-39
+      e12: 6.1e-43
+      e13: 6.1e-43
+      e20: 5.632716e+27
+      e21: 1.0531867e-36
+      e22: 3.261815e-19
+      e23: 8.906949e+9
       e30: 4.5904e-41
-      e31: 0
-      e32: 8.16e-43
-      e33: 8.18e-43
+      e31: 6.15e-43
+      e32: 6.11e-43
+      e33: 6.14e-43
   m_TileColorArray:
   - m_RefCount: 0
-    m_Data: {r: 3.8976e-41, g: 3.8976e-41, b: 3.8976e-41, a: 3.8976e-41}
+    m_Data: {r: 4.721e-41, g: 4.721e-41, b: 4.721e-41, a: 4.721e-41}
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Origin: {x: 0, y: 0, z: 0}
-  m_Size: {x: 4, y: 4, z: 1}
+  m_Size: {x: 185, y: 1607, z: 1}
   m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
   m_TileOrientation: 0
   m_TileOrientationMatrix:

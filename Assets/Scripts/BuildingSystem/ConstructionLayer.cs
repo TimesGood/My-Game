@@ -38,7 +38,11 @@ public class ConstructionLayer : TilemapLayer {
             Instantiate(item.gameObject, _tilemap.CellToWorld(coords) + _tilemap.cellSize / 2, Quaternion.identity);
 
         // 数据通过 WorldManager.PlaceTile 存入 ChunkManager
-        chunkManager.SetBlockId(layer, worldCoords, item.blockId);
+        if (item is TreeClass) ((TreeClass)item).PlanceSelf(worldCoords.x, worldCoords.y);
+        else {
+            chunkManager.SetBlockId(layer, worldCoords, item.blockId);
+        }
+        
     }
 
     // 检查图块位置是否为空（同时检查数据和视觉）
