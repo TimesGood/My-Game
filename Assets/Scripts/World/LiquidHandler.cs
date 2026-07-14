@@ -7,7 +7,6 @@ using UnityEngine.Tilemaps;
 
 // 液体物理模拟
 public class LiquidHandler : Singleton<LiquidHandler> {
-    public WorldManager world;
     public LiquidClass[] liquids; // 已注册的液体类型
     public bool openFlow = false;
     public Dictionary<LiquidClass, Dictionary<Vector2Int, int>> updates = new Dictionary<LiquidClass, Dictionary<Vector2Int, int>>();
@@ -17,11 +16,11 @@ public class LiquidHandler : Singleton<LiquidHandler> {
     private float lastClearUpdateTime;
     private const float checkClearInterval = 3f;
 
-    private ChunkManager chunkManager;
+    private ChunkManager chunkManager => ChunkManager.Instance;
+    private WorldManager world => WorldManager.Instance;
 
     protected override void Awake() {
         base.Awake();
-        chunkManager = ChunkManager.Instance;
         foreach (var liquid in liquids) {
             updates.Add(liquid, new Dictionary<Vector2Int, int>());
         }
@@ -39,7 +38,7 @@ public class LiquidHandler : Singleton<LiquidHandler> {
 
         // 屏幕外：快速批量处理
         foreach (var item in keys) {
-            if (!world.CheckWorldBound(item.x, item.y) || bounds.Contains((Vector3Int)item)) continue;
+            if (!chunkManager.CheckWorldBound(item.x, item.y) || bounds.Contains((Vector3Int)item)) continue;
             float curVolume = GetVolume(item);
             bool isChange = liquid.CalculatePhysics(item);
             if (!updates.ContainsKey(item)) continue;
@@ -118,7 +117,7 @@ public class LiquidHandler : Singleton<LiquidHandler> {
     private IEnumerator HandlerVisibleOut(Bounds bounds, LiquidClass liquid, List<Vector2Int> outUpdates, Dictionary<Vector2Int, int> updates) {
         int processed = 0;
         foreach (var item in outUpdates) {
-            if (!world.CheckWorldBound(item.x, item.y)) continue;
+            if (!chunkManager.CheckWorldBound(item.x, item.y)) continue;
             if (bounds.Contains((Vector3Int)item)) continue;
             float curVolume = GetVolume(item);
             bool isChange = liquid.CalculatePhysics(item);
@@ -156,7 +155,7 @@ public class LiquidHandler : Singleton<LiquidHandler> {
 
     // 标记
     public void MarkForUpdate(LiquidClass liquid, Vector2Int pos) {
-        if (!world.CheckWorldBound(pos.x, pos.y)) return;
+        if (!chunkManager.CheckWorldBound(pos.x, pos.y)) return;
 
         if (!updates.TryGetValue(liquid, out var set))
             throw new Exception("Liquid " + liquid.name + " 未注册！");
@@ -169,7 +168,7 @@ public class LiquidHandler : Singleton<LiquidHandler> {
 
     // 删除标记
     public void RemoveForUpdate(LiquidClass liquid, Vector2Int pos) {
-        if (!world.CheckWorldBound(pos.x, pos.y)) return;
+        if (!chunkManager.CheckWorldBound(pos.x, pos.y)) return;
 
         if (!updates.TryGetValue(liquid, out var set))
             throw new Exception("Liquid " + liquid.name + " 未注册！");

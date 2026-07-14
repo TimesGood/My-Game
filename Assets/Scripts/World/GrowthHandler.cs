@@ -23,7 +23,7 @@ public class GrowthHandler : Singleton<GrowthHandler> {
         foreach (var kvp in growthTime.ToList()) {
             if (Time.time > kvp.Value) {
                 Vector2Int wpos = new Vector2Int(kvp.Key.x, kvp.Key.y);
-                TileClass tileClass = world.GetTileClass(Layers.Addons, kvp.Key.x, kvp.Key.y);
+                TileClass tileClass = chunkManager.GetTileClass(Layers.Addons, kvp.Key.x, kvp.Key.y);
                 int growthData = chunkManager.GetGrowthData(wpos);
 
                 if (tileClass == null) {
@@ -61,7 +61,7 @@ public class GrowthHandler : Singleton<GrowthHandler> {
     }
 
     public void MarkForUpdate(Vector2Int pos, int growthData) {
-        if (!world.CheckWorldBound(pos.x, pos.y)) return;
+        if (!chunkManager.CheckWorldBound(pos.x, pos.y)) return;
         Vector3Int p = (Vector3Int)pos;
         if (growthTime.TryGetValue(p, out float value)) return;
         growthTime.Add(p, Time.time);

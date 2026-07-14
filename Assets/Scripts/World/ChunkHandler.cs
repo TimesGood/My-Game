@@ -7,7 +7,8 @@ using UnityEngine.Tilemaps;
 
 // 区块渲染管理器 —— 根据摄像机位置加载/卸载 Unity Tilemap 图块
 public class ChunkHandler : Singleton<ChunkHandler> {
-    public WorldManager world;
+    public WorldManager world = WorldManager.Instance;
+    public ChunkManager chunk => ChunkManager.Instance;
     public float loadRadius = 3f;
 
     public int chunkCount = 20;
@@ -41,10 +42,10 @@ public class ChunkHandler : Singleton<ChunkHandler> {
         base.Awake();
 
         chunkXCount = chunkCount;
-        chunkYCount = chunkCount * world.worldSize.y / world.worldSize.x;
+        chunkYCount = chunkCount * chunk.Height / chunk.Width;
 
-        chunkXSize = world.worldSize.x / chunkXCount;
-        chunkYSize = world.worldSize.y / chunkYCount;
+        chunkXSize = chunk.Width / chunkXCount;
+        chunkYSize = chunk.Height / chunkYCount;
         // 空瓦片数组，用于卸载
         emptyTiles = new TileBase[chunkXSize * chunkYSize];
     }
@@ -110,7 +111,7 @@ public class ChunkHandler : Singleton<ChunkHandler> {
                 int worldY = chunkY * chunkYSize + y;
 
                 // 一次调用获取全部图层数据
-                TileData tileData = world.GetTileData(worldX, worldY);
+                TileData tileData = chunk.GetTileData(worldX, worldY);
 
                 foreach (var layer in layers) {
                     long blockId = tileData.GetBlockId(layer);

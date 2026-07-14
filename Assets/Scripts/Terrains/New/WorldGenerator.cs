@@ -30,13 +30,19 @@ public class WorldGenerator : MonoBehaviour
 
     public List<BiomeInstance> BiomeInstances { get; private set; }
 
+
+    private void Awake() {
+        ChunkManager chunk = ChunkManager.Instance;
+        chunk.InitChunks(_config.Width, _config.Height);
+    }
+
     [ContextMenu("Generate Map")]
     public void Generate()
     {
         int seed = _config.ResolveSeed();
         Debug.Log($"[MapGen] 开始 Seed={seed} Size={_config.Width}x{_config.Height}");
 
-        GenerationContext context = new GenerationContext(_config.Width, _config.Height, _config.Seed);
+        GenerationContext context = new GenerationContext(_config.Width, _config.Height, _config.Seed, ChunkManager.Instance);
 
 
         var pipeline = new GenerationPipeline();
@@ -59,30 +65,4 @@ public class WorldGenerator : MonoBehaviour
         pipeline.Run(context);
     }
 
-    private List<BiomeInstance> DistributeAll(GenerationContext context)
-    {
-        Array.Sort(_distributors, (a, b) => a.Priority.CompareTo(b.Priority));
-
-        List<BiomeInstance> result = new List<BiomeInstance>();
-        foreach (var dist in _distributors)
-        {
-            result.AddRange(dist.Distribute(context));
-        }
-        return result;
-    }
-
-    private void GenerateAll(GenerationContext context)
-    {
-        foreach (var inst in BiomeInstances)
-        {
-            var biomeCtx = new BiomeContext(context, inst);
-            // 直接调用 BiomeDefinition.Generate()，Feature 在定义中内联
-            inst.Def.Generate(biomeCtx);
-        }
-    }
-
-    private void PostProcessAll(GenerationContext context)
-    {
-        // TODO: 后处理器实现
-    }
 }

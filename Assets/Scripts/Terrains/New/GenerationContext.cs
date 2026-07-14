@@ -26,11 +26,12 @@ public class GenerationContext {
 
     // 跨群落共享元数据
     private readonly Dictionary<string, object> _metadata = new();
-    public GenerationContext(int width, int height, int seed) {
+    public GenerationContext(int width, int height, int seed, ChunkManager chunk) {
         Width = width;
         Height = height;
         Seed = seed;
         RNG = new System.Random(seed);
+        ChunkManager = chunk;
     }
 
     // ── 共享浮点图 ──

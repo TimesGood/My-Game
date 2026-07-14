@@ -1,14 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
 using static WorldManager;
 
 // 图层包装 —— 持有 Unity Tilemap 引用，数据委托给 ChunkManager
 public class ConstructionLayer : TilemapLayer {
-    // 区块尺寸（由 WorldSetting 计算得出）
-    public Vector2Int ChunkCount { get; private set; }
-    public Vector2Int ChunkSize { get; private set; }
-
     public static Vector2Int[] directions = {
         Vector2Int.up,
         Vector2Int.down,
@@ -21,10 +16,7 @@ public class ConstructionLayer : TilemapLayer {
     }
 
     public virtual void InitLayer() {
-        ChunkCount = WorldSetting.chunkCount;
-        ChunkSize = new Vector2Int(
-            WorldSetting.worldSize.x / ChunkCount.x,
-            WorldSetting.worldSize.y / ChunkCount.y);
+
     }
 
     // 放置图块（当 ChunkManager 管理数据时的直接 Tilemap 操作）
@@ -37,7 +29,6 @@ public class ConstructionLayer : TilemapLayer {
         if (item.gameObject != null)
             Instantiate(item.gameObject, _tilemap.CellToWorld(coords) + _tilemap.cellSize / 2, Quaternion.identity);
 
-        // 数据通过 WorldManager.PlaceTile 存入 ChunkManager
         if (item is TreeClass) ((TreeClass)item).PlanceSelf(worldCoords.x, worldCoords.y);
         else {
             chunkManager.SetBlockId(layer, worldCoords, item.blockId);
@@ -48,7 +39,7 @@ public class ConstructionLayer : TilemapLayer {
     // 检查图块位置是否为空（同时检查数据和视觉）
     public bool IsEmpty(Vector2Int worldCoords) {
         var coords = _tilemap.WorldToCell(new Vector3Int(worldCoords.x, worldCoords.y));
-        TileData tileData = WorldManager.Instance.GetTileData(coords.x, coords.y);
+        TileData tileData = chunkManager.GetTileData(coords.x, coords.y);
         return tileData.IsEmpty && _tilemap.GetTile(coords) == null;
     }
 

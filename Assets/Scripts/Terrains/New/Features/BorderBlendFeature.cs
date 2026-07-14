@@ -41,9 +41,9 @@ public class BorderBlendFeature : BiomeFeature
 
     private void BlendByCurve(WorldManager w, BiomeContext ctx)
     {
-        int start = ctx.LocalToWorldX(0);
-        BlendData(w.terrainCurveData, _terrainTex.curveData, start);
-        if (blendStoneCurve) BlendData(w.stoneCurveData, _terrainTex.curveData, start, 100);
+        //int start = ctx.LocalToWorldX(0);
+        //BlendData(w.terrainCurveData, _terrainTex.curveData, start);
+        //if (blendStoneCurve) BlendData(w.stoneCurveData, _terrainTex.curveData, start, 100);
     }
 
     private void BlendData(float[] m, float[] s, int start, int add = 0)
@@ -58,12 +58,12 @@ public class BorderBlendFeature : BiomeFeature
         }
     }
 
-    private void FillErase(WorldManager w, int x, int y)
+    private void FillErase(ChunkManager w, int x, int y)
     {
-        int d = y; while (w.GetTileClass(Layers.Ground, x, d) == null && d >= 0) d--;
-        int u = y + 1, oh = w.surfaceHeights[x];
-        while (u < oh) { w.SetTileClass(null, Layers.Ground, x, u); u++; }
-        w.surfaceHeights[x] = y;
+        //int d = y; while (w.GetTileClass(Layers.Ground, x, d) == null && d >= 0) d--;
+        //int u = y + 1, oh = w.surfaceHeights[x];
+        //while (u < oh) { w.SetTileClass(null, Layers.Ground, x, u); u++; }
+        //w.surfaceHeights[x] = y;
     }
 
     private float Smooth(float a, float b, float t) { t = Mathf.Clamp01(t); t = -2f * t * t * t + 3f * t * t; return Mathf.Lerp(a, b, t); }

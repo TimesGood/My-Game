@@ -7,14 +7,15 @@ using static WorldManager;
 /// 替代原先分散在各 ConstructionLayer/LiquidLayer/AddonLayer 中的多个字典。
 /// </summary>
 public class ChunkManager : Singleton<ChunkManager> {
-    [Header("世界配置")]
-    public WorldManager world;
+
+    public int Width { get; private set; }
+    public int Height { get; private set; }
 
     // 世界中全部区块（仅数据，不负责渲染）
     private Dictionary<Vector2Int, Chunk> allChunks = new Dictionary<Vector2Int, Chunk>();
 
-    // 区块尺寸（由 WorldSetting 派生）
-    public Vector2Int chunkCount { get; private set; }
+    // 区块尺寸
+    public Vector2Int chunkCount = new Vector2Int(20, 20);
     public Vector2Int chunkSize { get; private set; }
 
     protected override void Awake() {
@@ -24,13 +25,13 @@ public class ChunkManager : Singleton<ChunkManager> {
     /// <summary>
     /// 根据世界设置初始化全部区块。在世界创建/加载时调用一次。
     /// </summary>
-    public void InitChunks() {
+    public void InitChunks(int width, int height) {
         allChunks.Clear();
-
-        chunkCount = WorldSetting.chunkCount;
+        Width = width;
+        Height = height;
         chunkSize = new Vector2Int(
-            WorldSetting.worldSize.x / chunkCount.x,
-            WorldSetting.worldSize.y / chunkCount.y);
+            width / chunkCount.x,
+            height / chunkCount.y);
 
         for (int cx = 0; cx < chunkCount.x; cx++) {
             for (int cy = 0; cy < chunkCount.y; cy++) {
@@ -47,12 +48,15 @@ public class ChunkManager : Singleton<ChunkManager> {
     }
 
     // ===== 图块数据访问 =====
+    public bool CheckWorldBound(int x, int y) {
+        return x >= 0 && x < Width && y >= 0 && y < Height;
+    }
 
     /// <summary>
     /// 获取世界坐标处的完整 TileData。越界返回默认空值。
     /// </summary>
     public TileData GetTileData(Vector2Int worldPos) {
-        if (!world.CheckWorldBound(worldPos.x, worldPos.y)) return default;
+        if (!CheckWorldBound(worldPos.x, worldPos.y)) return default;
 
         if (TryGetChunk(worldPos, out Chunk chunk)) {
             if (chunk.TryGetTile(worldPos, out TileData tile))
@@ -104,7 +108,7 @@ public class ChunkManager : Singleton<ChunkManager> {
     /// 设置指定图层在世界坐标处的 blockId。越界返回 false。
     /// </summary>
     public bool SetBlockId(Layers layer, Vector2Int worldPos, long blockId) {
-        if (!world.CheckWorldBound(worldPos.x, worldPos.y)) return false;
+        if (!CheckWorldBound(worldPos.x, worldPos.y)) return false;
 
         if (TryGetChunk(worldPos, out Chunk chunk)) {
             if (chunk.TryGetTile(worldPos, out TileData tile)) {

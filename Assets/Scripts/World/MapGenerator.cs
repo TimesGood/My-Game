@@ -10,7 +10,7 @@ public class MapGenerator : Singleton<MapGenerator> {
 
     //世界生成
     public BaseTerrain baseTerrain;//基础地形
-    public MapGridLayout[] layouts;
+    //public MapGridLayout[] layouts;
 
     [ContextMenu("GenerateWorld")]
     public void Test() {
@@ -23,9 +23,9 @@ public class MapGenerator : Singleton<MapGenerator> {
     private void InitNoiseTexture() {
 
         baseTerrain.InitNoiseTexture();
-        foreach (var layout in layouts) {
-            layout.InitLayout();
-        }
+        //foreach (var layout in layouts) {
+        //    layout.InitLayout();
+        //}
     }
 
     //生成世界
@@ -33,10 +33,10 @@ public class MapGenerator : Singleton<MapGenerator> {
         Debug.Log("正在生成基础地形...");
         yield return StartCoroutine(baseTerrain.Generation());
 
-        Debug.Log("正在生成群落地形...");
-        foreach (var layout in layouts) {
-            yield return StartCoroutine(layout.Generation());
-        }
+        //Debug.Log("正在生成群落地形...");
+        //foreach (var layout in layouts) {
+        //    yield return StartCoroutine(layout.Generation());
+        //}
         
         //Debug.Log("正在渲染光照...");
         //LightHandler.Instance.InitLight();

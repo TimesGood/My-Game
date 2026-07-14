@@ -6,18 +6,10 @@ using UnityEngine.Tilemaps;
 
 // 世界管理器 —— 图块查询与世界状态的中心枢纽
 public class WorldManager : Singleton<WorldManager>, IMapSaveManager {
-    public int seed;
-    public Vector2Int worldSize = new Vector2Int(6000, 2000);
-    public Vector2Int chunkCount = new Vector2Int(20, 20);
 
     // 图层 Tilemap 注册表（用于渲染——每个图层拥有一个 Unity Tilemap GameObject）
     private Dictionary<Layers, TilemapLayer> tileLayers = new Dictionary<Layers, TilemapLayer>();
-    private ChunkManager chunkManager;
-
-    public int baseHeight => (int)(worldSize.y * 0.7f);
-    public int[] surfaceHeights { get; set; }
-    public float[] terrainCurveData;
-    public float[] stoneCurveData;
+    private ChunkManager chunkManager => ChunkManager.Instance;
 
     public static Vector3Int[] directions = {
         Vector3Int.up,
@@ -77,10 +69,6 @@ public class WorldManager : Singleton<WorldManager>, IMapSaveManager {
 
     protected override void Awake() {
         base.Awake();
-        seed = -8211;
-        WorldSetting.seed = seed;
-        WorldSetting.worldSize = worldSize;
-        WorldSetting.chunkCount = chunkCount;
     }
 
     private void Start() {
@@ -88,69 +76,19 @@ public class WorldManager : Singleton<WorldManager>, IMapSaveManager {
     }
 
     public void InitWorld() {
-        // 查找 ChunkManager
-        chunkManager = GetComponentInChildren<ChunkManager>();
-        if (chunkManager == null) {
-            Debug.LogError("未在 WorldManager 子对象中找到 ChunkManager！");
-            return;
-        }
-        chunkManager.world = this;
-        chunkManager.InitChunks();
-
         // 注册各图层的 Unity Tilemap（从 TilemapLayer 子对象中获取）
         TilemapLayer[] tilemapLayers = GetComponentsInChildren<TilemapLayer>();
         foreach (var tml in tilemapLayers) {
             if (!tileLayers.ContainsKey(tml.layer))
                 tileLayers.Add(tml.layer, tml);
         }
-
-        surfaceHeights = new int[worldSize.x];
-        for (int x = 0; x < worldSize.x; x++) {
-            surfaceHeights[x] = baseHeight;
-        }
-        stoneCurveData = new float[worldSize.x];
     }
-
-    public bool CheckWorldBound(int x, int y) {
-        return x >= 0 && x < worldSize.x && y >= 0 && y < worldSize.y;
-    }
-
-
     // ===== 图块查询 =====
 
     public TilemapLayer GetTileLayer(Layers layer) {
         tileLayers.TryGetValue(layer, out TilemapLayer tileLayer);
         return tileLayer;
     }
-
-    public TileClass GetTileClass(Layers layer, int x, int y) {
-        if (!CheckWorldBound(x, y)) return null;
-        long blockId = chunkManager.GetBlockId(layer, new Vector2Int(x, y));
-        return TileRegistry.GetTile(blockId);
-    }
-
-    public bool SetTileClass(TileClass tileClass, Layers layer, int x, int y) {
-        if (!CheckWorldBound(x, y)) return false;
-        long tileId = tileClass == null ? 0 : tileClass.blockId;
-        return chunkManager.SetBlockId(layer, new Vector2Int(x, y), tileId);
-    }
-
-    /// <summary>
-    /// 获取世界坐标处的统一 TileData（新 API，一次调用获取全部图层）。
-    /// </summary>
-    public TileData GetTileData(int x, int y) {
-        return chunkManager.GetTileData(new Vector2Int(x, y));
-    }
-
-    // ===== 地形 =====
-
-    public float GetTerrain(int x) {
-        return terrainCurveData[x];
-    }
-    public void SetTerrain(int x, float value) {
-        terrainCurveData[x] = value;
-    }
-
 
     // ===== 存档/读档 =====
 
@@ -185,30 +123,30 @@ public class WorldManager : Singleton<WorldManager>, IMapSaveManager {
     }
 
     public void SaveData(ref MapData data) {
-        Vector2Int cSize = new Vector2Int(WorldSetting.worldSize.x / chunkCount.x, WorldSetting.worldSize.y / chunkCount.y);
-        Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
-        long[,][,,] result = new long[chunkCount.x, chunkCount.y][,,];
+        //Vector2Int cSize = new Vector2Int(WorldSetting.worldSize.x / chunkCount.x, WorldSetting.worldSize.y / chunkCount.y);
+        //Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
+        //long[,][,,] result = new long[chunkCount.x, chunkCount.y][,,];
 
-        for (int cx = 0; cx < chunkCount.x; cx++) {
-            for (int cy = 0; cy < chunkCount.y; cy++) {
-                Vector2Int chunkCoord = new Vector2Int(cx, cy);
-                Chunk chunk = chunkManager.GetChunk(chunkCoord);
-                long[,,] chunkResult = new long[layers.Length, cSize.x, cSize.y];
+        //for (int cx = 0; cx < chunkCount.x; cx++) {
+        //    for (int cy = 0; cy < chunkCount.y; cy++) {
+        //        Vector2Int chunkCoord = new Vector2Int(cx, cy);
+        //        Chunk chunk = chunkManager.GetChunk(chunkCoord);
+        //        long[,,] chunkResult = new long[layers.Length, cSize.x, cSize.y];
 
-                if (chunk != null) {
-                    for (int x = 0; x < cSize.x; x++) {
-                        for (int y = 0; y < cSize.y; y++) {
-                            TileData tile = chunk.tiles[x, y];
-                            chunkResult[(int)Layers.Addons, x, y] = tile.addonId;
-                            chunkResult[(int)Layers.Background, x, y] = tile.wallId;
-                            chunkResult[(int)Layers.Ground, x, y] = tile.groundId;
-                            chunkResult[(int)Layers.Liquid, x, y] = tile.liquidId;
-                        }
-                    }
-                }
-                result[cx, cy] = chunkResult;
-            }
-        }
-        data.chunkDatas = result;
+        //        if (chunk != null) {
+        //            for (int x = 0; x < cSize.x; x++) {
+        //                for (int y = 0; y < cSize.y; y++) {
+        //                    TileData tile = chunk.tiles[x, y];
+        //                    chunkResult[(int)Layers.Addons, x, y] = tile.addonId;
+        //                    chunkResult[(int)Layers.Background, x, y] = tile.wallId;
+        //                    chunkResult[(int)Layers.Ground, x, y] = tile.groundId;
+        //                    chunkResult[(int)Layers.Liquid, x, y] = tile.liquidId;
+        //                }
+        //            }
+        //        }
+        //        result[cx, cy] = chunkResult;
+        //    }
+        //}
+        //data.chunkDatas = result;
     }
 }

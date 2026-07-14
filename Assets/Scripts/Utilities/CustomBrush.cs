@@ -109,7 +109,7 @@ namespace UnityEditor
                     // ªÒ»°Õﬂ∆¨
                     TileBase tile = tilemap.GetTile(pos);
                     Layers layer = GetLayerByName(brushTarget.name);
-                    TileClass tileClass = WorldManager.Instance.GetTileClass(layer, pos.x, pos.y);
+                    TileClass tileClass = ChunkManager.Instance.GetTileClass(layer, pos.x, pos.y);
                     if (tileClass is LiquidClass) {
                         //float volume = LiquidHandler.Instance.liquidVolume[pos.x, pos.y];
                         float volume = LiquidHandler.Instance.GetVolume((Vector2Int)pos);

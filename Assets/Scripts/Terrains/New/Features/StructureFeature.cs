@@ -13,18 +13,18 @@ public class StructureFeature : BiomeFeature
 
     public override void Execute(BiomeContext _ctx)
     {
-        if (structureTile == null) return;
+        //if (structureTile == null) return;
 
-        RectInt region = _ctx.Bounds;
+        //RectInt region = _ctx.Bounds;
 
-        WorldManager world = WorldManager.Instance;
-        for (int i = 0; i < count; i++)
-        {
-            int lx = Random.Range(0, region.width);
-            int ly = Random.Range(0, region.height);
-            int wx = region.x + lx;
-            int wy = region.y + ly;
-            world.SetTileClass(structureTile, structureTile.layer, wx, wy);
-        }
+        //ChunkManager chunk = ChunkManager.Instance;
+        //for (int i = 0; i < count; i++)
+        //{
+        //    int lx = Random.Range(0, region.width);
+        //    int ly = Random.Range(0, region.height);
+        //    int wx = region.x + lx;
+        //    int wy = region.y + ly;
+        //    chunk.SetTileClass(structureTile.layer, wx, wy);
+        //}
     }
 }

@@ -73,9 +73,9 @@ public class TerrainFeature : BiomeFeature
         //}
     }
 
-    private void EraseTop(WorldManager w, BiomeContext ctx, int x, int h)
+    private void EraseTop(ChunkManager w, BiomeContext ctx, int x, int h)
     {
-        int old = w.surfaceHeights[x];
+        //int old = w.surfaceHeights[x];
         //if (old > h && ctx.IsSurfaceRange(x))
         //{
         //    for (int y = h; y < old; y++) w.SetTileClass(null, Layers.Ground, x, y);
@@ -83,11 +83,11 @@ public class TerrainFeature : BiomeFeature
         //}
     }
 
-    private void AdjustHeight(WorldManager w, BiomeContext ctx, int x, int h)
+    private void AdjustHeight(ChunkManager w, BiomeContext ctx, int x, int h)
     {
-        int old = w.surfaceHeights[x];
-        if (old > h) { for (int y = h; y < old; y++) w.SetTileClass(null, Layers.Ground, x, y); }
-        else { for (int y = old; y < h; y++) if (tileMapping?.dirtTile != null) w.SetTileClass(tileMapping.dirtTile, Layers.Ground, x, y); }
-        w.surfaceHeights[x] = h;
+        //int old = w.surfaceHeights[x];
+        //if (old > h) { for (int y = h; y < old; y++) w.SetTileClass(null, Layers.Ground, x, y); }
+        //else { for (int y = old; y < h; y++) if (tileMapping?.dirtTile != null) w.SetTileClass(tileMapping.dirtTile, Layers.Ground, x, y); }
+        //w.surfaceHeights[x] = h;
     }
 }
