@@ -6,14 +6,15 @@ public class RopeSegment : MonoBehaviour
 {
     public GameObject connectedAbove, connectedBelow;
     private SpriteRenderer spriteRenderer;
-    public List<Sprite> commonSprite = new List<Sprite>();
+    public List<Sprite> commonSprite = new List<Sprite>();//通用精灵
     public List<Sprite> endSprite = new List<Sprite>();//末端精灵
-    public bool isEnd;
+    public bool isEnd;// 是否是末端
 
     private void Start() {
         ResetAnchor();
     }
 
+    // 重置锚点
     public void ResetAnchor() {
         //设置随机精灵
         spriteRenderer = GetComponent<SpriteRenderer>();

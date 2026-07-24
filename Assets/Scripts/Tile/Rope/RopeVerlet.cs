@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// ÉþË÷Ä£Äâ
+/// </summary>
 public class RopeVerlet : MonoBehaviour
 {
     [Header("Rope")]
@@ -15,7 +18,8 @@ public class RopeVerlet : MonoBehaviour
     [SerializeField] private LayerMask _collisionMask;
     [SerializeField] private float _collisionRadius = 0.1f;
     [SerializeField] private float _bounceFactor = 0.1f;
-    [SerializeField] private float _correctionClampAmount = 0.1f;
+    // [SerializeField] private float _correctionClampAmount = 0.1f;
+
 
     [Header("Constraints")]
     [SerializeField] private int _numOfConstraintRuns = 50;

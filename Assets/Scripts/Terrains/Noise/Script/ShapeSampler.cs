@@ -37,8 +37,6 @@ public class ShapeSampler
 
         tex.Apply();
         return tex;
-        //ApplyDistortion();
-        Random.state = originalState;
     }
 
     //生成多边形随机顶点

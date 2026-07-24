@@ -61,7 +61,6 @@ public abstract class DistributorBase : ScriptableObject {
 
     // 检索已放置的群落中与某矩阵产生交集的群落
     public List<BiomeInstance> GetBiomeOverlaps(List<BiomeInstance> allBiomeInstance, RectInt rect) {
-        RectInt s = new RectInt();
         List<BiomeInstance> result = new List<BiomeInstance>();
         if (allBiomeInstance == null || allBiomeInstance.Count == 0) return result;
 

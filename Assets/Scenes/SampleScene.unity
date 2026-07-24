@@ -282,7 +282,6 @@ MonoBehaviour:
     m_Bits: 0
   _collisionRadius: 0.1
   _bounceFactor: 0.1
-  _correctionClampAmount: 0.1
   _numOfConstraintRuns: 50
   _collisionSegmentInterval: 2
 --- !u!120 &107134089
@@ -3463,6 +3462,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a3e6bac12300c94f9d3e993b7436298, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  metadata:
+    seed: 0
+    mapSize: {x: 0, y: 0}
+    chunkCount: {x: 0, y: 0}
   baseTerrain: {fileID: 11400000, guid: 44fe922146dde9847bc191f445b1747b, type: 2}
 --- !u!4 &2143271237
 Transform:
@@ -3487,6 +3490,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1486361913153101978, guid: a21c611cf711e3a43a635e0a32651bbf, type: 3}
+      propertyPath: m_BodyType
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2227403264249037059, guid: a21c611cf711e3a43a635e0a32651bbf, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

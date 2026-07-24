@@ -25,35 +25,6 @@ public class ChunkManager : Singleton<ChunkManager>, IMapSaveManager {
         base.Awake();
     }
 
-    /// <summary>
-    /// 根据世界设置初始化全部区块。在世界创建/加载时调用一次。
-    /// </summary>
-    public void InitChunks(int width, int height) {
-        allChunks.Clear();
-        Width = width;
-        Height = height;
-        Vector2Int chunkCount = new Vector2Int(
-            Mathf.CeilToInt(width / chunkSize.x),
-            Mathf.CeilToInt(height / chunkSize.y)
-            );
-        //chunkSize = new Vector2Int(
-        //    width / chunkCount.x,
-        //    height / chunkCount.y);
-
-        for (int cx = 0; cx < chunkCount.x; cx++) {
-            for (int cy = 0; cy < chunkCount.y; cy++) {
-                var coord = new Vector2Int(cx, cy);
-                var chunk = new Chunk(
-                    coord,
-                    chunkSize.x,
-                    chunkSize.y,
-                    cx * chunkSize.x,
-                    cy * chunkSize.y);
-                allChunks[coord] = chunk;
-            }
-        }
-    }
-
     public void InitializeNewWorld(WorldMeta meta) {
         worldMeta = meta;
         Width = meta.width;

@@ -29,10 +29,11 @@ public class Rope : MonoBehaviour
             //int index = Random.Range(0, prefabRopeSegs.Length);
             //GameObject newSeg = Instantiate(prefabRopeSegs[index]);
             GameObject newSeg = Instantiate(prefabRopeSeg);
-            newSeg.transform.parent = transform;
+            newSeg.transform.parent = null;
             newSeg.transform.position = transform.position;
             //Á´½Ó
             HingeJoint2D hj = newSeg.GetComponent<HingeJoint2D>();
+            hj.autoConfigureConnectedAnchor = false;
             hj.connectedBody = prevBod;
             prevBod = newSeg.GetComponent<Rigidbody2D>();
 
@@ -48,10 +49,13 @@ public class Rope : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Ìí¼Ó½ÂÁ´£¨Í·²å£©
+    /// </summary>
     [ContextMenu("AddLink")]
     public void AddLink() {
         GameObject newSeg = Instantiate(prefabRopeSeg);
-        newSeg.transform.parent = transform;
+        newSeg.transform.parent = null;
         newSeg.transform.position = transform.position;
 
         HingeJoint2D hj = newSeg.GetComponent<HingeJoint2D>();
