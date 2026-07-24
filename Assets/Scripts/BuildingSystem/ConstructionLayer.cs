@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using static WorldManager;
 
 // 图层包装 —— 持有 Unity Tilemap 引用，数据委托给 ChunkManager
 public class ConstructionLayer : TilemapLayer {
@@ -50,15 +49,15 @@ public class ConstructionLayer : TilemapLayer {
         chunkManager.SetBlockId(layer, worldCoords, 0);
 
         // 销毁图块时，如果周围有水体，激活模拟
-        if (Layers.Ground == layer) {
+        if (LayerType.Foreground == layer) {
             foreach (var dir in directions) {
                 Vector2Int target = worldCoords + dir;
                 long liquidId = chunkManager.GetLiquidId(target);
                 if (liquidId == 0) continue;
-                TileClass liquidTile = TileRegistry.GetTile(liquidId);
+                TileClass liquidTile = TileRegistry_.GetTile(liquidId);
                 if (liquidTile is LiquidClass liquidClass) {
                     if (LiquidHandler.Instance.CheckMarkForUpdate(liquidClass, target)) continue;
-                    List<Vector2Int> tiles = FindConnectedTiles(Layers.Liquid, target);
+                    List<Vector2Int> tiles = FindConnectedTiles(LayerType.Liquid, target);
                     foreach (var item in tiles) {
                         LiquidHandler.Instance.MarkForUpdate(liquidClass, item);
                     }
@@ -68,7 +67,7 @@ public class ConstructionLayer : TilemapLayer {
     }
 
     // BFS 查找相连的同类型图块
-    private List<Vector2Int> FindConnectedTiles(Layers layer, Vector2Int startPosition) {
+    private List<Vector2Int> FindConnectedTiles(LayerType layer, Vector2Int startPosition) {
         var connectedTiles = new List<Vector2Int>();
         var visited = new HashSet<Vector2Int>();
         var queue = new Queue<Vector2Int>();

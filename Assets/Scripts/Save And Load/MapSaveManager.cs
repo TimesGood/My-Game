@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-//µØÍ¼Êı¾İ±£´æ¹ÜÀíÆ÷
+//åœ°å›¾æ•°æ®ä¿å­˜ç®¡ç†å™¨
 public class MapSaveManager : Singleton<MapSaveManager> {
     [SerializeField] private string fileName;
     [SerializeField] private bool encryptData;
 
-    private MapData gameData;
+    private GameData gameData;
     private List<IMapSaveManager> saveManagers;
     private TilemapExporter dataHandler;
 
-    //É¾³ıÓÎÏ·Êı¾İ
-    [ContextMenu("Delete save file")]//Ìí¼Óµ½×é¼ş²Ëµ¥ÖĞ
+    //åˆ é™¤æ¸¸æˆæ•°æ®
+    [ContextMenu("Delete save file")]//æ·»åŠ åˆ°ç»„ä»¶èœå•ä¸­
     public void DeleteSaveData() {
 
     }
@@ -21,15 +21,21 @@ public class MapSaveManager : Singleton<MapSaveManager> {
     private void Start() {
         saveManagers = FindAllSaveManagers();
         dataHandler = GetComponent<TilemapExporter>();
-        
+
+        // æ ¹æ® GameSession è®¾ç½®å½“å‰ä¸–ç•Œçš„å­˜æ¡£è·¯å¾„
+        //var session = GameSession.Instance;
+        //if (session?.CurrentWorld != null)
+        //{
+        //    string worldPath = WorldSaveManager.GetWorldPath(session.CurrentWorld.worldId);
+        //    dataHandler.SetCustomSavePath(worldPath);
+        //    Debug.Log($"[MapSaveManager] å½“å‰ä¸–ç•Œè·¯å¾„: {worldPath}");
+        //}
     }
 
-    //´´½¨ĞÂÓÎÏ·Êı¾İ
-    public void NewGame() {
-        WorldManager world = WorldManager.Instance;
-        ChunkHandler chunk = ChunkHandler.Instance;
-
-        gameData = new MapData();
+    //åˆ›å»ºæ–°æ¸¸æˆæ•°æ®
+    public void NewGame(WorldMeta worldMeta) {
+        gameData = new GameData(worldMeta);
+        
     }
 
 
@@ -42,53 +48,49 @@ public class MapSaveManager : Singleton<MapSaveManager> {
         StartCoroutine(SaveGame());
     }
 
-    //¼ÓÔØÓÎÏ·Êı¾İ
+    //åŠ è½½æ¸¸æˆæ•°æ®
     public IEnumerator LoadGame() {
 
-        yield return StartCoroutine(dataHandler.LoadAllTilemaps(
-            value => this.gameData = value,
-            process => Debug.Log("µØÍ¼¼ÓÔØÖĞ, ½ø¶È£º" + process)));
+        // æ•°æ®åŠ è½½
 
-        if (this.gameData == null) {
-            NewGame();
-        }
 
+
+        // æ•°æ®æ³¨å…¥
         foreach (IMapSaveManager saveManager in saveManagers) {
             saveManager.LoadData(gameData);
         }
 
+        yield return null;
+
     }
 
-    //±£´æÓÎÏ·Êı¾İ
+    //ä¿å­˜æ¸¸æˆæ•°æ®
     public IEnumerator SaveGame() {
-        if (this.gameData == null) {
-            gameData = new MapData();
-        }
 
+        // æ•°æ®æ”¶é›†
         foreach (IMapSaveManager saveManager in saveManagers) {
             saveManager.SaveData(ref gameData);
         }
 
-        yield return StartCoroutine(dataHandler.ExportAllTilemaps(
-            gameData,
-            process => Debug.Log("µØÍ¼±£´æÖĞ, ½ø¶È£º" + process)));
-
+        // æ•°æ®åºåˆ—åŒ–åˆ°æœ¬åœ°
+        
+        yield return null;
     }
 
-    //ÍË³ö±£´æ
+    //é€€å‡ºä¿å­˜
     protected override void OnApplicationQuit() {
         //SaveGame();
         base.OnApplicationQuit();
 
     }
 
-    //²éÕÒÓÎÏ·ÄÚËùÓĞÊµÏÖISaveManager½Ó¿ÚµÄ¶ÔÏó
+    //æŸ¥æ‰¾æ¸¸æˆå†…æ‰€æœ‰å®ç°ISaveManageræ¥å£çš„å¯¹è±¡
     private List<IMapSaveManager> FindAllSaveManagers() {
         IEnumerable<IMapSaveManager> saveManagers = FindObjectsOfType<MonoBehaviour>().OfType<IMapSaveManager>();
         return new List<IMapSaveManager>(saveManagers);
     }
 
-    //²é¿´ÊÇ·ñÓĞ±£´æÊı¾İ
+    //æŸ¥çœ‹æ˜¯å¦æœ‰ä¿å­˜æ•°æ®
     public bool HasSaveData() {
         return dataHandler.isExists();
     }

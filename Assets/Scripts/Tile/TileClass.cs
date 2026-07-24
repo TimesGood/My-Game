@@ -9,7 +9,7 @@ public class TileClass : ScriptableObject
     public CustomTile tile;//瓦片
     public GameObject gameObject;//游戏对象
     public Sprite previewSprite;//预览精灵
-    public Layers layer;//方块所属图层
+    public LayerType layer;//方块所属图层
     public long blockId;//方块Id
     public bool isIlluminated;//是否自发光
     public float lightLevel;//发光强度

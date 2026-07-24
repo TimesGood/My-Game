@@ -9,7 +9,12 @@ public class AssembleTreeClass : TreeClass
     public int maxHeight;//最大树高
     public int minHeight;//最小树高
     public TileClass leaf;//树叉
-
+    private Vector3Int[] directions = {
+        Vector3Int.up,
+        Vector3Int.down,
+        Vector3Int.left,
+        Vector3Int.right
+    };
     public override void PlanceSelf(int x, int y) {
         int h = Random.Range(minHeight, maxHeight);//树高
         int maxBranches = Random.Range(3, 10);//树杈
@@ -21,13 +26,13 @@ public class AssembleTreeClass : TreeClass
             if (ny == y) {
                 //左侧树桩
                 if (Random.Range(0, 100) < 30) {
-                    if (x > 0 && chunk.GetTileClass(Layers.Ground, x - 1, ny - 1) != null && chunk.GetTileClass(Layers.Ground, x - 1, ny) == null) {
+                    if (x > 0 && chunk.GetTileClass(LayerType.Foreground, x - 1, ny - 1) != null && chunk.GetTileClass(LayerType.Foreground, x - 1, ny) == null) {
                         chunk.SetTileClass(this.layer, x - 1, ny, this);
                     }
                 }
                 //右侧树桩
                 if (Random.Range(0, 100) < 30) {
-                    if (chunk.GetTileClass(Layers.Ground, x + 1, ny - 1) != null && chunk.GetTileClass(Layers.Ground, x + 1, ny) == null) {
+                    if (chunk.GetTileClass(LayerType.Foreground, x + 1, ny - 1) != null && chunk.GetTileClass(LayerType.Foreground, x + 1, ny) == null) {
                         chunk.SetTileClass(this.layer, x + 1, ny, this);
                     }
                 }
@@ -36,13 +41,13 @@ public class AssembleTreeClass : TreeClass
             //生成树杈
             else if (ny >= y + 2 && ny <= y + h - 3) {
                 if (bCounts < maxBranches && Random.Range(0, 100) < 40) {
-                    if (x > 0 && chunk.GetTileClass(Layers.Ground, x - 1, ny) == null && chunk.GetTileClass(Layers.Addons, x - 1, ny - 1) != this) {
+                    if (x > 0 && chunk.GetTileClass(LayerType.Foreground, x - 1, ny) == null && chunk.GetTileClass(LayerType.Addons, x - 1, ny - 1) != this) {
                         chunk.SetTileClass(leaf.layer, x - 1, ny, leaf);
                         bCounts++;
                     }
                 }
                 if (bCounts < maxBranches && Random.Range(0, 100) < 40) {
-                    if (chunk.GetTileClass(Layers.Ground, x + 1, ny) == null && chunk.GetTileClass(Layers.Addons, x + 1, ny - 1) != this) {
+                    if (chunk.GetTileClass(LayerType.Foreground, x + 1, ny) == null && chunk.GetTileClass(LayerType.Addons, x + 1, ny - 1) != this) {
                         chunk.SetTileClass(leaf.layer, x + 1, ny, leaf);
                         bCounts++;
                     }
@@ -79,7 +84,7 @@ public class AssembleTreeClass : TreeClass
             connectedTiles.Add(current); // 添加到结果
 
             // 检查所有相邻方向
-            foreach (Vector2Int dir in WorldManager.directions) {
+            foreach (Vector2Int dir in directions) {
                 Vector2Int neighbor = current + dir;
 
                 // 跳过已访问坐标
@@ -101,8 +106,8 @@ public class AssembleTreeClass : TreeClass
         for (int extY = y; extY < y + maxHeight; extY++) {
             //查看左右侧树两格情况，如果存在树木，则不能生成
             for (int i = 1; i <= 2; i++) {
-                TileClass leftAddons = chunk.GetTileClass(Layers.Addons, x - i, extY);
-                TileClass rightAddons = chunk.GetTileClass(Layers.Addons, x + i, extY);
+                TileClass leftAddons = chunk.GetTileClass(LayerType.Addons, x - i, extY);
+                TileClass rightAddons = chunk.GetTileClass(LayerType.Addons, x + i, extY);
                 if ((leftAddons != null && leftAddons as TreeClass) || (rightAddons != null && rightAddons as TreeClass)) {
                     return false;
                 }

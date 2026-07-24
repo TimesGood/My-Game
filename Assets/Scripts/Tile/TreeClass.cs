@@ -36,11 +36,11 @@ public class TreeClass : TileClass
         List<Vector2Int> occupys = footprint.GetWorldClearCells(x, y);
         foreach (var wordPos in occupys) {
 
-            TileClass groundTile = chunk.GetTileClass(Layers.Ground, wordPos);
+            TileClass groundTile = chunk.GetTileClass(LayerType.Foreground, wordPos);
             if (groundTile != null) {
-                chunk.SetBlockId(Layers.Ground, wordPos, 0);
+                chunk.SetBlockId(LayerType.Foreground, wordPos, 0);
                 //查看清除的土块上方是否有树木，清除掉
-                TileClass addonsTile = chunk.GetTileClass(Layers.Addons, wordPos + Vector2Int.up);
+                TileClass addonsTile = chunk.GetTileClass(LayerType.Addons, wordPos + Vector2Int.up);
                 if (addonsTile == null) continue;
                 if (addonsTile is TreeClass) ((TreeClass)addonsTile).ClearSelf(wordPos.x, wordPos.y + 1);
             }
@@ -83,7 +83,7 @@ public class TreeClass : TileClass
             if (!fp.ShouldClear(gx, originGy)) break;
             int worldX = gx - originGx + x;
             int worldYBelow = y - 1;
-            if (chunk.GetTileClass(Layers.Ground, worldX, worldYBelow) == null)
+            if (chunk.GetTileClass(LayerType.Foreground, worldX, worldYBelow) == null)
                 return false;
         }
 
@@ -92,7 +92,7 @@ public class TreeClass : TileClass
             if (!fp.ShouldClear(gx, originGy)) break;
             int worldX = gx - originGx + x;
             int worldYBelow = y - 1;
-            if (chunk.GetTileClass(Layers.Ground, worldX, worldYBelow) == null)
+            if (chunk.GetTileClass(LayerType.Foreground, worldX, worldYBelow) == null)
                 return false;
         }
 

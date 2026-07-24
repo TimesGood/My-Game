@@ -19,23 +19,23 @@ public struct TileData {
     public bool HasAddon => addonId != 0;
 
     // 获取指定图层的 blockId
-    public long GetBlockId(Layers layer) {
+    public long GetBlockId(LayerType layer) {
         switch (layer) {
-            case Layers.Ground: return groundId;
-            case Layers.Background: return wallId;
-            case Layers.Liquid: return liquidId;
-            case Layers.Addons: return addonId;
+            case LayerType.Foreground: return groundId;
+            case LayerType.Background: return wallId;
+            case LayerType.Liquid: return liquidId;
+            case LayerType.Addons: return addonId;
             default: return 0;
         }
     }
 
     // 设置指定图层的 blockId
-    public void SetBlockId(Layers layer, long id) {
+    public void SetBlockId(LayerType layer, long id) {
         switch (layer) {
-            case Layers.Ground: groundId = id; break;
-            case Layers.Background: wallId = id; break;
-            case Layers.Liquid: liquidId = id; break;
-            case Layers.Addons: addonId = id; break;
+            case LayerType.Foreground: groundId = id; break;
+            case LayerType.Background: wallId = id; break;
+            case LayerType.Liquid: liquidId = id; break;
+            case LayerType.Addons: addonId = id; break;
         }
     }
 

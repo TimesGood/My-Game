@@ -22,7 +22,7 @@ public class OutLineFeature : BiomeFeature {
                 if (tex.GetPixel(x, y).r > 0) {
                     int wx = region.x + x;
                     int wy = region.y + y;
-                    chunk.SetBlockId(Layers.Ground, new Vector2Int(wx, wy), outLine.tileClass.blockId);
+                    chunk.SetBlockId(LayerType.Foreground, new Vector2Int(wx, wy), outLine.tileClass.blockId);
                 
                 }
             }

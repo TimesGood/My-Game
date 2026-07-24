@@ -5,7 +5,7 @@ using UnityEngine;
 public interface IMapSaveManager
 {
     //加载数据
-    void LoadData(MapData data);
+    void LoadData(GameData data);
     //保存数据
-    void SaveData(ref MapData data);
+    void SaveData(ref GameData data);
 }

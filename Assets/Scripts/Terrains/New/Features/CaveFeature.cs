@@ -21,7 +21,7 @@ public class CaveFeature : BiomeFeature
             {
                 if (sampleResult.tex.GetPixel(x, y).r > saveParams.threshold) {
                     Vector2Int worldPos = _ctx.LocalToWorld(x, y);
-                    chunk.SetBlockId(Layers.Ground, worldPos, 0);
+                    chunk.SetBlockId(LayerType.Foreground, worldPos, 0);
                 }
                     
             }

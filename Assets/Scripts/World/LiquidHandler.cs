@@ -17,7 +17,6 @@ public class LiquidHandler : Singleton<LiquidHandler> {
     private const float checkClearInterval = 3f;
 
     private ChunkManager chunkManager => ChunkManager.Instance;
-    private WorldManager world => WorldManager.Instance;
 
     protected override void Awake() {
         base.Awake();
@@ -149,7 +148,7 @@ public class LiquidHandler : Singleton<LiquidHandler> {
 
     // 更新液体
     public void UpdateVolume(LiquidClass liquid, Vector2Int pos, float volume) {
-        LiquidLayer tilemapLayer = world.GetTileLayer(Layers.Liquid) as LiquidLayer;
+        LiquidLayer tilemapLayer = TilemapManager.Instance.GetLayer(LayerType.Liquid) as LiquidLayer;
         tilemapLayer.Build(pos, liquid, volume);
     }
 

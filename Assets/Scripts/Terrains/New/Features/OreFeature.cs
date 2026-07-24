@@ -40,7 +40,7 @@ public class OreFeature : BiomeFeature
                     _cache.TryGetValue(ore.oreClass.blockId.ToString(), out Texture2D tex);
                     if (tex.GetPixel(x, y).r > (ore.noiseParams.isBinary ? 0 : ore.noiseParams.threshold)) {
                         Vector2Int worldPos = _ctx.LocalToWorld(x, y);
-                        chunk.SetBlockId(Layers.Ground, worldPos, ore.oreClass.blockId);
+                        chunk.SetBlockId(LayerType.Foreground, worldPos, ore.oreClass.blockId);
 
                     }
                 }

@@ -5,7 +5,6 @@ using UnityEngineInternal;
 
 public class MapGenerator : Singleton<MapGenerator> {
     private MapMetadata metadata;
-    private WorldManager world => WorldManager.Instance;
 
 
     //世界生成

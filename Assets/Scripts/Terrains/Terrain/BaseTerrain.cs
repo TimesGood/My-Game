@@ -9,7 +9,6 @@ using UnityEngine;
 public class BaseTerrain : ScriptableObject {
 
     private MapGenerator map;
-    private WorldManager world => WorldManager.Instance;
 
     //[Header("µØÐÎ")]
     //public CurveConfig terrain;

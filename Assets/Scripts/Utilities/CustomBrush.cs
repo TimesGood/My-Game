@@ -31,8 +31,8 @@ namespace UnityEditor
                     BrushCell cell = cells[GetCellIndexWrapAround(pos.x, pos.y, pos.z)];
                     if (cell.tile is CustomTile) {
                         long id = ((CustomTile)cell.tile).blockId;
-                        TileClass tileClass = WorldManager.TileRegistry.GetTile(id);
-                        ConstructionLayer tilemapLayer = WorldManager.Instance.GetTileLayer(tileClass.layer) as ConstructionLayer;
+                        TileClass tileClass = TileRegistry_.GetTile(id);
+                        ConstructionLayer tilemapLayer = TilemapManager.Instance.GetLayer(tileClass.layer) as ConstructionLayer;
                         tilemapLayer.Build(new Vector2Int(position.x, position.y), tileClass);
                         if (tileClass.isIlluminated) {
                             LightHandler.Instance.MarForUpdate(pos.x, pos.y);
@@ -52,16 +52,16 @@ namespace UnityEditor
             return cellCenter;
         }
         //查找瓦片对应瓦片地图
-        private Layers GetLayerByName(string name) {
+        private LayerType GetLayerByName(string name) {
             switch (name) {
                 case "Addons":
-                    return Layers.Addons;
+                    return LayerType.Addons;
                 case "BackGround":
-                    return Layers.Background;
+                    return LayerType.Background;
                 case "Ground":
-                    return Layers.Ground;
+                    return LayerType.Foreground;
                 case "Liquid":
-                    return Layers.Liquid;
+                    return LayerType.Liquid;
                 default:
                     throw new System.Exception("异常，找不到瓦片地图");
             }
@@ -74,8 +74,8 @@ namespace UnityEditor
         {
             if (Application.isPlaying)
             {
-                Layers layer = GetLayerByName(brushTarget.name);
-                ConstructionLayer tilemapLayer = WorldManager.Instance.GetTileLayer(layer) as ConstructionLayer;
+                LayerType layer = GetLayerByName(brushTarget.name);
+                ConstructionLayer tilemapLayer = TilemapManager.Instance.GetLayer(layer) as ConstructionLayer;
                 tilemapLayer.Destory(new Vector2Int(position.x, position.y));
             }
             else
@@ -108,7 +108,7 @@ namespace UnityEditor
                     //Vector3 cellCenter = GetCellWorldCenter(gridLayout, pos);
                     // 获取瓦片
                     TileBase tile = tilemap.GetTile(pos);
-                    Layers layer = GetLayerByName(brushTarget.name);
+                    LayerType layer = GetLayerByName(brushTarget.name);
                     TileClass tileClass = ChunkManager.Instance.GetTileClass(layer, pos.x, pos.y);
                     if (tileClass is LiquidClass) {
                         //float volume = LiquidHandler.Instance.liquidVolume[pos.x, pos.y];
@@ -140,16 +140,16 @@ namespace UnityEditor
             return new Vector3Int((int)cellCenter.x, (int)cellCenter.y, 0);
         }
         //查找瓦片对应瓦片地图
-        private Layers GetLayerByName(string name) {
+        private LayerType GetLayerByName(string name) {
             switch (name) {
                 case "Addons":
-                    return Layers.Addons;
+                    return LayerType.Addons;
                 case "BackGround":
-                    return Layers.Background;
+                    return LayerType.Background;
                 case "Ground":
-                    return Layers.Ground;
+                    return LayerType.Foreground;
                 case "Liquid":
-                    return Layers.Liquid;
+                    return LayerType.Liquid;
                 default:
                     throw new System.Exception("异常，找不到瓦片地图");
             }

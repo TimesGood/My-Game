@@ -13,7 +13,6 @@ public class VineFeature : BiomeFeature
     {
         if (vineTile == null) return;
 
-        WorldManager world = WorldManager.Instance;
         //for (int y = _ctx.maxHeight; y >= 0; y--)
         //{
         //    int wy = _ctx.LocalToWorldY(y);

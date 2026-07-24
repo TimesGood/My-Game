@@ -17,10 +17,10 @@ public class LiquidLayer : ConstructionLayer {
         LiquidClass liquid = item as LiquidClass;
         chunkManager.SetLiquidVolume(worldCoords, volume);
         if (volume == 0) {
-            chunkManager.SetBlockId(Layers.Liquid, worldCoords, 0);
+            chunkManager.SetBlockId(LayerType.Liquid, worldCoords, 0);
             LiquidHandler.Instance.RemoveForUpdate(liquid, worldCoords);
         } else {
-            chunkManager.SetBlockId(Layers.Liquid, worldCoords, liquid.blockId);
+            chunkManager.SetBlockId(LayerType.Liquid, worldCoords, liquid.blockId);
             LiquidHandler.Instance.MarkForUpdate(liquid, worldCoords);
         }
         

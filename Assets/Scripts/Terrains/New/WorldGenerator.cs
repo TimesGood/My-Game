@@ -3,13 +3,13 @@
 //  流程：基础地形 → 分配 → 生成（BiomeDefinition 内联 Feature）→ 后处理
 // =============================================
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
-public class WorldGenerator : MonoBehaviour
-{
+public class WorldGenerator : Singleton<WorldGenerator> {
     [Header("配置")]
     [SerializeField] private MapConfig _config;
 
@@ -30,19 +30,24 @@ public class WorldGenerator : MonoBehaviour
 
     public List<BiomeInstance> BiomeInstances { get; private set; }
 
-
-    private void Awake() {
-        ChunkManager chunk = ChunkManager.Instance;
-        chunk.InitChunks(_config.Width, _config.Height);
+    public void Init(ChunkManager chunkManager) {
+        this.chunkManager = chunkManager;
     }
+
 
     [ContextMenu("Generate Map")]
     public void Generate()
     {
-        int seed = _config.ResolveSeed();
-        Debug.Log($"[MapGen] 开始 Seed={seed} Size={_config.Width}x{_config.Height}");
+        var genParams = new WorldCreationParams();
+        StartCoroutine(GenerateWorld(genParams, (p, s) => {
+            Debug.Log("");
+        }));
+    }
 
-        GenerationContext context = new GenerationContext(_config.Width, _config.Height, _config.Seed, ChunkManager.Instance);
+    public IEnumerator GenerateWorld(WorldCreationParams genParams,
+                                     System.Action<float, string> onProgress) {
+
+        GenerationContext context = new GenerationContext(chunkManager.Width, chunkManager.Height, _config.Seed, chunkManager);
 
 
         var pipeline = new GenerationPipeline();
@@ -63,6 +68,12 @@ public class WorldGenerator : MonoBehaviour
 
         // ---- 6. 执行 Pipeline ----
         pipeline.Run(context);
+
+
+        onProgress?.Invoke(1f, "世界生成完成!");
+
+        yield return null;
     }
+
 
 }

@@ -7,7 +7,6 @@ using UnityEngine.Tilemaps;
 
 // 区块渲染管理器 —— 根据摄像机位置加载/卸载 Unity Tilemap 图块
 public class ChunkHandler : Singleton<ChunkHandler> {
-    public WorldManager world = WorldManager.Instance;
     public ChunkManager chunk => ChunkManager.Instance;
     public float loadRadius = 3f;
 
@@ -40,9 +39,11 @@ public class ChunkHandler : Singleton<ChunkHandler> {
 
     protected override void Awake() {
         base.Awake();
+    }
 
+    public void Init(WorldMeta meta) {
         chunkXCount = chunkCount;
-        chunkYCount = chunkCount * chunk.Height / chunk.Width;
+        chunkYCount = chunkCount * meta.height / meta.width;
 
         chunkXSize = chunk.Width / chunkXCount;
         chunkYSize = chunk.Height / chunkYCount;
@@ -54,7 +55,7 @@ public class ChunkHandler : Singleton<ChunkHandler> {
         if (applyAll) return;
         Vector2Int currentChunk = WorldToChunkCoord(renderCamera.transform.position);
 
-        // 当玩家移动到新区块是重新加载
+        // 当玩家移动到新区块时重新加载
         if (currentChunk != lastLoadedChunk) {
             LoadChunksAroundCamera();
             lastLoadedChunk = currentChunk;
@@ -97,7 +98,7 @@ public class ChunkHandler : Singleton<ChunkHandler> {
                 new Vector3Int(chunkXSize, chunkYSize, 1))
         };
 
-        Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
+        LayerType[] layers = (LayerType[])Enum.GetValues(typeof(LayerType));
         List<TileBase>[] tileBases = new List<TileBase>[layers.Length];
 
         for (int i = 0; i < layers.Length; i++) {
@@ -118,9 +119,9 @@ public class ChunkHandler : Singleton<ChunkHandler> {
                     TileBase tile = null;
 
                     if (blockId != 0) {
-                        TileClass tileClass = WorldManager.TileRegistry.GetTile(blockId);
+                        TileClass tileClass = TileRegistry_.GetTile(blockId);
                         if (tileClass != null) {
-                            if (layer == Layers.Liquid) {
+                            if (layer == LayerType.Liquid) {
                                 tile = ((LiquidClass)tileClass)?.GetTileToVolume(tileData.liquidVolume);
                             } else {
                                 tile = tileClass.tile;
@@ -228,11 +229,11 @@ public class ChunkHandler : Singleton<ChunkHandler> {
 
     // 加载区块
     IEnumerator LoadChunk(Vector2Int chunkID) {
-        Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
+        LayerType[] layers = (LayerType[])Enum.GetValues(typeof(LayerType));
         ChunkRenderData data = GetChunkRenderData(chunkID.x, chunkID.y);
 
-        foreach (Layers layer in layers) {
-            world.GetTileLayer(layer)._tilemap.SetTilesBlock(data.bounds, data.tileBases[(int)layer].ToArray());
+        foreach (LayerType layer in layers) {
+            TilemapManager.Instance.GetLayer(layer)._tilemap.SetTilesBlock(data.bounds, data.tileBases[(int)layer].ToArray());
             yield return null;
         }
 
@@ -242,10 +243,10 @@ public class ChunkHandler : Singleton<ChunkHandler> {
     // 卸载区块
     private IEnumerator UnloadChunk(Vector2Int chunkID) {
         ChunkRenderData data = GetChunkRenderData(chunkID.x, chunkID.y);
-        Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
+        LayerType[] layers = (LayerType[])Enum.GetValues(typeof(LayerType));
 
-        foreach (Layers layer in layers) {
-            Tilemap tileMap = world.GetTileLayer(layer)._tilemap;
+        foreach (LayerType layer in layers) {
+            Tilemap tileMap = TilemapManager.Instance.GetLayer(layer)._tilemap;
             tileMap.SetTilesBlock(data.bounds, emptyTiles);
             tileMap.CompressBounds();
             yield return null;

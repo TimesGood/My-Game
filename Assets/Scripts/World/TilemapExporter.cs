@@ -16,28 +16,49 @@ using static UnityEngine.Rendering.DebugUI;
 using UnityEngine.UIElements;
 
 
-//ÍßÆ¬µØÍ¼Êı¾İÊä³ö
+//ç“¦ç‰‡åœ°å›¾å¯¼å‡ºå™¨
 public class TilemapExporter : Singleton<TilemapExporter> {
     public int chunkSize = 16;
     public string exportFileName = "tilemap_data.bin";
 
-    public WorldManager world;
+    /// <summary>è‡ªå®šä¹‰å­˜æ¡£ç›®å½•è·¯å¾„ï¼ˆä¸ºç©ºæ—¶ä½¿ç”¨ streamingAssetsPathï¼‰</summary>
+    private string customSavePath;
+
+    /// <summary>
+    /// è®¾ç½®è‡ªå®šä¹‰å­˜æ¡£ç›®å½•è·¯å¾„
+    /// </summary>
+    public void SetCustomSavePath(string _path)
+    {
+        customSavePath = _path;
+    }
+
+    /// <summary>
+    /// è·å–å½“å‰å­˜æ¡£æ–‡ä»¶å®Œæ•´è·¯å¾„
+    /// </summary>
+    private string GetSaveFilePath()
+    {
+        if (!string.IsNullOrEmpty(customSavePath))
+        {
+            return Path.Combine(customSavePath, exportFileName);
+        }
+        return Path.Combine(Application.streamingAssetsPath, exportFileName);
+    }
 
     public IEnumerator ExportAllTilemaps(MapData mapData, Action<float> progressCallback) {
-        string path = Path.Combine(Application.streamingAssetsPath, exportFileName);
+        string path = GetSaveFilePath();
         long[,][,,] chunkData = mapData.chunkDatas;
         int chunkXCount = chunkData.GetLength(0);
         int chunkYCount = chunkData.GetLength(1);
         int chunkTotal = chunkXCount * chunkYCount;
 
-        // Ê¹ÓÃÑ¹ËõÁ÷°ü¹üÎÄ¼şÁ÷
+        // ä½¿ç”¨å‹ç¼©æµåŒ…è£¹æ–‡ä»¶æµ
         using (FileStream fs = File.Create(path))
-        using (GZipStream gzip = new GZipStream(fs, CompressionLevel.Optimal))  // Ê¹ÓÃGZIPÑ¹Ëõ
-        using (BinaryWriter writer = new BinaryWriter(gzip))  // Ğ´ÈëÑ¹ËõÁ÷
+        using (GZipStream gzip = new GZipStream(fs, CompressionLevel.Optimal))  // ä½¿ç”¨GZIPå‹ç¼©
+        using (BinaryWriter writer = new BinaryWriter(gzip))  // å†™å…¥å‹ç¼©æµ
         {
-            writer.Write(2);  // °æ±¾ºÅÉı¼¶µ½2£¨±êÊ¶ĞÂ¸ñÊ½£©
+            writer.Write(2);  // ç‰ˆæœ¬å·å‡çº§åˆ°2ï¼ˆæ ‡è¯†æ–°æ ¼å¼ï¼‰
 
-            // Ğ´ÈëÇø¿éÔªÊı¾İ
+            // å†™å…¥åŒºå—å…ƒæ•°æ®
             writer.Write(chunkXCount);
             writer.Write(chunkYCount);
 
@@ -47,7 +68,7 @@ public class TilemapExporter : Singleton<TilemapExporter> {
                     long[,,] chunk = chunkData[cx, cy];
                     WriteChunkOptimized(writer, chunk);
 
-                    // ½ø¶È¸üĞÂ£¨Ã¿Çø¿é¸üĞÂÒ»´Î£©
+                    // è¿›åº¦æ›´æ–°ï¼ˆæ¯åŒºå—æ›´æ–°ä¸€æ¬¡ï¼‰
                     if (++processed % 10 == 0) {
                         yield return null;
                         progressCallback?.Invoke(processed / chunkTotal * 100f);
@@ -59,7 +80,7 @@ public class TilemapExporter : Singleton<TilemapExporter> {
     }
 
     public IEnumerator LoadAllTilemaps(Action<MapData> onComplete, Action<float> progressCallback) {
-        string path = Path.Combine(Application.streamingAssetsPath, exportFileName);
+        string path = GetSaveFilePath();
         if (!File.Exists(path)) {
             Debug.LogError($"File not found: {path}");
             yield break;
@@ -68,19 +89,19 @@ public class TilemapExporter : Singleton<TilemapExporter> {
         using (FileStream fs = File.OpenRead(path))
         using (GZipStream gzip = new GZipStream(fs, CompressionMode.Decompress))
         using (BinaryReader reader = new BinaryReader(gzip)) {
-            // ¶ÁÈ¡°æ±¾ºÅ
+            // è¯»å–ç‰ˆæœ¬å·
             int version = reader.ReadInt32();
             if (version != 2) {
                 Debug.LogError($"Unsupported file version: {version}. Expected version 2.");
                 yield break;
             }
 
-            // ¶ÁÈ¡Çø¿éÔªÊı¾İ
+            // è¯»å–åŒºå—å…ƒæ•°æ®
             int chunkXCount = reader.ReadInt32();
             int chunkYCount = reader.ReadInt32();
             int chunkTotal = chunkXCount * chunkYCount;
 
-            // ³õÊ¼»¯µØÍ¼Êı¾İ½á¹¹
+            // åˆå§‹åŒ–åœ°å›¾æ•°æ®ç»“æ„
             long[,][,,] mapData = new long[chunkXCount, chunkYCount][,,];
             float processed = 0;
 
@@ -88,7 +109,7 @@ public class TilemapExporter : Singleton<TilemapExporter> {
                 for (int cy = 0; cy < chunkYCount; cy++) {
                     mapData[cx, cy] = ReadChunkOptimized(reader);
 
-                    // ½ø¶È¸üĞÂ
+                    // è¿›åº¦æ›´æ–°
                     if (++processed % 10 == 0) {
                         yield return null;
                         progressCallback?.Invoke(processed / chunkTotal * 100f);
@@ -104,66 +125,66 @@ public class TilemapExporter : Singleton<TilemapExporter> {
 
     }
 
-    // Ğ´ÈëÇø¿éÊı¾İ
+    // å†™å…¥åŒºå—æ•°æ®
     private void WriteChunkOptimized(BinaryWriter writer, long[,,] chunk) {
         int layers = chunk.GetLength(0);
         int width = chunk.GetLength(1);
         int height = chunk.GetLength(2);
 
-        // 1. Ğ´ÈëÇø¿éÎ¬¶È£¨¸÷²ã³ß´çÏàÍ¬£©
+        // 1. å†™å…¥åŒºå—ç»´åº¦ï¼ˆå„å±‚å°ºå¯¸ç›¸åŒï¼‰
         writer.Write((ushort)width);
         writer.Write((ushort)height);
 
-        // 2. °´²ã´¦ÀíÊı¾İ
+        // 2. æŒ‰å±‚å¤„ç†æ•°æ®
         for (int l = 0; l < layers; l++) {
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
                     long tileId = chunk[l, x, y];
                     const long EMPTY = 0;
                     if (tileId == EMPTY) {
-                        writer.Write((byte)0x00);  // ÌØÊâ±ê¼Ç£º¿ÕÍßÆ¬
+                        writer.Write((byte)0x00);  // ç‰¹æ®Šæ ‡è®°ï¼šç©ºç“¦ç‰‡
                     }
-                    // 5. Öµ·¶Î§Ñ¹Ëõ£º¸ù¾İÊµ¼ÊÖµÓòÑ¡Ôñ´æ´¢ÀàĞÍ
+                    // 5. å€¼èŒƒå›´å‹ç¼©ï¼šæ ¹æ®å®é™…å€¼åŸŸé€‰æ‹©å­˜å‚¨ç±»å‹
                     else if (tileId <= ushort.MaxValue) {
-                        writer.Write((byte)0x01);  // ±ê¼Ç£º16Î»Öµ
+                        writer.Write((byte)0x01);  // æ ‡è®°ï¼š16ä½å€¼
                         writer.Write((ushort)tileId);
                     } else {
-                        writer.Write((byte)0x02);  // ±ê¼Ç£ºÍêÕûlong
+                        writer.Write((byte)0x02);  // æ ‡è®°ï¼šå®Œæ•´long
                         writer.Write(tileId);
                     }
                 }
             }
         }
     }
-    // ¶ÁÈ¡Çø¿éÊı¾İ
+    // è¯»å–åŒºå—æ•°æ®
     private long[,,] ReadChunkOptimized(BinaryReader reader) {
-        // ¶ÁÈ¡Çø¿é³ß´ç
+        // è¯»å–åŒºå—å°ºå¯¸
 
         ushort chunkXCount = reader.ReadUInt16();
         ushort chunkYCount = reader.ReadUInt16();
 
-        // »ñÈ¡²ãÊıĞÅÏ¢£¨ĞèÒªÓëµ¼³öÊ±µÄ²ã¶¨ÒåÒ»ÖÂ£©
-        Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
+        // è·å–å±‚æ•°ä¿¡æ¯ï¼ˆéœ€è¦ä¸å¯¼å‡ºæ—¶çš„å±‚å®šä¹‰ä¸€è‡´ï¼‰
+        LayerType[] layers = (LayerType[])Enum.GetValues(typeof(LayerType));
         int layerCount = layers.Length;
 
-        // ³õÊ¼»¯ÈıÎ¬Êı×é [²ã, ¿í, ¸ß]
+        // åˆå§‹åŒ–ä¸‰ç»´æ•°ç»„ [å±‚, å®½, é«˜]
         long[,,] chunk = new long[layerCount, chunkXCount, chunkYCount];
 
-        // Öğ²ã½âÂëRLEÊı¾İ
+        // é€å±‚è§£ç RLEæ•°æ®
         for (int l = 0; l < layerCount; l++) {
             for (int y = 0; y < chunkYCount; y++) {
                 for (int x = 0; x < chunkXCount; x++) {
-                    // ¶ÁÈ¡RLE±ê¼ÇºÍ³¤¶È
+                    // è¯»å–RLEæ ‡è®°å’Œé•¿åº¦
                     byte flag = reader.ReadByte();
                     long tileId = 0;
                     switch (flag) {
-                        case 0x00: // ¿ÕÍßÆ¬
+                        case 0x00: // ç©ºç“¦ç‰‡
                             tileId = 0;
                             break;
-                        case 0x01: // 16Î»Öµ
+                        case 0x01: // 16ä½å€¼
                             tileId = reader.ReadUInt16();
                             break;
-                        case 0x02: // ÍêÕû64Î»Öµ
+                        case 0x02: // å®Œæ•´64ä½å€¼
                             tileId = reader.ReadInt64();
                             break;
                         default:
@@ -179,7 +200,7 @@ public class TilemapExporter : Singleton<TilemapExporter> {
 
 
     public bool isExists() {
-        string path = Path.Combine(Application.streamingAssetsPath, exportFileName);
+        string path = GetSaveFilePath();
         if (!File.Exists(path)) {
             return false;
         }

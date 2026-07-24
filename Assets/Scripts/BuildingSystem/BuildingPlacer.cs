@@ -30,7 +30,7 @@ namespace BuildingSystem {
 
             // 右键：销毁
             if (_mouseUser.IsMouseButtonPressed(MouseButton.Right)) {
-                DestroyTile(mousePos2Int, Layers.Ground);
+                DestroyTile(mousePos2Int, LayerType.Foreground);
             }
 
             if (ActionBuildable == null) return;
@@ -53,7 +53,7 @@ namespace BuildingSystem {
             //WorldManager.Instance.PlaceTile(item, cellPos);
         }
 
-        private void DestroyTile(Vector2Int worldCoords, Layers layer) {
+        private void DestroyTile(Vector2Int worldCoords, LayerType layer) {
             //var cellPos = _constructionLayer._tilemap.WorldToCell(worldCoords);
 
             //// 检查所有图层，销毁找到的第一个非空图块

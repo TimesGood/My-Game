@@ -23,28 +23,27 @@ public class BorderBlendFeature : BiomeFeature
         //else if (mode == BorderBlendMode.CurveBlend && _terrainTex != null) BlendByCurve(w, _ctx);
     }
 
-    private void BlendByHeight(WorldManager w, BiomeContext ctx)
-    {
-        //int lsY = w.surfaceHeights[ctx.surfaceStart], rsY = w.surfaceHeights[ctx.surfaceEnd];
-        //int lbX = Mathf.Max(ctx.surfaceStart - blendDistance, 0);
-        //int reX = Mathf.Min(ctx.surfaceEnd + blendDistance, w.worldSize.x - 1);
-        //int lbY = w.surfaceHeights[lbX], reY = w.surfaceHeights[reX];
+    //private void BlendByHeight(WorldManager w, BiomeContext ctx)
+    //{
+    //    int lsY = w.surfaceHeights[ctx.surfaceStart], rsY = w.surfaceHeights[ctx.surfaceEnd];
+    //    int lbX = Mathf.Max(ctx.surfaceStart - blendDistance, 0);
+    //    int reX = Mathf.Min(ctx.surfaceEnd + blendDistance, w.worldSize.x - 1);
+    //    int lbY = w.surfaceHeights[lbX], reY = w.surfaceHeights[reX];
 
-        //for (int x = 0; x < blendDistance; x++)
-        //{
-        //    float t = (float)x / (blendDistance - 1);
-        //    float n = Mathf.PerlinNoise(x * 0.05f, 0) * 2 - 1;
-        //    FillErase(w, x + lbX, (int)(Mathf.Lerp(lbY, lsY, t) + n * 3f));
-        //    FillErase(w, x + reX - blendDistance, (int)(Mathf.Lerp(rsY, reY, t) + n * 3f));
-        //}
-    }
+    //    for (int x = 0; x < blendDistance; x++) {
+    //        float t = (float)x / (blendDistance - 1);
+    //        float n = Mathf.PerlinNoise(x * 0.05f, 0) * 2 - 1;
+    //        FillErase(w, x + lbX, (int)(Mathf.Lerp(lbY, lsY, t) + n * 3f));
+    //        FillErase(w, x + reX - blendDistance, (int)(Mathf.Lerp(rsY, reY, t) + n * 3f));
+    //    }
+    //}
 
-    private void BlendByCurve(WorldManager w, BiomeContext ctx)
-    {
-        //int start = ctx.LocalToWorldX(0);
-        //BlendData(w.terrainCurveData, _terrainTex.curveData, start);
-        //if (blendStoneCurve) BlendData(w.stoneCurveData, _terrainTex.curveData, start, 100);
-    }
+    //private void BlendByCurve(WorldManager w, BiomeContext ctx)
+    //{
+    //    int start = ctx.LocalToWorldX(0);
+    //    BlendData(w.terrainCurveData, _terrainTex.curveData, start);
+    //    if (blendStoneCurve) BlendData(w.stoneCurveData, _terrainTex.curveData, start, 100);
+    //}
 
     private void BlendData(float[] m, float[] s, int start, int add = 0)
     {

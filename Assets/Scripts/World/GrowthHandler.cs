@@ -7,7 +7,6 @@ using UnityEngine.Tilemaps;
 
 // 植物生长模拟
 public class GrowthHandler : Singleton<GrowthHandler> {
-    private WorldManager world => WorldManager.Instance;
     private ChunkManager chunkManager;
     public Dictionary<Vector3Int, float> growthTime = new Dictionary<Vector3Int, float>();
     private float interval = 10f;
@@ -23,7 +22,7 @@ public class GrowthHandler : Singleton<GrowthHandler> {
         foreach (var kvp in growthTime.ToList()) {
             if (Time.time > kvp.Value) {
                 Vector2Int wpos = new Vector2Int(kvp.Key.x, kvp.Key.y);
-                TileClass tileClass = chunkManager.GetTileClass(Layers.Addons, kvp.Key.x, kvp.Key.y);
+                TileClass tileClass = chunkManager.GetTileClass(LayerType.Addons, kvp.Key.x, kvp.Key.y);
                 int growthData = chunkManager.GetGrowthData(wpos);
 
                 if (tileClass == null) {
@@ -36,7 +35,7 @@ public class GrowthHandler : Singleton<GrowthHandler> {
                     growthData += 1;
                     chunkManager.SetGrowthData(wpos, growthData);
 
-                    Tilemap tilemap = world.GetTileLayer(Layers.Addons)._tilemap;
+                    Tilemap tilemap = TilemapManager.Instance.GetLayer(LayerType.Addons)._tilemap;
                     if (tilemap == null) continue;
 
                     GameObject tileObj = tilemap.GetInstantiatedObject(kvp.Key);

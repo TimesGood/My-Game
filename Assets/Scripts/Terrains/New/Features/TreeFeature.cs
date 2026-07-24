@@ -39,7 +39,7 @@ public class TreeFeature : BiomeFeature
         for (int x = 0; x < _ctx.biomeSize.x; x++) {
             var wx = _ctx.LocalToWorldX(x);
             int th = (int)surface[wx];
-            TileClass tileClass = chunk.GetTileClass(Layers.Ground, wx, th);
+            TileClass tileClass = chunk.GetTileClass(LayerType.Foreground, wx, th);
             if (tileClass == null) continue;
             int ty = th + 1;
             foreach (var tg in trees) {
@@ -69,10 +69,10 @@ public class TreeFeature : BiomeFeature
         for (int x = 0; x < _ctx.biomeSize.x; x++) {
             for (int y = 0; y < _ctx.biomeSize.y; y++) {
                 Vector2Int worldPos = _ctx.LocalToWorld(x, y);
-                TileClass tile = chunk.GetTileClass(Layers.Ground, worldPos);
+                TileClass tile = chunk.GetTileClass(LayerType.Foreground, worldPos);
                 if (tile != null) continue;
 
-                TileClass downTile = chunk.GetTileClass(Layers.Ground, worldPos - Vector2Int.down);
+                TileClass downTile = chunk.GetTileClass(LayerType.Foreground, worldPos - Vector2Int.down);
                 if (downTile != null) {
                     foreach (var tg in trees) {
                         if (tg?.treeClass == null || !tg.treeClass.CheckSpawn(worldPos.x, worldPos.y)) continue;

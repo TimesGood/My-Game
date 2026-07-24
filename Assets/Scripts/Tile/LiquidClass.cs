@@ -58,7 +58,7 @@ public class LiquidClass : TileClass {
             return false;
         }
         //液体在地面瓦片中，擦掉
-        if (chunk.GetTileClass(Layers.Ground, x, y) != null) {
+        if (chunk.GetTileClass(LayerType.Foreground, x, y) != null) {
             liquidHandler.UpdateVolume(this, pos, 0);
             return false;
         }
@@ -81,11 +81,11 @@ public class LiquidClass : TileClass {
 
         Vector2Int downPos = pos + Vector2Int.down;
         // 检查下方是否可流动
-        if (chunk.GetTileClass(Layers.Ground, downPos.x, downPos.y) != null) return false;
+        if (chunk.GetTileClass(LayerType.Foreground, downPos.x, downPos.y) != null) return false;
         //液体满了
         //float downVolume = liquidHandler.liquidVolume[downPos.x, downPos.y];
         float downVolume = liquidHandler.GetVolume(downPos);
-        LiquidClass downLiquid = chunk.GetTileClass(Layers.Liquid, downPos.x, downPos.y) as LiquidClass;
+        LiquidClass downLiquid = chunk.GetTileClass(LayerType.Liquid, downPos.x, downPos.y) as LiquidClass;
 
         if (downVolume >= 1f && (downLiquid == null || downLiquid == this)) return false;
 
@@ -130,7 +130,7 @@ public class LiquidClass : TileClass {
         curVolume = avg;
         liquidHandler.UpdateVolume(this, pos, curVolume);
         foreach (var dir in flowDirs) {
-            LiquidClass targetLiquid = chunk.GetTileClass(Layers.Liquid, dir.x, dir.y) as LiquidClass;
+            LiquidClass targetLiquid = chunk.GetTileClass(LayerType.Liquid, dir.x, dir.y) as LiquidClass;
             if (targetLiquid != null && targetLiquid.TouchLiquid(pos, dir)) continue;
             
             liquidHandler.UpdateVolume(this, dir, avg);
@@ -149,7 +149,7 @@ public class LiquidClass : TileClass {
         if (curVolume <= 1f) return false;
         //液体溢出
         Vector2Int upPos = pos + Vector2Int.up;
-        LiquidClass targetLiquid = chunk.GetTileClass(Layers.Liquid, upPos.x, upPos.y) as LiquidClass;
+        LiquidClass targetLiquid = chunk.GetTileClass(LayerType.Liquid, upPos.x, upPos.y) as LiquidClass;
         if (targetLiquid != null && targetLiquid != this) {
             return false;
         }
@@ -170,22 +170,22 @@ public class LiquidClass : TileClass {
 
         bool flag = false;
         //如果液体不相同，可流动
-        TileClass targetLiquid = chunk.GetTileClass(Layers.Liquid, x, y);
+        TileClass targetLiquid = chunk.GetTileClass(LayerType.Liquid, x, y);
         //float targetVolume = liquidHandler.liquidVolume[x, y];
         float targetVolume = liquidHandler.GetVolume(dir);
         if (targetLiquid != null && targetLiquid != this) flag = true;
 
-        if (chunk.GetTileClass(Layers.Ground, x, y) == null && curVolume > targetVolume && curVolume - targetVolume > 0.0001f) flag = true;
+        if (chunk.GetTileClass(LayerType.Foreground, x, y) == null && curVolume > targetVolume && curVolume - targetVolume > 0.0001f) flag = true;
         return flag;
     }
     //检查水平流动方向是否可流动
     private void CheckFlowDirection(int x, int y, float curVolume, ref List<Vector2Int> dirs) {
         if (!chunk.CheckWorldBound(x, y)) return;
-        TileClass targetLiquid = chunk.GetTileClass(Layers.Liquid, x, y);
+        TileClass targetLiquid = chunk.GetTileClass(LayerType.Liquid, x, y);
 
         //float targetVolume = liquidHandler.liquidVolume[x, y];
         float targetVolume = liquidHandler.GetVolume(new Vector2Int(x, y));
-        if (chunk.GetTileClass(Layers.Ground, x, y) != null || (targetVolume >= curVolume && (targetLiquid == null || targetLiquid == this))) return;
+        if (chunk.GetTileClass(LayerType.Foreground, x, y) != null || (targetVolume >= curVolume && (targetLiquid == null || targetLiquid == this))) return;
         //两边液体体积相差无几，不扩散，避免水体表面一直在计算
         if (curVolume - targetVolume < 0.0001f) return;
         dirs.Add(new Vector2Int(x, y));
@@ -195,12 +195,12 @@ public class LiquidClass : TileClass {
     // 与其他液体接触时触发一些事件（比如生成新物质）
     // origin：接触者， target：被接触者
     private bool TouchLiquid(Vector2Int origin, Vector2Int target) {
-        LiquidClass originLiquid = chunk.GetTileClass(Layers.Liquid, origin.x, origin.y) as LiquidClass;
+        LiquidClass originLiquid = chunk.GetTileClass(LayerType.Liquid, origin.x, origin.y) as LiquidClass;
         //如果接触目标不是相同液体，进行处理
         if (originLiquid != this) {
 
             liquidHandler.UpdateVolume(this, target, 0);
-            ChunkManager.Instance.SetBlockId(Layers.Ground, target, medium.blockId);
+            ChunkManager.Instance.SetBlockId(LayerType.Foreground, target, medium.blockId);
             //world.SetTileClass(liquidHandler.test, Layers.Ground, target.x, target.y);
             //world.tilemaps[(int)Layers.Ground].SetTile((Vector3Int)target, liquidHandler.test.tile);
             return true;

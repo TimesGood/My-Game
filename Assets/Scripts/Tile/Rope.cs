@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class Rope : MonoBehaviour
 {
-    private WorldManager world => WorldManager.Instance;
+    private TilemapManager tilemap => TilemapManager.Instance;
     public Rigidbody2D hook;//连接点
     public GameObject prefabRopeSeg;
     public int numLinks = 5;
@@ -20,7 +20,7 @@ public class Rope : MonoBehaviour
         Rigidbody2D prevBod = hook;
 
         //查看这个位置的藤蔓数据
-        AddonLayer layer = world.GetTileLayer(Layers.Addons) as AddonLayer;
+        AddonLayer layer = tilemap.GetLayer(LayerType.Addons) as AddonLayer;
         Vector3Int pos = layer._tilemap.WorldToCell(transform.position);
         int growthData = layer.GetGrowthData(pos);
         if (growthData != 0) numLinks = growthData;

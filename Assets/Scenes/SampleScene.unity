@@ -531,7 +531,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5abdf2b5638f90b44b8f77134371de56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  world: {fileID: 858115489}
   lightTex: {fileID: 0}
   lightMap: {fileID: 2100000, guid: 31e7f576489830c48bdca414ee05b6b3, type: 2}
   updating: 0
@@ -588,6 +587,54 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &437427352
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 437427354}
+  - component: {fileID: 437427353}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &437427353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 437427352}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fd5aeb38824dc04bae6d7c8d75200d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _chunkManager: {fileID: 0}
+  _worldGenerator: {fileID: 0}
+  _lightHandler: {fileID: 0}
+  _chunkHandler: {fileID: 0}
+--- !u!4 &437427354
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 437427352}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 115.90476, y: 1053.1558, z: -0.3256751}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -804,7 +851,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8d9f2b85caac154680e73ad721434ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  world: {fileID: 858115489}
+  chunkSize: {x: 300, y: 300}
 --- !u!1 &537737214
 GameObject:
   m_ObjectHideFlags: 0
@@ -1001,7 +1048,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chunkSize: 16
   exportFileName: tilemap_data.bin
-  world: {fileID: 858115489}
 --- !u!1 &858115488
 GameObject:
   m_ObjectHideFlags: 0
@@ -1012,7 +1058,7 @@ GameObject:
   m_Component:
   - component: {fileID: 858115491}
   - component: {fileID: 858115490}
-  - component: {fileID: 858115489}
+  - component: {fileID: 858115492}
   m_Layer: 0
   m_Name: TileMap
   m_TagString: Untagged
@@ -1020,23 +1066,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &858115489
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 858115488}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59c4e89f20b2f314ca66d301e8f43636, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  seed: 0
-  worldSize: {x: 6000, y: 2000}
-  chunkCount: {x: 20, y: 20}
-  terrainCurveData: []
-  stoneCurveData: []
 --- !u!156049354 &858115490
 Grid:
   m_ObjectHideFlags: 0
@@ -1070,6 +1099,18 @@ Transform:
   - {fileID: 530379992}
   m_Father: {fileID: 1322792614}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &858115492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 858115488}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19b600d6e2eee1a4ca3ea37fefb80b9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &975868223
 GameObject:
   m_ObjectHideFlags: 0
@@ -1157,6 +1198,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1531841076}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1027974963
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1027974965}
+  - component: {fileID: 1027974964}
+  m_Layer: 0
+  m_Name: SceneFlowController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1027974964
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1027974963}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25273af1b1a46a142a98c8bf40f5ee44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1027974965
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1027974963}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 115.90476, y: 1053.1558, z: -0.3256751}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1065819341
 GameObject:
   m_ObjectHideFlags: 0
@@ -1201,7 +1286,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3a0a6fb39a7c46489f940df7c5c3dae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  world: {fileID: 858115489}
   loadRadius: 10
   chunkCount: 1000
   chunkXCount: 500
@@ -1824,7 +1908,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31b7a4acb34af0e45aaa24d343d8bdba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  world: {fileID: 858115489}
   liquids:
   - {fileID: 11400000, guid: 8ce1d91866f79b641aa2058b27d01002, type: 2}
   - {fileID: 11400000, guid: d4e4cc04092dc094fbed02ac0c5df7b4, type: 2}
@@ -3381,9 +3464,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseTerrain: {fileID: 11400000, guid: 44fe922146dde9847bc191f445b1747b, type: 2}
-  layouts:
-  - {fileID: 11400000, guid: 197e3b38fa9c6df41ae313855e62219f, type: 2}
-  - {fileID: 11400000, guid: 3d026c6221636a34e99dc6f84bce52c5, type: 2}
 --- !u!4 &2143271237
 Transform:
   m_ObjectHideFlags: 0
@@ -3477,3 +3557,5 @@ SceneRoots:
   - {fileID: 107134090}
   - {fileID: 2128452433}
   - {fileID: 660398701}
+  - {fileID: 437427354}
+  - {fileID: 1027974965}

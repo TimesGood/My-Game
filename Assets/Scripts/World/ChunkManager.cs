@@ -1,12 +1,12 @@
 using System.Collections.Generic;
+using System.Drawing;
+using Unity.Entities;
 using UnityEngine;
-using static WorldManager;
-
 /// <summary>
 /// 区块数据管理中心——世界图块数据的唯一权威来源。
 /// 替代原先分散在各 ConstructionLayer/LiquidLayer/AddonLayer 中的多个字典。
 /// </summary>
-public class ChunkManager : Singleton<ChunkManager> {
+public class ChunkManager : Singleton<ChunkManager>, IMapSaveManager {
 
     public int Width { get; private set; }
     public int Height { get; private set; }
@@ -15,8 +15,11 @@ public class ChunkManager : Singleton<ChunkManager> {
     private Dictionary<Vector2Int, Chunk> allChunks = new Dictionary<Vector2Int, Chunk>();
 
     // 区块尺寸
-    public Vector2Int chunkCount = new Vector2Int(20, 20);
-    public Vector2Int chunkSize { get; private set; }
+    //public Vector2Int chunkCount = new Vector2Int(20, 20);
+    public Vector2Int chunkSize;
+
+    public WorldMeta worldMeta { get; private set; }
+    public bool IsReady { get; private set; }
 
     protected override void Awake() {
         base.Awake();
@@ -29,9 +32,13 @@ public class ChunkManager : Singleton<ChunkManager> {
         allChunks.Clear();
         Width = width;
         Height = height;
-        chunkSize = new Vector2Int(
-            width / chunkCount.x,
-            height / chunkCount.y);
+        Vector2Int chunkCount = new Vector2Int(
+            Mathf.CeilToInt(width / chunkSize.x),
+            Mathf.CeilToInt(height / chunkSize.y)
+            );
+        //chunkSize = new Vector2Int(
+        //    width / chunkCount.x,
+        //    height / chunkCount.y);
 
         for (int cx = 0; cx < chunkCount.x; cx++) {
             for (int cy = 0; cy < chunkCount.y; cy++) {
@@ -45,6 +52,49 @@ public class ChunkManager : Singleton<ChunkManager> {
                 allChunks[coord] = chunk;
             }
         }
+    }
+
+    public void InitializeNewWorld(WorldMeta meta) {
+        worldMeta = meta;
+        Width = meta.width;
+        Height = meta.height;
+        allChunks.Clear();
+        Vector2Int chunkCount = new Vector2Int(
+            Mathf.CeilToInt(Width / chunkSize.x),
+            Mathf.CeilToInt(Height / chunkSize.y)
+        );
+        //chunkSize = new Vector2Int(
+        //    width / chunkCount.x,
+        //    height / chunkCount.y);
+
+        for (int cx = 0; cx < chunkCount.x; cx++) {
+            for (int cy = 0; cy < chunkCount.y; cy++) {
+                var coord = new Vector2Int(cx, cy);
+                var chunk = new Chunk(
+                    coord,
+                    chunkSize.x,
+                    chunkSize.y,
+                    cx * chunkSize.x,
+                    cy * chunkSize.y);
+                allChunks[coord] = chunk;
+            }
+        }
+        IsReady = true;
+    }
+
+    /// <summary>加载已有世界元数据</summary>
+    public void LoadExistingWorld(WorldMeta meta) {
+        worldMeta = meta;
+        Width = meta.width;
+        Height = meta.height;
+
+        allChunks.Clear();
+
+
+
+
+        IsReady = true;
+        Debug.Log($"[WDC] 存档世界已就绪: {meta.worldName}");
     }
 
     // ===== 图块数据访问 =====
@@ -69,37 +119,37 @@ public class ChunkManager : Singleton<ChunkManager> {
         return GetTileData(new Vector2Int(x, y));
     }
 
-    public TileClass GetTileClass(Layers layer, Vector2Int worldPos) {
+    public TileClass GetTileClass(LayerType layer, Vector2Int worldPos) {
         TileData tile = GetTileData(worldPos);
-        return TileRegistry.GetTile(tile.GetBlockId(layer));
+        return TileRegistry_.GetTile(tile.GetBlockId(layer));
     }
 
-    public TileClass GetTileClass(Layers layer, int x, int y) {
+    public TileClass GetTileClass(LayerType layer, int x, int y) {
         return GetTileClass(layer, new Vector2Int(x, y));
     }
 
-    public bool SetTileClass(Layers layer, Vector2Int worldPos, TileClass tile) {
+    public bool SetTileClass(LayerType layer, Vector2Int worldPos, TileClass tile) {
         long blockId = tile == null ? 0 : tile.blockId;
         return SetBlockId(layer, worldPos, blockId);
     }
 
-    public bool SetTileClass(Layers layer, int x, int y, TileClass tile) {
+    public bool SetTileClass(LayerType layer, int x, int y, TileClass tile) {
         return SetTileClass(layer, new Vector2Int(x, y), tile);
     }
 
     /// <summary>
     /// 获取指定图层在世界坐标处的 blockId。
     /// </summary>
-    public long GetBlockId(Layers layer, Vector2Int worldPos) {
+    public long GetBlockId(LayerType layer, Vector2Int worldPos) {
         TileData tile = GetTileData(worldPos);
         return tile.GetBlockId(layer);
     }
 
-    public long GetBlockId(Layers layer, int x, int y) {
+    public long GetBlockId(LayerType layer, int x, int y) {
         return GetBlockId(layer, new Vector2Int(x, y));
     }
 
-    public bool SetBlockId(Layers layer, int x, int y, long blockId) {
+    public bool SetBlockId(LayerType layer, int x, int y, long blockId) {
         Vector2Int worldPos = new Vector2Int(x, y);
         return SetBlockId(layer, worldPos, blockId);
     }
@@ -107,7 +157,7 @@ public class ChunkManager : Singleton<ChunkManager> {
     /// <summary>
     /// 设置指定图层在世界坐标处的 blockId。越界返回 false。
     /// </summary>
-    public bool SetBlockId(Layers layer, Vector2Int worldPos, long blockId) {
+    public bool SetBlockId(LayerType layer, Vector2Int worldPos, long blockId) {
         if (!CheckWorldBound(worldPos.x, worldPos.y)) return false;
 
         if (TryGetChunk(worldPos, out Chunk chunk)) {
@@ -220,5 +270,22 @@ public class ChunkManager : Singleton<ChunkManager> {
             chunk.tiles = data;
             chunk.isDirty = true;
         }
+    }
+
+    public void LoadData(GameData data) {
+        List<Chunk> chunks = data.chunks;
+        if (chunks == null) return;
+        foreach (var chunk in chunks) {
+            allChunks.Add(chunk.coord, chunk);
+        }
+    }
+
+    public void SaveData(ref GameData data) {
+        List<Chunk> chunks = new List<Chunk>();
+        foreach (var chunk in allChunks.Values) {
+            chunks.Add(chunk);
+        }
+        data.chunks = chunks;
+
     }
 }

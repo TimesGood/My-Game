@@ -17,7 +17,6 @@ public class NestedBiomeFeature : BiomeFeature
         RectInt region = _ctx.Bounds;
         if (childBiomes == null || childBiomes.Length == 0) return;
 
-        WorldManager world = WorldManager.Instance;
         Vector2 regionSize = new Vector2(region.width, region.height);
 
         Vector2 parentLocalMin = new Vector2(0, 0);

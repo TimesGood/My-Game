@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
-using static WorldManager;
 using Debug = UnityEngine.Debug;
 
 //光源处理
@@ -21,23 +20,24 @@ public class LightHandler : Singleton<LightHandler>
     public SpriteRenderer spriteRenderer;
     private Color defaultColor;
 
-    protected override void Awake() {
-        base.Awake();
-        lightValues = new float[chunkManager.Width, chunkManager.Height];
+    public void Init(WorldMeta meta) {
+        lightValues = new float[meta.width, meta.height];
 
         defaultColor = spriteRenderer.color;
         spriteRenderer.color = new Color(255, 255, 255, 0);
 
-        lightTex = new Texture2D(chunkManager.Width, chunkManager.Height);
+        lightTex = new Texture2D(meta.width, meta.height);
         lightTex.filterMode = FilterMode.Point;
 
         //放大到覆盖地图大小
-        transform.localScale = new Vector3(chunkManager.Width, chunkManager.Height, 1);
+        transform.localScale = new Vector3(meta.width, meta.height, 1);
         //位置
-        transform.localPosition = new Vector3(chunkManager.Width / 2f, chunkManager.Height / 2f, 0);
-
+        transform.localPosition = new Vector3(meta.width / 2f, meta.height / 2f, 0);
     }
+
     private void Update() {
+        if (!chunkManager.IsReady) return;
+
         if (!updating && updates.Count > 0) {
             updating = true;
             StartCoroutine(LightUpdate(updates.Dequeue()));
@@ -81,7 +81,7 @@ public class LightHandler : Singleton<LightHandler>
                 if (GetLightValue(x, y) != 0L) {
                     lightValue = GetLightValue(x, y);
                 }
-                else if (chunkManager.GetTileClass(Layers.Background, x, y) == null && chunkManager.GetTileClass(Layers.Ground, x, y) == null)
+                else if (chunkManager.GetTileClass(LayerType.Background, x, y) == null && chunkManager.GetTileClass(LayerType.Foreground, x, y) == null)
                 {
                     lightValue = sunlight;
                 }
@@ -96,7 +96,7 @@ public class LightHandler : Singleton<LightHandler>
                     lightValue = Mathf.Max(lightValues[x, ny1], lightValues[x, ny2], lightValues[nx1, y], lightValues[nx2, y]);
 
                     //光照锐减
-                    if (chunkManager.GetTileClass(Layers.Ground, x, y) == null)
+                    if (chunkManager.GetTileClass(LayerType.Foreground, x, y) == null)
                     {
                         lightValue -= 1f;
                     }
@@ -126,7 +126,7 @@ public class LightHandler : Singleton<LightHandler>
                 {
                     lightValue = GetLightValue(x, y);
                 }
-                else if (chunkManager.GetTileClass(Layers.Background, x, y) == null && chunkManager.GetTileClass(Layers.Ground, x, y) == null)
+                else if (chunkManager.GetTileClass(LayerType.Background, x, y) == null && chunkManager.GetTileClass(LayerType.Foreground, x, y) == null)
                 {
                     lightValue = sunlight;
                 }
@@ -141,7 +141,7 @@ public class LightHandler : Singleton<LightHandler>
                     lightValue = Mathf.Max(lightValues[x, ny1], lightValues[x, ny2], lightValues[nx1, y], lightValues[nx2, y]);
 
                     //光照锐减
-                    if (chunkManager.GetTileClass(Layers.Ground, x, y) == null)
+                    if (chunkManager.GetTileClass(LayerType.Foreground, x, y) == null)
                     {
                         lightValue -= 1f;
                     }
@@ -193,10 +193,10 @@ public class LightHandler : Singleton<LightHandler>
         TileData tile = ChunkManager.Instance.GetTileData(x, y);
 
         // 检查每个图层的图块是否发光
-        Layers[] layers = (Layers[])Enum.GetValues(typeof(Layers));
+        LayerType[] layers = (LayerType[])Enum.GetValues(typeof(LayerType));
         foreach (var layer in layers) {
             long blockId = tile.GetBlockId(layer);
-            TileClass tileClass = TileRegistry.GetTile(blockId);
+            TileClass tileClass = TileRegistry_.GetTile(blockId);
             if (tileClass == null) continue;
             if (tileClass.lightLevel > lightValue)
                 lightValue = tileClass.lightLevel;

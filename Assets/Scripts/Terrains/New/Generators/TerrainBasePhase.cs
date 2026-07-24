@@ -40,13 +40,13 @@ public class TerrainBasePhase : IGenerator {
 
                 if (y < 800) {
                     // 岩石层
-                    chunk.SetBlockId(Layers.Ground, x, y, 2616614646469115761);
+                    chunk.SetBlockId(LayerType.Foreground, x, y, 2616614646469115761);
                 } else if (y < surfaceY) {
                     // 泥土层
-                    chunk.SetBlockId(Layers.Ground, x, y, 7356931947058480037);
+                    chunk.SetBlockId(LayerType.Foreground, x, y, 7356931947058480037);
                 } else if (y == surfaceY){
                     // 地表层
-                    chunk.SetBlockId(Layers.Ground, x, y, 2033059213628461017);
+                    chunk.SetBlockId(LayerType.Foreground, x, y, 2033059213628461017);
                 }
                 
             }
