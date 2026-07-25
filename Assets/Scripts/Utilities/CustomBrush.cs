@@ -111,6 +111,7 @@ namespace UnityEditor
                     LayerType layer = GetLayerByName(brushTarget.name);
                     TileClass tileClass = ChunkManager.Instance.GetTileClass(layer, pos.x, pos.y);
                     if (tileClass is LiquidClass) {
+                        
                         //float volume = LiquidHandler.Instance.liquidVolume[pos.x, pos.y];
                         float volume = LiquidHandler.Instance.GetVolume((Vector2Int)pos);
                         Handles.Label(new Vector3(pos.x, pos.y + 1), volume.ToString() + "->" + tileClass.name);

@@ -74,6 +74,7 @@ public class GameManager : Singleton<GameManager> {
 
         _lightHandler.Init(meta);
         _chunkHandler.Init(meta);
+        PhysicsSimulationHandler.Instance.Reinitialize();
         yield return null;
     }
 

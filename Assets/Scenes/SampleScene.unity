@@ -1110,6 +1110,58 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19b600d6e2eee1a4ca3ea37fefb80b9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &881479502
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 881479504}
+  - component: {fileID: 881479503}
+  m_Layer: 0
+  m_Name: PhysicsSimulationHandler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &881479503
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 881479502}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9ea544cc0bd8964abb448e0ab3fccbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  physicsConfig: {fileID: 11400000, guid: b750ba1bd26ec0642902a93d9c83e782, type: 2}
+  simulationSeed: 0
+  chunkSize: 16
+  chunkSleepDelay: 3
+  maxProcessedCellsPerFrame: 10000
+  globalSpeedMultiplier: 0.5
+  enableStats: 1
+  logInterval: 30
+--- !u!4 &881479504
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 881479502}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 179.32272, y: 1042.6603, z: -0.07953287}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &975868223
 GameObject:
   m_ObjectHideFlags: 0
@@ -1902,7 +1954,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1186727234}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 31b7a4acb34af0e45aaa24d343d8bdba, type: 3}
   m_Name: 
@@ -3462,11 +3514,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a3e6bac12300c94f9d3e993b7436298, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  metadata:
-    seed: 0
-    mapSize: {x: 0, y: 0}
-    chunkCount: {x: 0, y: 0}
-  baseTerrain: {fileID: 11400000, guid: 44fe922146dde9847bc191f445b1747b, type: 2}
 --- !u!4 &2143271237
 Transform:
   m_ObjectHideFlags: 0
@@ -3566,3 +3613,4 @@ SceneRoots:
   - {fileID: 660398701}
   - {fileID: 437427354}
   - {fileID: 1027974965}
+  - {fileID: 881479504}

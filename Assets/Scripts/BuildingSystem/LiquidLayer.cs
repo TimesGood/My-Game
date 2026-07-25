@@ -21,6 +21,7 @@ public class LiquidLayer : ConstructionLayer {
             LiquidHandler.Instance.RemoveForUpdate(liquid, worldCoords);
         } else {
             chunkManager.SetBlockId(LayerType.Liquid, worldCoords, liquid.blockId);
+            PhysicsSimulationHandler.Instance.MarkForUpdate(worldCoords);
             LiquidHandler.Instance.MarkForUpdate(liquid, worldCoords);
         }
         
