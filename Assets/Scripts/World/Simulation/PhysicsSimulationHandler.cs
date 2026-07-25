@@ -23,6 +23,7 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
 
     [Header("性能统计")]
     public bool enableStats = true;                    // 是否启用统计
+    public bool openSimulation = true;
 
     // 模拟组件
     private SimulationGrid simulationGrid;
@@ -65,7 +66,7 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         if (!isInitialized || !isSimulationEnabled) return;
 
         // 执行模拟步骤
-        SimulationStep();
+        if(openSimulation) SimulationStep();
 
         // 更新 FPS 统计
         UpdateFPS();
@@ -128,7 +129,7 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
 
         // 创建活跃格子的副本，避免在遍历过程中修改集合
         List<Vector2Int> activeCellsCopy = new List<Vector2Int>(simulationGrid.GetActiveCells());
-
+        activeCellsCopy.Sort((a, b) => b.y.CompareTo(a.y));
         // 遍历副本
         foreach (var pos in activeCellsCopy) {
             // 检查处理预算

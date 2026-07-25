@@ -13,13 +13,34 @@ public class ExampleConfig : MonoBehaviour {
     public void CreateExampleData() {
         MaterialPhysicsConfig config = ScriptableObject.CreateInstance<MaterialPhysicsConfig>();
 
-        // 示例：配置水
+        // 示例：配置油（密度最低，浮在水面上）
+        var oilEntry = new MaterialPhysicsConfig.MaterialDefinitionEntry {
+            materialName = "Oil",
+            blockId = 1000, // 假设油的 blockId
+            definition = new SimulationMaterialDefinition {
+                movementMode = MaterialMovementMode.Liquid,
+                density = 10, // 密度很低
+                moveProbability = 1f,
+                lateralProbability = 0.8f,
+                horizontalSearchDistance = 6,
+                canBeDisplaced = true,
+                isFlammable = true,
+                flammability = 0.8f,
+                ignitionTemperature = 80f,
+                minVolume = 0.005f,
+                maxVolume = 1f,
+                flowSpeed = 8f,
+                horizontalSpreadDistance = 6
+            }
+        };
+
+        // 示例：配置水（中等密度，浮在油下面，岩浆上面）
         var waterEntry = new MaterialPhysicsConfig.MaterialDefinitionEntry {
             materialName = "Water",
             blockId = 1001, // 假设水的 blockId
             definition = new SimulationMaterialDefinition {
                 movementMode = MaterialMovementMode.Liquid,
-                density = 30,
+                density = 30, // 中等密度
                 moveProbability = 1f,
                 lateralProbability = 0.8f,
                 horizontalSearchDistance = 6,
@@ -31,6 +52,27 @@ public class ExampleConfig : MonoBehaviour {
                 maxVolume = 1f,
                 flowSpeed = 10f, // 水流速度：每秒更新10次
                 horizontalSpreadDistance = 6
+            }
+        };
+
+        // 示例：配置毒液（密度比水高，沉在水下面）
+        var poisonEntry = new MaterialPhysicsConfig.MaterialDefinitionEntry {
+            materialName = "Poison",
+            blockId = 1005, // 假设毒液的 blockId
+            definition = new SimulationMaterialDefinition {
+                movementMode = MaterialMovementMode.Liquid,
+                density = 50, // 密度比水高
+                moveProbability = 1f,
+                lateralProbability = 0.8f,
+                horizontalSearchDistance = 5,
+                canBeDisplaced = true,
+                isFlammable = false,
+                flammability = 0f,
+                ignitionTemperature = 100f,
+                minVolume = 0.005f,
+                maxVolume = 1f,
+                flowSpeed = 9f,
+                horizontalSpreadDistance = 5
             }
         };
 
@@ -72,17 +114,17 @@ public class ExampleConfig : MonoBehaviour {
             }
         };
 
-        // 示例：配置岩浆
+        // 示例：配置岩浆（密度最高，沉在最下面）
         var lavaEntry = new MaterialPhysicsConfig.MaterialDefinitionEntry {
             materialName = "Lava",
             blockId = 1004, // 假设岩浆的 blockId
             definition = new SimulationMaterialDefinition {
                 movementMode = MaterialMovementMode.Liquid,
-                density = 88,
+                density = 88, // 密度最高
                 moveProbability = 0.72f,
                 lateralProbability = 0.45f,
                 horizontalSearchDistance = 3,
-                canBeDisplaced = false,
+                canBeDisplaced = true,
                 isFlammable = false,
                 flammability = 0f,
                 ignitionTemperature = 160f,
@@ -94,7 +136,9 @@ public class ExampleConfig : MonoBehaviour {
         };
 
         config.materialEntries = new MaterialPhysicsConfig.MaterialDefinitionEntry[] {
+            oilEntry,
             waterEntry,
+            poisonEntry,
             sandEntry,
             gravelEntry,
             lavaEntry

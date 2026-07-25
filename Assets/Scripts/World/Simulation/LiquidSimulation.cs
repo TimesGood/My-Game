@@ -102,6 +102,8 @@ public class LiquidSimulation {
             return true;
         }
 
+        
+
         // 1. 尝试向下流动（优先级最高）
         if (TryFlowDown(x, y, ref curVolume, liquidId, materialDef)) {
             return true;
@@ -141,16 +143,20 @@ public class LiquidSimulation {
 
         // 如果下方是不同类型的液体
         if (downLiquid != null && downLiquid.blockId != liquidId) {
-            // 不同液体接触
-            // 判断密度，密度大的进行交换
             var downMaterialDef = physicsConfig.GetDefinition(downLiquid.blockId);
-            if (materialDef.density > downMaterialDef.density) {
-                
-                
+            if (downMaterialDef == null) return false;
+
+            // 密度比较：只有当前液体密度大于下方液体密度时，才能下沉
+            if (materialDef.density <= downMaterialDef.density) {
+                return false; // 密度不够，不能下沉
             }
+
+            UpdateVolume(liquidId, downPos, curVolume);// 交换下方液体
+            UpdateVolume(downLiquid.blockId, pos, downVolume); // 交换当前液体
+            return true;
         }
 
-        // 执行液体转移
+        // 下方是空的或同种液体，执行普通流动
         downVolume += curVolume;
         UpdateVolume(liquidId, downPos, downVolume);
 
@@ -165,40 +171,52 @@ public class LiquidSimulation {
     /// 尝试横向扩散
     /// </summary>
     private bool TryDiffusion(int x, int y, ref float curVolume, long liquidId, SimulationMaterialDefinition materialDef) {
+        var pos = new Vector2Int(x, y);
         List<Vector2Int> flowDirs = new List<Vector2Int>();
-
+        
         // 检测可用流动方向
         Vector2Int leftDir = new Vector2Int(x - 1, y);
         Vector2Int rightDir = new Vector2Int(x + 1, y);
         if (CheckFlowDirection(rightDir, curVolume, liquidId, materialDef)) flowDirs.Add(rightDir);
         if (CheckFlowDirection(leftDir, curVolume, liquidId, materialDef)) flowDirs.Add(leftDir);
-
         if (flowDirs.Count == 0) return false;
 
         // 计算每个方向的分配量
         float avg = curVolume;
         foreach (var item in flowDirs) {
+            if (liquidId != chunkManager.GetLiquidId(item)) continue;
             avg += chunkManager.GetLiquidVolume(item);
         }
         avg /= (flowDirs.Count + 1);
 
         // 更新当前位置
         curVolume = avg;
-        var pos = new Vector2Int(x, y);
+        
         UpdateVolume(liquidId, pos, curVolume);
 
         // 更新目标位置
         foreach (var dir in flowDirs) {
             LiquidClass targetLiquid = chunkManager.GetTileClass(LayerType.Liquid, dir.x, dir.y) as LiquidClass;
-            // 如果目标是不同液体
+
+            // 如果目标是不同液体，需要根据密度处理
             if (targetLiquid != null && targetLiquid.blockId != liquidId) {
-                // 扩散并把目标抬升
-                //float tarVolume = chunkManager.GetLiquidVolume(dir);
-                //UpdateVolume(targetLiquid.blockId, dir + Vector2Int.up, tarVolume);
-                //UpdateVolume(liquidId, dir, avg - tarVolume);
-                //continue;
+                var targetMaterialDef = physicsConfig.GetDefinition(targetLiquid.blockId);
+                if (targetMaterialDef != null) {
+
+                    float targetVolume = chunkManager.GetLiquidVolume(dir);
+                    LiquidClass upClass = chunkManager.GetTileClass(LayerType.Liquid, dir + Vector2Int.up) as LiquidClass;
+                    if (upClass != null && upClass.blockId == targetLiquid.blockId) {
+                        targetVolume += chunkManager.GetLiquidVolume(dir + Vector2Int.up);
+                    }
+                    // 找到最上方的液体
+                    UpdateVolume(targetLiquid.blockId, dir + Vector2Int.up, targetVolume);
+                    UpdateVolume(liquidId, dir, avg);
+
+                    continue;
+                }
             }
 
+            // 同种液体或空位置，直接更新
             UpdateVolume(liquidId, dir, avg);
         }
 
@@ -223,18 +241,9 @@ public class LiquidSimulation {
         // 如果目标是不同类型的液体
         if (targetLiquid != null && targetLiquid.blockId != liquidId) {
             var targetMaterialDef = physicsConfig.GetDefinition(targetLiquid.blockId);
-
-            // 如果密度大于目标密度，可扩散，并把目标向上抬升
-            //if (materialDef.density > targetMaterialDef.density) {
-            //    return true;
-            //} else {
-            //    return false;
-            //}
-            
-            //if (targetMaterialDef != null && !targetMaterialDef.canBeDisplaced) {
-            //    return false; // 不可置换的液体阻挡流动
-            //}
-            return true; // 可以混合的不同液体
+            if (targetMaterialDef == null) return false;
+            if (materialDef.density > targetMaterialDef.density) return true;
+            else return false;
         }
 
         // 如果目标是空的或同种液体，检查体积差
