@@ -6,6 +6,14 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 /// <summary>
+/// 液体模拟模式
+/// </summary>
+public enum LiquidSimulationMode {
+    Custom,             // 自定义模式（带冷却时间的密度分层）
+    PixelAlchemy        // PixelAlchemy模式（基于粒子移动）
+}
+
+/// <summary>
 /// 物理模拟主循环，整合液体和粉末模拟
 /// 借鉴 PixelAlchemy 的系统分离和活跃区域优化设计
 /// </summary>
@@ -14,6 +22,7 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
     public MaterialPhysicsConfig physicsConfig;
 
     [Header("模拟设置")]
+    public LiquidSimulationMode liquidSimulationMode = LiquidSimulationMode.Custom; // 液体模拟模式
     public int simulationSeed = 0;                     // 随机种子（0表示随机）
     public int chunkSize = 16;                         // 区块大小
     public int chunkSleepDelay = 3;                    // 区块休眠延迟帧数
@@ -27,7 +36,8 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
 
     // 模拟组件
     private SimulationGrid simulationGrid;
-    private LiquidSimulation liquidSimulation;
+    private LiquidSimulation liquidSimulation;           // 自定义液体模拟
+    private LiquidSimulationPixelAlchemy liquidSimulationPA; // PixelAlchemy液体模拟
     private PowderSimulation powderSimulation;
 
     // 区块管理器引用
@@ -93,10 +103,14 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
             chunkSleepDelay
         );
 
-        // 创建液体模拟
+        // 创建自定义液体模拟（带冷却时间的密度分层）
         liquidSimulation = new LiquidSimulation(chunkManager, physicsConfig, simulationSeed);
         liquidSimulation.GlobalSpeedMultiplier = globalSpeedMultiplier;
         liquidSimulation.OnUpdateVolume += HandleLiquidVolumeUpdate;
+
+        // 创建 PixelAlchemy 风格的液体模拟（基于粒子移动）
+        liquidSimulationPA = new LiquidSimulationPixelAlchemy(chunkManager, physicsConfig, simulationSeed);
+        liquidSimulationPA.OnUpdateVolume += HandleLiquidVolumeUpdate;
 
         //// 创建粉末模拟
         powderSimulation = new PowderSimulation(chunkManager, physicsConfig, simulationSeed);
@@ -107,7 +121,7 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         //simulationGrid.ActivateAll();
 
         isInitialized = true;
-        UnityEngine.Debug.Log("[PhysicsSimulationHandler] 物理模拟系统初始化完成");
+        UnityEngine.Debug.Log($"[PhysicsSimulationHandler] 物理模拟系统初始化完成，当前液体模拟模式: {liquidSimulationMode}");
     }
 
     /// <summary>
@@ -119,37 +133,39 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         // 开始模拟步骤
         simulationGrid.BeginSimulationStep();
 
-        int processedCells = 0;
+        // 如果使用 PixelAlchemy 模式，清除帧标记
+        if (liquidSimulationMode == LiquidSimulationMode.PixelAlchemy) {
+            liquidSimulationPA.ClearFrameFlags();
+        }
 
-        //logFrameCounter++;
-        //if (logFrameCounter >= logInterval) {
-        //    UnityEngine.Debug.Log("目前活动中: " + simulationGrid.GetActiveCellCount());
-        //    logFrameCounter = 0;
-        //}
+        int processedCells = 0;
 
         // 创建活跃格子的副本，避免在遍历过程中修改集合
         List<Vector2Int> activeCellsCopy = new List<Vector2Int>(simulationGrid.GetActiveCells());
-        activeCellsCopy.Sort((a, b) => b.y.CompareTo(a.y));
+        //activeCellsCopy.Sort((a, b) => a.y.CompareTo(b.y));
+
         // 遍历副本
         foreach (var pos in activeCellsCopy) {
             // 检查处理预算
             if (maxProcessedCellsPerFrame > 0 && processedCells >= maxProcessedCellsPerFrame) {
                 break;
             }
-            //logFrameCounter++;
-            //if (logFrameCounter >= logInterval) {
-            //    UnityEngine.Debug.Log("处理活动瓦片：");
-            //    logFrameCounter = 0;
-            //}
+
             // 处理液体
             if (chunkManager.GetTileData(pos).HasLiquid) {
+                bool changed = false;
 
-                //logFrameCounter++;
-                //if (logFrameCounter >= logInterval) {
-                //    UnityEngine.Debug.Log("液体");
-                //    logFrameCounter = 0;
-                //}
-                if (liquidSimulation.StepCell(pos.x, pos.y, simulationGrid)) {
+                // 根据模拟模式选择使用哪个模拟器
+                switch (liquidSimulationMode) {
+                    case LiquidSimulationMode.Custom:
+                        changed = liquidSimulation.StepCell(pos.x, pos.y, simulationGrid);
+                        break;
+                    case LiquidSimulationMode.PixelAlchemy:
+                        changed = liquidSimulationPA.StepCell(pos.x, pos.y, simulationGrid);
+                        break;
+                }
+
+                if (changed) {
                     processedCells++;
                 }
             }
@@ -271,7 +287,11 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         if (liquidId != 0 && volume > 0) {
             TileClass tileClass = TileRegistry_.GetTile(liquidId);
             if (tileClass != null && tileClass is LiquidClass liquidClass) {
-                tile = liquidClass.GetTileToVolume(volume);
+                TileClass upTile = chunkManager.GetTileClass(LayerType.Liquid, pos + Vector2Int.up);
+                if(upTile != null)
+                    tile = liquidClass.GetTileToVolume(1);
+                else
+                    tile = liquidClass.GetTileToVolume(volume);
             }
         }
 
@@ -328,6 +348,32 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
     /// </summary>
     public void SetSimulationEnabled(bool enabled) {
         isSimulationEnabled = enabled;
+    }
+
+    /// <summary>
+    /// 设置液体模拟模式
+    /// </summary>
+    /// <param name="mode">模拟模式</param>
+    public void SetLiquidSimulationMode(LiquidSimulationMode mode) {
+        liquidSimulationMode = mode;
+        UnityEngine.Debug.Log($"[PhysicsSimulationHandler] 液体模拟模式切换为: {mode}");
+    }
+
+    /// <summary>
+    /// 获取当前液体模拟模式
+    /// </summary>
+    public LiquidSimulationMode GetLiquidSimulationMode() {
+        return liquidSimulationMode;
+    }
+
+    /// <summary>
+    /// 设置全局速度倍率
+    /// </summary>
+    public void SetGlobalSpeedMultiplier(float multiplier) {
+        globalSpeedMultiplier = Mathf.Clamp(multiplier, 0.1f, 10f);
+        if (liquidSimulation != null) {
+            liquidSimulation.GlobalSpeedMultiplier = globalSpeedMultiplier;
+        }
     }
 
     /// <summary>

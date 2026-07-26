@@ -33,7 +33,7 @@ MonoBehaviour:
     blockId: 6015563188601812698
     definition:
       movementMode: 2
-      density: 30
+      density: 10
       moveProbability: 1
       lateralProbability: 0.8
       horizontalSearchDistance: 6
@@ -43,5 +43,5 @@ MonoBehaviour:
       ignitionTemperature: 0
       minVolume: 0.0001
       maxVolume: 1
-      flowSpeed: 100
+      flowSpeed: 1
       horizontalSpreadDistance: 3
