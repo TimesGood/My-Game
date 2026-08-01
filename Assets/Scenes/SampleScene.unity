@@ -1142,7 +1142,7 @@ MonoBehaviour:
   physicsConfig: {fileID: 11400000, guid: b750ba1bd26ec0642902a93d9c83e782, type: 2}
   liquidSimulationMode: 0
   simulationSeed: 0
-  chunkSize: 5
+  chunkSize: 64
   chunkSleepDelay: 3
   maxProcessedCellsPerFrame: 10000
   globalSpeedMultiplier: 0.5

@@ -36,7 +36,7 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
 
     // 模拟组件
     private SimulationGrid simulationGrid;
-    private LiquidSimulation liquidSimulation;           // 自定义液体模拟
+    private LiquidSimulationTest liquidSimulation;           // 自定义液体模拟
     private LiquidSimulationPixelAlchemy liquidSimulationPA; // PixelAlchemy液体模拟
     private PowderSimulation powderSimulation;
 
@@ -104,7 +104,7 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         );
 
         // 创建自定义液体模拟（带冷却时间的密度分层）
-        liquidSimulation = new LiquidSimulation(chunkManager, physicsConfig, simulationSeed);
+        liquidSimulation = new LiquidSimulationTest(chunkManager, physicsConfig, simulationSeed);
         liquidSimulation.GlobalSpeedMultiplier = globalSpeedMultiplier;
         liquidSimulation.OnUpdateVolume += HandleLiquidVolumeUpdate;
 
@@ -141,11 +141,11 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         int processedCells = 0;
 
         // 创建活跃格子的副本，避免在遍历过程中修改集合
-        List<Vector2Int> activeCellsCopy = new List<Vector2Int>(simulationGrid.GetActiveCells());
+        //List<Vector2Int> activeCellsCopy = new List<Vector2Int>(simulationGrid.GetActiveCells());
         //activeCellsCopy.Sort((a, b) => a.y.CompareTo(b.y));
 
         // 遍历副本
-        foreach (var pos in activeCellsCopy) {
+        foreach (var pos in simulationGrid.GetActiveCells()) {
             // 检查处理预算
             if (maxProcessedCellsPerFrame > 0 && processedCells >= maxProcessedCellsPerFrame) {
                 break;
@@ -171,12 +171,12 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
             }
 
             // 处理粉末
-            TileData tileData = chunkManager.GetTileData(pos);
-            if (tileData.HasGround && physicsConfig.IsPowderMaterial(tileData.groundId)) {
-                if (powderSimulation.StepCell(pos.x, pos.y, simulationGrid)) {
-                    processedCells++;
-                }
-            }
+            //TileData tileData = chunkManager.GetTileData(pos);
+            //if (tileData.HasGround && physicsConfig.IsPowderMaterial(tileData.groundId)) {
+            //    if (powderSimulation.StepCell(pos.x, pos.y, simulationGrid)) {
+            //        processedCells++;
+            //    }
+            //}
         }
 
         // 结束模拟步骤

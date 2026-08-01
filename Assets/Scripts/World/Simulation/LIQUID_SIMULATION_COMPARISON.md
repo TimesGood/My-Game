@@ -2,10 +2,11 @@
 
 ## 概述
 
-本项目现在支持两种液体模拟方案，你可以在运行时切换来对比效果：
+本项目现在支持三种液体模拟方案，你可以在运行时切换来对比效果：
 
 1. **Custom 模式**：自定义模式，带冷却时间的密度分层
 2. **PixelAlchemy 模式**：基于粒子移动的理念
+3. **V2 模式**：渐进式密度交换，解决混合抽搐问题（推荐）
 
 ## 如何切换
 
@@ -19,10 +20,40 @@
 
 ```csharp
 PhysicsSimulationHandler handler = PhysicsSimulationHandler.Instance;
-handler.SetLiquidSimulationMode(LiquidSimulationMode.PixelAlchemy);
+handler.SetLiquidSimulationMode(LiquidSimulationMode.V2); // 推荐使用V2模式
 ```
 
+### 运行时切换
+
+添加 `LiquidSimulationModeSwitcher` 组件：
+- 按 **M** 键循环切换模式：Custom -> PixelAlchemy -> V2 -> Custom
+
 ## 方案对比
+
+### V2 模式（推荐）
+
+**设计理念**：
+- 渐进式密度交换，避免突然的位置变化
+- 体积守恒原则，保持总体积不变
+- 密度加权平均，平滑过渡混合区域
+- 稳定优先，避免视觉抽搐
+
+**核心特点**：
+- ✅ 渐进式密度交换（解决抽搐问题）
+- ✅ 体积守恒（液体不会凭空消失）
+- ✅ 密度加权混合（平滑过渡）
+- ✅ 混合阈值控制（避免过度混合）
+- ✅ 横向扩散保持各层独立
+
+**适用场景**：
+- 需要稳定混合效果的游戏
+- 不同液体需要平滑过渡
+- 避免视觉抽搐和闪烁
+- 需要真实的液体行为
+
+**代码位置**：`LiquidSimulationV2.cs`
+
+---
 
 ### Custom 模式（自定义）
 
@@ -70,14 +101,16 @@ handler.SetLiquidSimulationMode(LiquidSimulationMode.PixelAlchemy);
 
 ## 核心差异对比
 
-| 特性 | Custom 模式 | PixelAlchemy 模式 |
-|------|-------------|-------------------|
-| 液体表示 | 基于体积（0~1+） | 基于粒子（每个格子是完整粒子） |
-| 密度分层 | ✅ 带冷却时间 | ✅ 密度驱动位移 |
-| 冒泡问题 | 通过冷却时间解决 | 通过帧标记避免 |
-| 横向扩散 | 基于体积差 | 横向搜索多个格子 |
-| 随机化 | 方向随机化 | 方向和扫描顺序随机化 |
-| 性能 | 较好 | 较好 |
+| 特性 | Custom 模式 | PixelAlchemy 模式 | V2 模式 |
+|------|-------------|-------------------|---------|
+| 液体表示 | 基于体积（0~1+） | 基于粒子 | 基于体积 |
+| 密度分层 | ✅ 带冷却时间 | ✅ 密度驱动位移 | ✅ 渐进式交换 |
+| 冒泡问题 | 通过冷却时间解决 | 通过帧标记避免 | 通过渐进交换避免 |
+| 混合抽搐 | ❌ 可能出现 | ❌ 可能出现 | ✅ 解决 |
+| 横向扩散 | 基于体积差 | 横向搜索多个格子 | 保持各层独立 |
+| 体积守恒 | ✅ | ✅ | ✅ |
+| 视觉稳定性 | 中等 | 中等 | 高 |
+| 性能 | 较好 | 较好 | 较好 |
 
 ## 详细差异说明
 
@@ -100,6 +133,23 @@ if (targetDefinition.IsAir) {
     // 直接移动整个粒子
     grid.SetCell(toX, toY, source);
     grid.SetCell(fromX, fromY, Pixel.FromMaterial(MaterialType.Air));
+}
+```
+
+**V2 模式**：
+```csharp
+// 渐进式密度交换
+float swapFactor = Mathf.Clamp01(Mathf.Abs(densityDiff) / 50f);
+float maxSwapVolume = Mathf.Min(curVolume, downVolume) * swapFactor * STABILITY_FACTOR;
+
+if (densityDiff > 0) {
+    // 高密度下沉
+    UpdateVolume(liquidId, pos, curVolume - maxSwapVolume);
+    UpdateVolume(downLiquidId, downPos, downVolume + maxSwapVolume);
+} else {
+    // 低密度上浮
+    UpdateVolume(liquidId, pos, curVolume - maxSwapVolume);
+    UpdateVolume(downLiquidId, downPos, downVolume + maxSwapVolume);
 }
 ```
 
@@ -201,9 +251,16 @@ for (int distance = 1; distance <= maxDistance; distance++) {
 
 ## 选择建议
 
+### 选择 V2 模式（推荐）如果你需要：
+- 稳定的混合效果（无抽搐）
+- 平滑的密度分层过渡
+- 体积守恒的液体行为
+- 避免视觉闪烁和跳动
+- 真实的液体混合行为
+
 ### 选择 Custom 模式如果你需要：
 - 精确的体积控制
-- 稳定的密度分层
+- 简单的密度分层
 - 可调节的流速
 - 防止冒泡效果
 

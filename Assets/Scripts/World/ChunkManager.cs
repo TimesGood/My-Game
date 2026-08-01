@@ -69,6 +69,9 @@ public class ChunkManager : Singleton<ChunkManager>, IMapSaveManager {
     }
 
     // ===== 图块数据访问 =====
+    public bool CheckWorldBound(Vector2Int worldPos) {
+        return CheckWorldBound(worldPos.x, worldPos.y);
+    }
     public bool CheckWorldBound(int x, int y) {
         return x >= 0 && x < Width && y >= 0 && y < Height;
     }
