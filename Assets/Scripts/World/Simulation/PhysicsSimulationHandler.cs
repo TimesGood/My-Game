@@ -10,7 +10,7 @@ using UnityEngine.Tilemaps;
 /// </summary>
 public enum LiquidSimulationMode {
     Custom,             // 自定义模式（带冷却时间的密度分层）
-    PixelAlchemy        // PixelAlchemy模式（基于粒子移动）
+    PixelAlchemy       // PixelAlchemy模式（基于粒子移动）
 }
 
 /// <summary>
@@ -140,12 +140,13 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
 
         int processedCells = 0;
 
-        // 创建活跃格子的副本，避免在遍历过程中修改集合
-        //List<Vector2Int> activeCellsCopy = new List<Vector2Int>(simulationGrid.GetActiveCells());
-        //activeCellsCopy.Sort((a, b) => a.y.CompareTo(b.y));
+        // 创建活跃格子的副本并按 Y 升序（底→顶）排序
+        // 确定性顺序是泰拉瑞亚模式平整沉降的关键：无序遍历会导致流动方向随机、冒泡抽搐
+        List<Vector2Int> activeCellsCopy = new List<Vector2Int>(simulationGrid.GetActiveCells());
+        activeCellsCopy.Sort((a, b) => a.y.CompareTo(b.y));
 
         // 遍历副本
-        foreach (var pos in simulationGrid.GetActiveCells()) {
+        foreach (var pos in activeCellsCopy) {
             // 检查处理预算
             if (maxProcessedCellsPerFrame > 0 && processedCells >= maxProcessedCellsPerFrame) {
                 break;

@@ -1,5 +1,8 @@
 # V2 液体模拟使用指南
 
+> ⚠️ **已作废**：本文档描述的 V2 模式从未实现（代码中无 `LiquidSimulationV2.cs`，枚举无 `LiquidSimulationMode.V2`）。
+> 当前推荐使用 **Terraria 模式**（`LiquidSimulationTerraria.cs`，默认），其渐进式/稳定的设计目标已由泰拉瑞亚风格的算法实现。请参阅 `LIQUID_SIMULATION_COMPARISON.md`。
+
 ## 概述
 
 V2 模式是专为解决液体混合时的抽搐问题而设计的液体模拟方案。它采用渐进式密度交换和体积守恒原则，提供最稳定、最真实的液体物理效果。

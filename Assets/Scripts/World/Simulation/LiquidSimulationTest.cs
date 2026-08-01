@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine;
+using static Unity.Burst.Intrinsics.X86;
 using static UnityEditor.Progress;
 
 /// <summary>
@@ -19,6 +20,10 @@ public class LiquidSimulationTest
 
     // 全局速度倍率
     public float GlobalSpeedMultiplier { get; set; } = 1f;
+
+
+    // ===== 可调参数 =====
+    public float MaxVerticalFlowRate { get; set; } = 0.35f;
 
     // 液体更新回调
     public System.Action<long, Vector2Int, float> OnUpdateVolume;
@@ -78,17 +83,10 @@ public class LiquidSimulationTest
         long liquidId = tileData.liquidId;
         float curVolume = tileData.liquidVolume;
 
-        // 获取材料定义
         var materialDef = physicsConfig.GetDefinition(liquidId);
         if (materialDef == null || !materialDef.IsLiquid) return false;
 
-        // 流速控制：检查是否到达更新时间
-        Vector2Int pos = new Vector2Int(x, y);
-        if (!ShouldUpdate(pos, materialDef.flowSpeed)) {
-            // 此帧不到更新时间，放到下一帧
-            grid.MarkChanged(x, y);
-            return false;
-        }
+        var pos = new Vector2Int(x, y);
 
         // 检查最小体积阈值
         if (curVolume < materialDef.minVolume) {
@@ -97,30 +95,26 @@ public class LiquidSimulationTest
             return true;
         }
 
-        // 检查是否有固体方块阻挡
-        TileClass foregroundTile = chunkManager.GetTileClass(LayerType.Foreground, x, y);
-        if (foregroundTile != null) {
-            // 被固体阻挡，移除液体
+        // 清理:格内有实体地面阻挡
+        if (chunkManager.GetTileClass(LayerType.Foreground, x, y) != null) {
             UpdateVolume(liquidId, pos, 0f);
             return true;
         }
 
 
 
+
         // 1. 尝试向下流动
-        if (TryFlowDown(x, y, ref curVolume, liquidId, materialDef)) {
-            return true;
-        }
+        if (TryFlowDown(x, y, curVolume, liquidId, materialDef)) return true;
 
-        // 2. 尝试横向扩散
-        if (TryDiffusion(x, y, ref curVolume, liquidId, materialDef)) {
-            return true;
-        }
+        // 2. 尝试斜向扩散
+        //if (TryDiagonalFlow(x, y, curVolume, liquidId, materialDef)) return true;
 
-        // 3. 尝试向上溢出（体积>1时）
-        if (TryOverflow(x, y, curVolume, liquidId, materialDef)) {
-            return true;
-        }
+        // 3. 尝试横向扩散
+        if (TrySpreadFlow(x, y, curVolume, liquidId, materialDef)) return true;
+
+        // 4. 尝试向上溢出
+        //if (TryOverflow(x, y, curVolume, liquidId, materialDef)) return true;
 
         return false;
     }
@@ -128,114 +122,164 @@ public class LiquidSimulationTest
     /// <summary>
     /// 尝试向下流动
     /// </summary>
-    private bool TryFlowDown(int x, int y, ref float curVolume, long liquidId, SimulationMaterialDefinition materialDef) {
-        var pos = new Vector2Int(x, y);
+    private bool TryFlowDown(int x, int y, float curVolume, long liquidId, SimulationMaterialDefinition materialDef) {
         if (y <= 0) return false;
 
-        Vector2Int downPos = pos + Vector2Int.down;
-
-        // 检查下方是否可流动（有固体阻挡）
-        if (chunkManager.GetTileClass(LayerType.Foreground, downPos.x, downPos.y) != null) return false;
-
-        // 获取下方瓦片信息
+        Vector2Int downPos = new Vector2Int(x, y - 1);
         TileData downData = chunkManager.GetTileData(downPos);
-        if (downData.HasGround || downData.liquidVolume >= 1f) return false;
+        if (downData.HasGround) return false;
 
-        // 下方是空的或同种液体，执行普通流动
-        float downVolume = curVolume + downData.liquidVolume;
-        UpdateVolume(liquidId, downPos, downVolume);
+        long downLiquidId = downData.liquidId;
+        float downVolume = downData.liquidVolume;
 
-        // 清空当前位置
-        UpdateVolume(liquidId, pos, 0);
+        // 下方为空 → 转移
+        if (downLiquidId == 0) {
+            float move = Mathf.Min(curVolume, MaxVerticalFlowRate);
+            UpdateVolume(liquidId, downPos, move);
+            UpdateVolume(liquidId, new Vector2Int(x, y), curVolume - move);
+            return true;
+        }
 
-        return true;
+        // 下方为同种液体 → 未满则转移
+        if (downLiquidId == liquidId) {
+            if (downVolume >= 1) return false;
+            float move = Mathf.Min(curVolume, MaxVerticalFlowRate);
+            UpdateVolume(liquidId, downPos, downVolume + move);
+            UpdateVolume(liquidId, new Vector2Int(x, y), curVolume - move);
+            return true;
+        }
+
+        // 下方为异种液体 → 密度判定
+        var downDef = physicsConfig.GetDefinition(downLiquidId);
+        if (downDef == null) return false;
+
+        if (materialDef.density > downDef.density) {
+            // 当前密度更大 → 沉底(交换两格液体)
+            UpdateVolume(downLiquidId, new Vector2Int(x, y), downVolume);
+            UpdateVolume(liquidId, downPos, curVolume);
+            return true;
+        }
+
+        return false; // 当前密度更小 → 浮在上面,阻挡下落
     }
 
     /// <summary>
-    /// 尝试横向扩散
+    /// 尝试斜向流动
     /// </summary>
-    private bool TryDiffusion(int x, int y, ref float curVolume, long liquidId, SimulationMaterialDefinition materialDef) {
+    private Dictionary<Vector2Int, TileData> tempPosList = new Dictionary<Vector2Int, TileData>();// 临时内容缓存
+    private bool TryDiagonalFlow(int x, int y, float curVolume, long liquidId, SimulationMaterialDefinition materialDef) {
+        tempPosList.Clear();
         var pos = new Vector2Int(x, y);
+        var leftDiagonalPos = pos + Vector2Int.left + Vector2Int.down;
+        var rightDiagonalPos = pos + Vector2Int.right + Vector2Int.down;
+        TileData leftData = chunkManager.GetTileData(leftDiagonalPos);
+        TileData rightData = chunkManager.GetTileData(rightDiagonalPos);
+        if (CheckDiagonalFlow(leftDiagonalPos, curVolume, liquidId, materialDef)) tempPosList.Add(leftDiagonalPos, leftData);
+        if (CheckDiagonalFlow(rightDiagonalPos, curVolume, liquidId, materialDef)) tempPosList.Add(rightDiagonalPos, rightData);
 
-        // 评估左右两侧流动目标（若目标下方为空则重定向到下方以加速下落）
-        var leftTarget = pos + Vector2Int.left;
-        var rightTarget = pos + Vector2Int.right;
-
-        bool canFlowLeft = CheckFlowDirection(ref leftTarget, curVolume, materialDef);
-        bool canFlowRight = CheckFlowDirection(ref rightTarget, curVolume, materialDef);
-
-        if (!canFlowLeft && !canFlowRight) return false;
-
-        // 区分「平流」（水平均分）与「重定向」（向下追加）目标
-        bool leftFell = canFlowLeft && leftTarget.y != y;
-        bool rightFell = canFlowRight && rightTarget.y != y;
-        bool hasFalling = leftFell || rightFell;
-
-        // ---------- 计算均分体积 ----------
-        // 仅平流目标参与均分；有重定向目标时基础分母 +1（当前位置 + 下落份额）
+        if (tempPosList.Count == 0) return false;
         float avg = curVolume;
-        int divisor = hasFalling ? 2 : 1;
 
-        if (canFlowLeft && !leftFell) {
-            avg += chunkManager.GetLiquidVolume(leftTarget);
-            divisor++;
-        }
-        if (canFlowRight && !rightFell) {
-            avg += chunkManager.GetLiquidVolume(rightTarget);
-            divisor++;
-        }
-        avg /= divisor;
+        avg /= (tempPosList.Count + 1);
 
-        // ---------- 更新当前位置 ----------
-        curVolume = avg;
         UpdateVolume(liquidId, pos, avg);
 
-        // ---------- 更新平流目标 ----------
-        if (canFlowLeft && !leftFell) {
-            UpdateVolume(liquidId, leftTarget, avg);
+        // 更新目标位置
+        foreach (var dir in tempPosList) {
+            Vector2Int k = dir.Key;
+            TileData v = dir.Value;
+            UpdateVolume(liquidId, k, avg + v.liquidVolume);
         }
-        if (canFlowRight && !rightFell) {
-            UpdateVolume(liquidId, rightTarget, avg);
-        }
-
-        // ---------- 更新重定向下落目标（在已有体积上追加） ----------
-        if (leftFell) {
-            float existing = chunkManager.GetLiquidVolume(leftTarget);
-            UpdateVolume(liquidId, leftTarget, existing + avg);
-        }
-        if (rightFell) {
-            float existing = chunkManager.GetLiquidVolume(rightTarget);
-            UpdateVolume(liquidId, rightTarget, existing + avg);
-        }
-
         return true;
+
     }
 
     /// <summary>
-    /// 检查是否可以向指定方向流动
+    /// 尝试横向流动
     /// </summary>
-    private bool CheckFlowDirection(ref Vector2Int dir, float curVolume, SimulationMaterialDefinition materialDef) {
-      
+    private bool TrySpreadFlow(int x, int y, float curVolume, long liquidId, SimulationMaterialDefinition materialDef) {
+        tempPosList.Clear();
+        var pos = new Vector2Int(x, y);
+        // 检测可用流动方向
+        Vector2Int leftDir = pos + Vector2Int.left;
+        Vector2Int rightDir = pos + Vector2Int.right;
+        TileData leftData = chunkManager.GetTileData(leftDir);
+        TileData rightData = chunkManager.GetTileData(rightDir);
+        if (CheckSpreadFlow(rightDir, curVolume, liquidId, materialDef)) tempPosList.Add(rightDir, rightData);
+        if (CheckSpreadFlow(leftDir, curVolume, liquidId, materialDef)) tempPosList.Add(leftDir, leftData);
+        if (tempPosList.Count == 0) return false;
+
+        // 计算每个方向的分配量
+        float avg = curVolume;
+        foreach (var item in tempPosList) {
+            Vector2Int k = item.Key;
+            TileData v = item.Value;
+            if (v.liquidId != liquidId) continue;
+            avg += v.liquidVolume;
+        }
+        avg /= (tempPosList.Count + 1);
+
+        UpdateVolume(liquidId, pos, avg);
+
+        // 更新目标位置
+        foreach (var dir in tempPosList) {
+            // 同种液体或空位置，直接更新
+            Vector2Int k = dir.Key;
+            TileData v = dir.Value;
+
+            if (v.liquidId != liquidId) {
+
+                Vector2Int upPos = k + Vector2Int.up;
+
+                TileData upData = chunkManager.GetTileData(upPos);
+                UpdateVolume(v.liquidId, upPos, upData.liquidVolume + v.liquidVolume);
+                UpdateVolume(liquidId, k, avg);
+                continue;
+            }
+
+            UpdateVolume(liquidId, k, avg);
+            
+        }
+        
+        return true;
+    }
+
+    private bool CheckSpreadFlow(Vector2Int dir, float curVolume, long liquidId, SimulationMaterialDefinition materialDef) {
         if (!chunkManager.CheckWorldBound(dir)) return false;
 
         TileData targetData = chunkManager.GetTileData(dir);
-        // 检查是否有固体阻挡
+        // 检查是否符合条件
         if (targetData.HasGround) return false;
 
-        // 水平扩散时，如果扩散目标下方是空的，不需要水平扩散，直接扩散到下级
-        var downDir = dir + Vector2Int.down;
-        TileData downData = chunkManager.GetTileData(downDir);
-        if (downData.IsEmpty || (downData.HasLiquid && downData.liquidVolume < materialDef.maxVolume)) {
-            dir = downDir;
-            return true;
+        // 相同液体
+        if (targetData.HasLiquid && targetData.liquidId == liquidId && targetData.liquidVolume > curVolume) return false;
+
+        // 不同液体
+        if (targetData.HasLiquid && targetData.liquidId != liquidId) {
+
+            var targetDef = physicsConfig.GetDefinition(targetData.liquidId);
+            if (targetDef == null) return false;
+            if (targetDef.density < materialDef.density) return true;
+
+            return false;
         }
 
-        // 横向扩散则需要比较体积
-        if (curVolume > targetData.liquidVolume) {
-            return true;
-        }
+        return true;
 
-        return false;
+    }
+
+    private bool CheckDiagonalFlow(Vector2Int dir, float curVolume, long liquidId, SimulationMaterialDefinition materialDef) {
+
+        if (!chunkManager.CheckWorldBound(dir)) return false;
+
+        TileData targetData = chunkManager.GetTileData(dir);
+        // 检查是否符合条件
+        if (targetData.HasGround) return false;
+
+        // 相同液体
+        if (targetData.HasLiquid && targetData.liquidId == liquidId && targetData.liquidVolume >= materialDef.maxVolume) return false;
+
+        return true;
     }
 
     /// <summary>

@@ -18,13 +18,11 @@ public class LiquidLayer : ConstructionLayer {
         chunkManager.SetLiquidVolume(worldCoords, volume);
         if (volume == 0) {
             chunkManager.SetBlockId(LayerType.Liquid, worldCoords, 0);
-            LiquidHandler.Instance.RemoveForUpdate(liquid, worldCoords);
         } else {
             chunkManager.SetBlockId(LayerType.Liquid, worldCoords, liquid.blockId);
             PhysicsSimulationHandler.Instance.MarkForUpdate(worldCoords);
-            LiquidHandler.Instance.MarkForUpdate(liquid, worldCoords);
         }
-        
+
         // 不同体积水体瓦片
         TileBase newTile = liquid.GetTileToVolume(volume);
         var coords = _tilemap.WorldToCell(new Vector3Int(worldCoords.x, worldCoords.y));

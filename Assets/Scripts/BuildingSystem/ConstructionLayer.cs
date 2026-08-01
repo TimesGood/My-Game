@@ -48,20 +48,17 @@ public class ConstructionLayer : TilemapLayer {
         _tilemap.SetTile(coords, null);
         chunkManager.SetBlockId(layer, worldCoords, 0);
 
-        // 销毁图块时，如果周围有水体，激活模拟
+        // 销毁图块时，如果周围有水体，激活新模拟（PhysicsSimulationHandler），让水流入挖开的洞
         if (LayerType.Foreground == layer) {
+            bool hasNeighborLiquid = false;
             foreach (var dir in directions) {
-                Vector2Int target = worldCoords + dir;
-                long liquidId = chunkManager.GetLiquidId(target);
-                if (liquidId == 0) continue;
-                TileClass liquidTile = TileRegistry_.GetTile(liquidId);
-                if (liquidTile is LiquidClass liquidClass) {
-                    if (LiquidHandler.Instance.CheckMarkForUpdate(liquidClass, target)) continue;
-                    List<Vector2Int> tiles = FindConnectedTiles(LayerType.Liquid, target);
-                    foreach (var item in tiles) {
-                        LiquidHandler.Instance.MarkForUpdate(liquidClass, item);
-                    }
+                if (chunkManager.GetLiquidId(worldCoords + dir) != 0) {
+                    hasNeighborLiquid = true;
+                    break;
                 }
+            }
+            if (hasNeighborLiquid && PhysicsSimulationHandler.Instance != null) {
+                PhysicsSimulationHandler.Instance.MarkAreaForUpdate(worldCoords, 2);
             }
         }
     }

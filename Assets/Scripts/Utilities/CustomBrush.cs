@@ -6,7 +6,7 @@ using static UnityEditor.Experimental.GraphView.GraphView;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 
-//×Ô¶¨Òå±ÊË¢
+//è‡ªå®šä¹‰ç¬”åˆ·
 namespace UnityEditor
 {
     [CustomGridBrush(true, false, false,"CustonBrush")]
@@ -16,15 +16,15 @@ namespace UnityEditor
         public bool refresh;
 
 
-        //·¶Î§»æÖÆ
+        //èŒƒå›´ç»˜åˆ¶
         public override void BoxFill(GridLayout gridLayout, GameObject brushTarget, BoundsInt position)
         {
 
             if (Application.isPlaying) {
                 foreach (var pos in position.allPositionsWithin) {
-                    // »ñÈ¡¾«È·µÄÊÀ½ç×ø±ê
+                    // è·å–ç²¾ç¡®çš„ä¸–ç•Œåæ ‡
                     Vector3 cellCenter = GetCellWorldCenter(gridLayout, pos);
-                    //¼ì²é´ËÇøÓòÊÇ·ñÓĞÅö×²Ìå,ÓĞÅö×²Ìå²»ÄÜ·ÅÖÃ
+                    //æ£€æŸ¥æ­¤åŒºåŸŸæ˜¯å¦æœ‰ç¢°æ’ä½“,æœ‰ç¢°æ’ä½“ä¸èƒ½æ”¾ç½®
                     Collider2D[] colliders = Physics2D.OverlapCircleAll(new Vector2(cellCenter.x, cellCenter.y), 0.3f);
                     if (colliders.Length > 0) return;
 
@@ -44,14 +44,14 @@ namespace UnityEditor
                 
             }
         }
-        // »ñÈ¡µ¥Ôª¸ñ¾«È·ÖĞĞÄµã
+        // è·å–å•å…ƒæ ¼ç²¾ç¡®ä¸­å¿ƒç‚¹
         private Vector3 GetCellWorldCenter(GridLayout grid, Vector3Int position) {
             Vector3 cellCenter = grid.CellToWorld(position);
             cellCenter += grid.cellSize / 2;
             cellCenter.z = 0;
             return cellCenter;
         }
-        //²éÕÒÍßÆ¬¶ÔÓ¦ÍßÆ¬µØÍ¼
+        //æŸ¥æ‰¾ç“¦ç‰‡å¯¹åº”ç“¦ç‰‡åœ°å›¾
         private LayerType GetLayerByName(string name) {
             switch (name) {
                 case "Addons":
@@ -63,13 +63,13 @@ namespace UnityEditor
                 case "Liquid":
                     return LayerType.Liquid;
                 default:
-                    throw new System.Exception("Òì³££¬ÕÒ²»µ½ÍßÆ¬µØÍ¼");
+                    throw new System.Exception("å¼‚å¸¸ï¼Œæ‰¾ä¸åˆ°ç“¦ç‰‡åœ°å›¾");
             }
         }
 
 
 
-        //²Á³ı
+        //æ“¦é™¤
         public override void Erase(GridLayout gridLayout, GameObject brushTarget, Vector3Int position)
         {
             if (Application.isPlaying)
@@ -87,7 +87,7 @@ namespace UnityEditor
     }
 
 
-    //»æÖÆÃèÊöĞÅÏ¢
+    //ç»˜åˆ¶æè¿°ä¿¡æ¯
     [CustomEditor(typeof(CustomBrush))]
     public class CustomBrushEditor : GridBrushEditor
     {
@@ -95,7 +95,7 @@ namespace UnityEditor
         {
             base.OnPaintSceneGUI(gridLayout, brushTarget, position, tool, executing);
 
-            //·¶Î§
+            //èŒƒå›´
             string labelText = "Pos:"+new Vector2Int(position.x, position.y);
             if (position.size.x > 1 || position.size.y > 1)
             {
@@ -104,16 +104,16 @@ namespace UnityEditor
             if (Application.isPlaying) {
                 Tilemap tilemap = brushTarget.GetComponent<Tilemap>();
                 foreach (var pos in position.allPositionsWithin) {
-                    // »ñÈ¡¾«È·µÄÊÀ½ç×ø±ê
+                    // è·å–ç²¾ç¡®çš„ä¸–ç•Œåæ ‡
                     //Vector3 cellCenter = GetCellWorldCenter(gridLayout, pos);
-                    // »ñÈ¡ÍßÆ¬
+                    // è·å–ç“¦ç‰‡
                     TileBase tile = tilemap.GetTile(pos);
                     LayerType layer = GetLayerByName(brushTarget.name);
                     TileClass tileClass = ChunkManager.Instance.GetTileClass(layer, pos.x, pos.y);
                     if (tileClass is LiquidClass) {
                         
-                        //float volume = LiquidHandler.Instance.liquidVolume[pos.x, pos.y];
-                        float volume = LiquidHandler.Instance.GetVolume((Vector2Int)pos);
+                        // æ¶²ä½“ä½“ç§¯ç»Ÿä¸€ä» ChunkManager è¯»å–ï¼ˆLiquidHandler å·²åœç”¨ï¼‰
+                        float volume = ChunkManager.Instance.GetLiquidVolume((Vector2Int)pos);
                         Handles.Label(new Vector3(pos.x, pos.y + 1), volume.ToString() + "->" + tileClass.name);
                     }
 
@@ -125,22 +125,22 @@ namespace UnityEditor
 
             //Vector3 cellCenter = GetCellWorldCenter(gridLayout, new Vector3Int(position.x, position.y));
             //Handles.CircleHandleCap(
-            //0, // ¿Ø¼ş ID
+            //0, // æ§ä»¶ ID
             //new Vector3(cellCenter.x, cellCenter.y),
-            //Quaternion.identity, // ÎŞĞı×ª£¨±£³Ö 2D Æ½Ãæ£©
+            //Quaternion.identity, // æ— æ—‹è½¬ï¼ˆä¿æŒ 2D å¹³é¢ï¼‰
             //0.3f,
             //EventType.Repaint
             //);
         }
 
-        //»ñÈ¡µ¥Ôª¸ñ¾«È·ÖĞĞÄµã
+        //è·å–å•å…ƒæ ¼ç²¾ç¡®ä¸­å¿ƒç‚¹
         private Vector3 GetCellWorldCenter(GridLayout grid, Vector3Int position) {
             Vector3 cellCenter = grid.CellToWorld(position);
             cellCenter += grid.cellSize / 2;
             cellCenter.z = 0;
             return new Vector3Int((int)cellCenter.x, (int)cellCenter.y, 0);
         }
-        //²éÕÒÍßÆ¬¶ÔÓ¦ÍßÆ¬µØÍ¼
+        //æŸ¥æ‰¾ç“¦ç‰‡å¯¹åº”ç“¦ç‰‡åœ°å›¾
         private LayerType GetLayerByName(string name) {
             switch (name) {
                 case "Addons":
@@ -152,7 +152,7 @@ namespace UnityEditor
                 case "Liquid":
                     return LayerType.Liquid;
                 default:
-                    throw new System.Exception("Òì³££¬ÕÒ²»µ½ÍßÆ¬µØÍ¼");
+                    throw new System.Exception("å¼‚å¸¸ï¼Œæ‰¾ä¸åˆ°ç“¦ç‰‡åœ°å›¾");
             }
         }
     }

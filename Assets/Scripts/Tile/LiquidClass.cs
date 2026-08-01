@@ -10,30 +10,29 @@ using UnityEngine.UIElements;
 using static UnityEditor.PlayerSettings;
 using static UnityEditor.Progress;
 
-//ÒºÌåÀà´É×©
+//æ¶²ä½“ç±»ç“¦ç‰‡
 [CreateAssetMenu(fileName = "LiquidClass", menuName = "Tile/new LiquidClass")]
 public class LiquidClass : TileClass {
     private ChunkManager chunk => ChunkManager.Instance;
     private LiquidHandler liquidHandler;
-    [field: SerializeField] public TileBase[] tiles { get; private set; }//ÒºÌåÔÚ²»Í¬Ë®Î»Ê±µÄ²»Í¬ÍßÆ¬
-    [field: SerializeField] public float flowSpeed { get; private set; }//Á÷¶¯ËÙ¶È
-    [field: SerializeField] public float minVolume { get; private set; } = 0.005f;//×îĞ¡Ë®Î»
+    [field: SerializeField] public TileBase[] tiles { get; private set; } // ä¸åŒæ°´ä½ç“¦ç‰‡
+    [field: SerializeField] public float flowSpeed { get; private set; }//ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    [field: SerializeField] public float minVolume { get; private set; } = 0.005f;//ï¿½ï¿½Ğ¡Ë®Î»
 
-    [field: SerializeField] public TileClass medium;//Óë²»Í¬ÒºÌåÅö´¥Ö®ºóÉú³ÉµÄÎï¿é
+    [field: SerializeField] public TileClass medium;//ï¿½ë²»Í¬Òºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½ï¿½ï¿½ï¿½Éµï¿½ï¿½ï¿½ï¿½
 
-    //¸ù¾İË®Î»»ñÈ¡¶ÔÓ¦Ìå»ıÍßÆ¬
+    //æ ¹æ®æ°´ä½è·å–å¯¹åº”ç“¦ç‰‡
     public TileBase GetTileToVolume(float volume) {
-        //¸ù¾İÒºÌåÌå»ı¸ü»»²»Í¬Tile
+        // ç©ºä½“ç§¯ä¸æ¸²æŸ“
+        if (volume <= 0f) return null;
+
         if (volume >= 1) {
             return tiles[tiles.Length - 1];
         } else {
             int liquidIndex = Mathf.FloorToInt(volume * (tiles.Length - 1));
             liquidIndex = liquidIndex >= 0 ? liquidIndex : 0;
-            if (liquidIndex == 0)
-                return null;
-            else
-                return tiles[liquidIndex];
-
+            // è–„æ¶²ä¸å†è¿”å› nullï¼Œä½¿ç”¨æœ€è–„ç“¦ç‰‡ï¼Œé¿å…å°ä½“ç§¯æ¶²ä½“ä¸å¯è§/è·³å˜
+            return tiles[liquidIndex];
         }
     }
 
@@ -52,37 +51,37 @@ public class LiquidClass : TileClass {
         float curVolume = liquidHandler.GetVolume(pos);
         
 
-        //Ìå»ıÌ«Ğ¡Ê±£¬²Áµô¸ÃÍßÆ¬
+        //ï¿½ï¿½ï¿½Ì«Ğ¡Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¬
         if (curVolume < minVolume) {
             liquidHandler.UpdateVolume(this, pos, 0);
             return false;
         }
-        //ÒºÌåÔÚµØÃæÍßÆ¬ÖĞ£¬²Áµô
+        //Òºï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½Æ¬ï¿½Ğ£ï¿½ï¿½ï¿½ï¿½ï¿½
         if (chunk.GetTileClass(LayerType.Foreground, x, y) != null) {
             liquidHandler.UpdateVolume(this, pos, 0);
             return false;
         }
-        // ÓÅÏÈÏòÏÂÁ÷¶¯
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         if (TryFlowDown(pos, ref curVolume)) return true;
         
-        // À©É¢´¦Àí
+        // ï¿½ï¿½É¢ï¿½ï¿½ï¿½ï¿½
         if(TryDiffusion(pos, ref curVolume)) return true;
 
-        //ÒºÌåÒç³ö
+        //Òºï¿½ï¿½ï¿½ï¿½ï¿½
         if (TryOverflow(pos, curVolume)) return true;
         return false;
     }
 
-    // ³¢ÊÔÏòÏÂÁ÷¶¯£¨·µ»ØÊÇ·ñ³É¹¦Á÷¶¯£©
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½É¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     private bool TryFlowDown(Vector2Int pos, ref float curVolume) {
         int x = pos.x;
         int y = pos.y;
         if (y <= 0) return false;
 
         Vector2Int downPos = pos + Vector2Int.down;
-        // ¼ì²éÏÂ·½ÊÇ·ñ¿ÉÁ÷¶¯
+        // ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         if (chunk.GetTileClass(LayerType.Foreground, downPos.x, downPos.y) != null) return false;
-        //ÒºÌåÂúÁË
+        //Òºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         //float downVolume = liquidHandler.liquidVolume[downPos.x, downPos.y];
         float downVolume = liquidHandler.GetVolume(downPos);
         LiquidClass downLiquid = chunk.GetTileClass(LayerType.Liquid, downPos.x, downPos.y) as LiquidClass;
@@ -99,7 +98,7 @@ public class LiquidClass : TileClass {
         curVolume = 0;
         liquidHandler.UpdateVolume(this, pos, curVolume);
 
-        //¿ÉÄÜÖÜÎ§ÓĞÎÈ¶¨×´Ì¬ÒºÌå£¬ÖØĞÂ¼¤»îÉÏ×óÓÒÒºÌåÒºÌå
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î§ï¿½ï¿½ï¿½È¶ï¿½×´Ì¬Òºï¿½å£¬ï¿½ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òºï¿½ï¿½Òºï¿½ï¿½
         //liquidHandler.MarkForUpdate(this, pos + Vector2Int.up);
         //liquidHandler.MarkForUpdate(this, pos + Vector2Int.left);
         //liquidHandler.MarkForUpdate(this, pos + Vector2Int.right);
@@ -107,18 +106,18 @@ public class LiquidClass : TileClass {
     }
 
 
-    // À©É¢´¦Àí
+    // ï¿½ï¿½É¢ï¿½ï¿½ï¿½ï¿½
     private bool TryDiffusion(Vector2Int pos, ref float curVolume) {
         int x = pos.x;
         int y = pos.y;
         List<Vector2Int> flowDirs = new List<Vector2Int>();
-        // ¼ì²â¿ÉÓÃÁ÷¶¯·½Ïò
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         Vector2Int leftDir = pos + Vector2Int.left;
         Vector2Int rightDir = pos + Vector2Int.right;
         if (CheckFlowDirection(leftDir, curVolume)) flowDirs.Add(leftDir);
         if (CheckFlowDirection(rightDir, curVolume)) flowDirs.Add(rightDir);
         if (flowDirs.Count == 0) return false;
-        // ¼ÆËãÃ¿¸ö·½ÏòµÄ·ÖÅäÁ¿
+        // ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä·ï¿½ï¿½ï¿½ï¿½ï¿½
         float avg = curVolume;
         foreach (var item in flowDirs) {
             //avg += liquidHandler.liquidVolume[item.x, item.y];
@@ -136,7 +135,7 @@ public class LiquidClass : TileClass {
             liquidHandler.UpdateVolume(this, dir, avg);
         }
 
-        //¿ÉÄÜÖÜÎ§ÓĞÎÈ¶¨×´Ì¬ÒºÌå£¬ÖØĞÂ¼¤»îÉÏ×óÓÒÒºÌåÒºÌå
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î§ï¿½ï¿½ï¿½È¶ï¿½×´Ì¬Òºï¿½å£¬ï¿½ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òºï¿½ï¿½Òºï¿½ï¿½
         //liquidHandler.MarkForUpdate(this, pos + Vector2Int.up);
         //liquidHandler.MarkForUpdate(this, pos + Vector2Int.left);
         //liquidHandler.MarkForUpdate(this, pos + Vector2Int.right);
@@ -144,10 +143,10 @@ public class LiquidClass : TileClass {
         return true;
     }
 
-    //Òç³ö´¦Àí
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     private bool TryOverflow(Vector2Int pos, float curVolume) {
         if (curVolume <= 1f) return false;
-        //ÒºÌåÒç³ö
+        //Òºï¿½ï¿½ï¿½ï¿½ï¿½
         Vector2Int upPos = pos + Vector2Int.up;
         LiquidClass targetLiquid = chunk.GetTileClass(LayerType.Liquid, upPos.x, upPos.y) as LiquidClass;
         if (targetLiquid != null && targetLiquid != this) {
@@ -169,7 +168,7 @@ public class LiquidClass : TileClass {
         if (!chunk.CheckWorldBound(x, y)) return false;
 
         bool flag = false;
-        //Èç¹ûÒºÌå²»ÏàÍ¬£¬¿ÉÁ÷¶¯
+        //ï¿½ï¿½ï¿½Òºï¿½å²»ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         TileClass targetLiquid = chunk.GetTileClass(LayerType.Liquid, x, y);
         //float targetVolume = liquidHandler.liquidVolume[x, y];
         float targetVolume = liquidHandler.GetVolume(dir);
@@ -178,7 +177,7 @@ public class LiquidClass : TileClass {
         if (chunk.GetTileClass(LayerType.Foreground, x, y) == null && curVolume > targetVolume && curVolume - targetVolume > 0.0001f) flag = true;
         return flag;
     }
-    //¼ì²éË®Æ½Á÷¶¯·½ÏòÊÇ·ñ¿ÉÁ÷¶¯
+    //ï¿½ï¿½ï¿½Ë®Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     private void CheckFlowDirection(int x, int y, float curVolume, ref List<Vector2Int> dirs) {
         if (!chunk.CheckWorldBound(x, y)) return;
         TileClass targetLiquid = chunk.GetTileClass(LayerType.Liquid, x, y);
@@ -186,17 +185,17 @@ public class LiquidClass : TileClass {
         //float targetVolume = liquidHandler.liquidVolume[x, y];
         float targetVolume = liquidHandler.GetVolume(new Vector2Int(x, y));
         if (chunk.GetTileClass(LayerType.Foreground, x, y) != null || (targetVolume >= curVolume && (targetLiquid == null || targetLiquid == this))) return;
-        //Á½±ßÒºÌåÌå»ıÏà²îÎŞ¼¸£¬²»À©É¢£¬±ÜÃâË®Ìå±íÃæÒ»Ö±ÔÚ¼ÆËã
+        //ï¿½ï¿½ï¿½ï¿½Òºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ş¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë®ï¿½ï¿½ï¿½ï¿½ï¿½Ò»Ö±ï¿½Ú¼ï¿½ï¿½ï¿½
         if (curVolume - targetVolume < 0.0001f) return;
         dirs.Add(new Vector2Int(x, y));
     }
 
 
-    // ÓëÆäËûÒºÌå½Ó´¥Ê±´¥·¢Ò»Ğ©ÊÂ¼ş£¨±ÈÈçÉú³ÉĞÂÎïÖÊ£©
-    // origin£º½Ó´¥Õß£¬ target£º±»½Ó´¥Õß
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òºï¿½ï¿½Ó´ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ò»Ğ©ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê£ï¿½
+    // originï¿½ï¿½ï¿½Ó´ï¿½ï¿½ß£ï¿½ targetï¿½ï¿½ï¿½ï¿½ï¿½Ó´ï¿½ï¿½ï¿½
     private bool TouchLiquid(Vector2Int origin, Vector2Int target) {
         LiquidClass originLiquid = chunk.GetTileClass(LayerType.Liquid, origin.x, origin.y) as LiquidClass;
-        //Èç¹û½Ó´¥Ä¿±ê²»ÊÇÏàÍ¬ÒºÌå£¬½øĞĞ´¦Àí
+        //ï¿½ï¿½ï¿½ï¿½Ó´ï¿½Ä¿ï¿½ê²»ï¿½ï¿½ï¿½ï¿½Í¬Òºï¿½å£¬ï¿½ï¿½ï¿½Ğ´ï¿½ï¿½ï¿½
         if (originLiquid != this) {
 
             liquidHandler.UpdateVolume(this, target, 0);

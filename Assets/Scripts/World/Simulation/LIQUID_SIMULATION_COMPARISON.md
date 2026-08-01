@@ -2,11 +2,11 @@
 
 ## 概述
 
-本项目现在支持三种液体模拟方案，你可以在运行时切换来对比效果：
+本项目支持三种液体模拟方案，可在运行时切换对比效果：
 
-1. **Custom 模式**：自定义模式，带冷却时间的密度分层
+1. **Custom 模式**：自定义模式，带冷却时间的密度分层（旧方案）
 2. **PixelAlchemy 模式**：基于粒子移动的理念
-3. **V2 模式**：渐进式密度交换，解决混合抽搐问题（推荐）
+3. **Terraria 模式（推荐）**：泰拉瑞亚风格，下落/平整沉降/密度分层/无冒泡
 
 ## 如何切换
 
@@ -14,77 +14,64 @@
 
 1. 选择 `PhysicsSimulationHandler` 对象
 2. 在 Inspector 中找到 `Liquid Simulation Mode` 下拉菜单
-3. 选择想要的模式
+3. 选择 `Terraria`（默认）
 
 ### 在代码中切换
 
 ```csharp
 PhysicsSimulationHandler handler = PhysicsSimulationHandler.Instance;
-handler.SetLiquidSimulationMode(LiquidSimulationMode.V2); // 推荐使用V2模式
+handler.SetLiquidSimulationMode(LiquidSimulationMode.Terraria); // 推荐
 ```
 
 ### 运行时切换
 
-添加 `LiquidSimulationModeSwitcher` 组件：
-- 按 **M** 键循环切换模式：Custom -> PixelAlchemy -> V2 -> Custom
+添加 `LiquidSimulationModeSwitcher` 组件，按 **M** 键循环切换：
+Custom -> PixelAlchemy -> Terraria -> Custom
 
 ## 方案对比
 
-### V2 模式（推荐）
+### Terraria 模式（推荐，默认）
 
-**设计理念**：
-- 渐进式密度交换，避免突然的位置变化
-- 体积守恒原则，保持总体积不变
-- 密度加权平均，平滑过渡混合区域
-- 稳定优先，避免视觉抽搐
+**设计理念**：复刻《泰拉瑞亚》的瓦片液体行为——单格容量封顶、下落优先、半差分横向均衡成平整水面、密度分层。
 
 **核心特点**：
-- ✅ 渐进式密度交换（解决抽搐问题）
-- ✅ 体积守恒（液体不会凭空消失）
-- ✅ 密度加权混合（平滑过渡）
-- ✅ 混合阈值控制（避免过度混合）
-- ✅ 横向扩散保持各层独立
+- ✅ 水面平整沉降（半差分均衡，无抖动收敛）
+- ✅ 无向上溢出（体积 >1 时向两侧扩散，消除冒泡/液面升天）
+- ✅ 密度分层（重液下沉、轻液上浮，交换规则不对称不回弹）
+- ✅ 斜向流动（斜坡滑落 + 悬崖边缘瀑布）
+- ✅ 确定性遍历顺序（按 Y 底→顶排序，流动方向稳定）
+- ✅ 体积守恒（转移按精确量增减）
+
+**关键规则**（`LiquidSimulationTerraria.cs`）：
+- 单格更新顺序：清理 → 下落 → 斜向流动 → 上浮 → 横向均衡
+- `MaxVerticalFlowRate` 控制下落速度；`SpreadFactor` 控制平整速度
+- `SettleTolerance` 控制水面平整度；`DensitySwapMinDiff` 控制分层灵敏度
 
 **适用场景**：
-- 需要稳定混合效果的游戏
-- 不同液体需要平滑过渡
-- 避免视觉抽搐和闪烁
-- 需要真实的液体行为
+- 需要泰拉瑞亚式液体的游戏
+- 需要水面平整、无抽搐的稳定表现
+- 需要不同液体明显分层
 
-**代码位置**：`LiquidSimulationV2.cs`
+**代码位置**：`LiquidSimulationTerraria.cs`
 
 ---
 
-### Custom 模式（自定义）
+### Custom 模式（旧方案）
 
-**设计理念**：
-- 基于体积的液体系统
-- 每个格子有液体体积参数（0~1+）
-- 使用冷却时间解决冒泡问题
-- 支持密度分层
+**设计理念**：基于体积的液体系统，每个格子有体积参数（0~1+），使用冷却时间解决冒泡问题，支持密度分层。
 
-**核心特点**：
-- ✅ 带冷却时间的密度分层（防止冒泡）
-- ✅ 基于体积的液体流动
-- ✅ 横向扩散支持
-- ✅ 流速控制
+**已确认的问题**：
+- ❌ 无确定性遍历顺序 → 流动方向随机、冒泡抽搐
+- ❌ `TryOverflow` 把 >1 的体积向上推 → 液面升天
+- ❌ 异种液体下落/扩散会覆盖对方 ID → 密度分层失效
 
-**适用场景**：
-- 需要精确体积控制的游戏
-- 需要稳定密度分层的场景
-- 不同液体需要明显分层效果
-
-**代码位置**：`LiquidSimulation.cs`
+**代码位置**：`LiquidSimulationTest.cs`（`LiquidSimulation.cs` 为更早的版本）
 
 ---
 
 ### PixelAlchemy 模式
 
-**设计理念**：
-- 每个格子是一个粒子
-- 基于密度的位移系统
-- 随机化方向避免偏向
-- 横向搜索多个格子
+**设计理念**：每个格子是一个粒子，基于密度的位移系统，随机化方向避免偏向，横向搜索多个格子。
 
 **核心特点**：
 - ✅ 密度驱动的位移（高密度下沉，低密度上浮）
@@ -92,183 +79,19 @@ handler.SetLiquidSimulationMode(LiquidSimulationMode.V2); // 推荐使用V2模�
 - ✅ 随机化方向（避免规则化痕迹）
 - ✅ 帧更新标记（避免同一帧重复移动）
 
-**适用场景**：
-- 需要自然流动效果的游戏
-- 需要粒子级物理模拟
-- 需要避免规则化痕迹
-
 **代码位置**：`LiquidSimulationPixelAlchemy.cs`
 
 ## 核心差异对比
 
-| 特性 | Custom 模式 | PixelAlchemy 模式 | V2 模式 |
-|------|-------------|-------------------|---------|
-| 液体表示 | 基于体积（0~1+） | 基于粒子 | 基于体积 |
-| 密度分层 | ✅ 带冷却时间 | ✅ 密度驱动位移 | ✅ 渐进式交换 |
-| 冒泡问题 | 通过冷却时间解决 | 通过帧标记避免 | 通过渐进交换避免 |
-| 混合抽搐 | ❌ 可能出现 | ❌ 可能出现 | ✅ 解决 |
-| 横向扩散 | 基于体积差 | 横向搜索多个格子 | 保持各层独立 |
+| 特性 | Terraria（推荐） | Custom | PixelAlchemy |
+|------|-----------------|--------|--------------|
+| 水面平整 | ✅ 半差分均衡 | ❌ 沉降不平整 | 中等 |
+| 冒泡/液面升天 | ✅ 无 | ❌ 有 | 中等 |
+| 密度分层 | ✅ 不对称交换 | ❌ 覆盖 ID | ✅ 密度位移 |
+| 确定性顺序 | ✅ Y 升序 | ❌ 无序 | 随机 |
 | 体积守恒 | ✅ | ✅ | ✅ |
-| 视觉稳定性 | 中等 | 中等 | 高 |
+| 视觉稳定性 | ✅ 高 | 低 | 中等 |
 | 性能 | 较好 | 较好 | 较好 |
-
-## 详细差异说明
-
-### 1. 液体流动方式
-
-**Custom 模式**：
-```csharp
-// 基于体积差流动
-if (curVolume > targetVolume) {
-    float avg = (curVolume + targetVolume) / 2;
-    UpdateVolume(liquidId, pos, avg);
-    UpdateVolume(liquidId, targetPos, avg);
-}
-```
-
-**PixelAlchemy 模式**：
-```csharp
-// 基于粒子移动
-if (targetDefinition.IsAir) {
-    // 直接移动整个粒子
-    grid.SetCell(toX, toY, source);
-    grid.SetCell(fromX, fromY, Pixel.FromMaterial(MaterialType.Air));
-}
-```
-
-**V2 模式**：
-```csharp
-// 渐进式密度交换
-float swapFactor = Mathf.Clamp01(Mathf.Abs(densityDiff) / 50f);
-float maxSwapVolume = Mathf.Min(curVolume, downVolume) * swapFactor * STABILITY_FACTOR;
-
-if (densityDiff > 0) {
-    // 高密度下沉
-    UpdateVolume(liquidId, pos, curVolume - maxSwapVolume);
-    UpdateVolume(downLiquidId, downPos, downVolume + maxSwapVolume);
-} else {
-    // 低密度上浮
-    UpdateVolume(liquidId, pos, curVolume - maxSwapVolume);
-    UpdateVolume(downLiquidId, downPos, downVolume + maxSwapVolume);
-}
-```
-
-### 2. 密度分层处理
-
-**Custom 模式**：
-```csharp
-// 密度交换 + 冷却时间
-if (materialDef.density > downMaterialDef.density) {
-    UpdateVolume(liquidId, downPos, curVolume);
-    UpdateVolume(downLiquid.blockId, pos, downVolume);
-    SetDisplacedCooldown(pos); // 防止冒泡
-}
-```
-
-**PixelAlchemy 模式**：
-```csharp
-// 密度驱动位移
-if (CanDisplace(definition, targetDefinition, offsetY)) {
-    // 交换两个粒子
-    grid.SetCell(toX, toY, source);
-    grid.SetCell(fromX, fromY, target);
-}
-```
-
-### 3. 横向搜索
-
-**Custom 模式**：
-```csharp
-// 检查相邻格子
-Vector2Int leftDir = pos + Vector2Int.left;
-Vector2Int rightDir = pos + Vector2Int.right;
-if (CheckFlowDirection(leftDir, curVolume)) flowDirs.Add(leftDir);
-if (CheckFlowDirection(rightDir, curVolume)) flowDirs.Add(rightDir);
-```
-
-**PixelAlchemy 模式**：
-```csharp
-// 搜索多个格子
-int maxDistance = definition.HorizontalSearchDistance;
-for (int distance = 1; distance <= maxDistance; distance++) {
-    if (TryMove(grid, x, y, direction * distance, 0, definition)) {
-        return true;
-    }
-}
-```
-
-## 测试建议
-
-### 测试场景 1：密度分层
-
-1. 创建一个容器
-2. 在底部放置高密度液体（岩浆，密度88）
-3. 在上面放置低密度液体（水，密度30）
-4. 观察分层效果
-
-**Custom 模式**：应该看到稳定的分层，没有冒泡
-**PixelAlchemy 模式**：应该看到密度驱动的自然分层
-
-### 测试场景 2：流动速度
-
-1. 创建一个斜坡
-2. 在顶部放置液体
-3. 观察流动速度和形态
-
-**Custom 模式**：基于体积的流动，速度可控
-**PixelAlchemy 模式**：基于粒子的流动，更自然
-
-### 测试场景 3：混合液体
-
-1. 创建一个容器
-2. 同时倒入多种液体（油、水、岩浆）
-3. 观察分层过程
-
-**Custom 模式**：带冷却时间的稳定分层
-**PixelAlchemy 模式**：密度驱动的自然分层
-
-## 性能对比
-
-### 内存使用
-
-**Custom 模式**：
-- 使用 Dictionary 存储冷却时间
-- 使用 Dictionary 存储更新时间
-
-**PixelAlchemy 模式**：
-- 使用 HashSet 存储帧标记
-- 使用 Dictionary 存储下落帧数
-
-### 计算开销
-
-**Custom 模式**：
-- 每帧需要检查冷却时间
-- 需要计算体积差
-
-**PixelAlchemy 模式**：
-- 每帧需要清除帧标记
-- 需要检查密度关系
-
-## 选择建议
-
-### 选择 V2 模式（推荐）如果你需要：
-- 稳定的混合效果（无抽搐）
-- 平滑的密度分层过渡
-- 体积守恒的液体行为
-- 避免视觉闪烁和跳动
-- 真实的液体混合行为
-
-### 选择 Custom 模式如果你需要：
-- 精确的体积控制
-- 简单的密度分层
-- 可调节的流速
-- 防止冒泡效果
-
-### 选择 PixelAlchemy 模式如果你需要：
-- 自然的流动效果
-- 粒子级物理模拟
-- 避免规则化痕迹
-- 更真实的物理行为
 
 ## 调试技巧
 
@@ -284,9 +107,11 @@ Debug.Log("当前模式: " + PhysicsSimulationHandler.Instance.GetLiquidSimulati
 if (Input.GetKeyDown(KeyCode.M)) {
     var handler = PhysicsSimulationHandler.Instance;
     var currentMode = handler.GetLiquidSimulationMode();
-    var newMode = currentMode == LiquidSimulationMode.Custom 
-        ? LiquidSimulationMode.PixelAlchemy 
-        : LiquidSimulationMode.Custom;
+    var newMode = currentMode == LiquidSimulationMode.Custom
+        ? LiquidSimulationMode.PixelAlchemy
+        : currentMode == LiquidSimulationMode.PixelAlchemy
+            ? LiquidSimulationMode.Terraria
+            : LiquidSimulationMode.Custom;
     handler.SetLiquidSimulationMode(newMode);
 }
 ```
@@ -295,20 +120,42 @@ if (Input.GetKeyDown(KeyCode.M)) {
 
 ```csharp
 PhysicsSimulationHandler.Instance.GetStats(
-    out float fps, 
-    out float simTime, 
-    out int processed, 
-    out int active, 
+    out float fps,
+    out float simTime,
+    out int processed,
+    out int active,
     out int chunks
 );
 Debug.Log($"FPS: {fps}, 模拟时间: {simTime}ms");
 ```
 
-## 总结
+水面静止数帧后 `活跃格子`/`活跃区块` 应下降（区块休眠），说明模拟正确休眠。
 
-两种方案各有优势：
+## 泰拉瑞亚模式参数调优
 
-- **Custom 模式**更适合需要精确控制和稳定性的游戏
-- **PixelAlchemy 模式**更适合需要自然物理效果的游戏
+在 `PhysicsSimulationHandler` Inspector 的 `泰拉瑞亚液体参数` 分组调整：
 
-建议你在实际项目中测试两种模式，选择最适合你游戏需求的方案。如果需要，你也可以混合使用两种模式的优点，创建自己的定制方案。
+| 参数 | 作用 | 调大 | 调小 |
+|------|------|------|------|
+| `maxVerticalFlowRate` | 下落/斜落速度 | 瀑布更急 | 瀑布更缓 |
+| `spreadFactor` | 横向平整速度 | 水面平整更快 | 更缓 |
+| `settleTolerance` | 水面平整度 | 更易停止 | 更平整但更耗算 |
+| `densitySwapMinDiff` | 分层灵敏度 | 需要更大密度差才分层 | 更容易分层 |
+
+## 常见问题
+
+### Q: 液体混合后不分离？
+
+A: 检查两种液体的 `density` 差值是否 ≥ `DensitySwapMinDiff`。`Assets/Data/Physics/Water.asset` 中 Water=30、Magma=88，差值足够。
+
+### Q: 下落太快/太慢？
+
+A: 调整 `PhysicsSimulationHandler` 的 `maxVerticalFlowRate` 和 `globalSpeedMultiplier`。
+
+### Q: 水面不平整？
+
+A: 减小 `settleTolerance`，或确认 `PhysicsSimulationHandler` 中 `SimulationStep` 已启用 Y 升序遍历（Terraria 模式依赖确定性顺序）。
+
+### Q: 挖洞后水不流入？
+
+A: 确认 `ConstructionLayer.Destory` 调用了 `PhysicsSimulationHandler.Instance.MarkAreaForUpdate(worldCoords, 2)`（已修复，不再依赖已停用的 `LiquidHandler`）。

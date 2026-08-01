@@ -21,7 +21,7 @@ MonoBehaviour:
       moveProbability: 1
       lateralProbability: 0.8
       horizontalSearchDistance: 6
-      canBeDisplaced: 0
+      canBeDisplaced: 1
       isFlammable: 0
       flammability: 0
       ignitionTemperature: 0
@@ -33,11 +33,11 @@ MonoBehaviour:
     blockId: 6015563188601812698
     definition:
       movementMode: 2
-      density: 10
+      density: 88
       moveProbability: 1
       lateralProbability: 0.8
       horizontalSearchDistance: 6
-      canBeDisplaced: 0
+      canBeDisplaced: 1
       isFlammable: 0
       flammability: 0
       ignitionTemperature: 0
