@@ -153,6 +153,14 @@ public class SimulationGrid {
     }
 
     /// <summary>
+    /// 无分配拷贝活跃格子到指定列表（复用调用方缓冲，避免每帧 GC 分配）
+    /// </summary>
+    public void CopyActiveCells(List<Vector2Int> into) {
+        into.Clear();
+        into.AddRange(activeCells);
+    }
+
+    /// <summary>
     /// 获取活跃格子数量
     /// </summary>
     public int GetActiveCellCount() {

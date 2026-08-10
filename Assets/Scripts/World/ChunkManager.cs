@@ -177,6 +177,22 @@ public class ChunkManager : Singleton<ChunkManager>, IMapSaveManager {
         }
     }
 
+    /// <summary>
+    /// 合并写入液体（ID + 体积）——单次查找写两个字段，供模拟热路径使用（不置 isDirty）。
+    /// 语义与 SetLiquidVolume + SetLiquidId 组合完全一致：体积为 0 时清除 ID。
+    /// </summary>
+    public bool SetLiquid(Vector2Int worldPos, long liquidId, float volume) {
+        if (!CheckWorldBound(worldPos.x, worldPos.y)) return false;
+
+        if (TryGetChunk(worldPos, out Chunk chunk) && chunk.WorldToLocal(worldPos, out int lx, out int ly)) {
+            ref TileData tile = ref chunk.tiles[lx, ly];
+            tile.liquidVolume = volume;
+            tile.liquidId = volume == 0 ? 0 : liquidId;
+            return true;
+        }
+        return false;
+    }
+
     // ===== 生长数据便捷访问 =====
 
     public int GetGrowthData(Vector2Int worldPos) {
@@ -216,9 +232,10 @@ public class ChunkManager : Singleton<ChunkManager>, IMapSaveManager {
     /// 世界坐标转区块网格坐标。
     /// </summary>
     public Vector2Int WorldToChunkCoord(Vector2Int worldPos) {
+        // 所有调用方传入前均已做边界检查，坐标恒为非负；整数除法即 floor 语义，省去浮点转换
         return new Vector2Int(
-            Mathf.FloorToInt((float)worldPos.x / chunkSize.x),
-            Mathf.FloorToInt((float)worldPos.y / chunkSize.y));
+            worldPos.x / chunkSize.x,
+            worldPos.y / chunkSize.y);
     }
 
     public Vector2Int WorldToChunkCoord(Vector3 worldPos) {

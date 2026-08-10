@@ -40,6 +40,10 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
     private LiquidSimulationPixelAlchemy liquidSimulationPA; // PixelAlchemy液体模拟
     private PowderSimulation powderSimulation;
 
+    // 每帧活跃格子缓冲（复用避免 GC）与待刷新液体瓦片集合（延迟批量去重）
+    private readonly List<Vector2Int> activeCellsBuffer = new List<Vector2Int>();
+    private readonly HashSet<Vector2Int> pendingLiquidTiles = new HashSet<Vector2Int>();
+
     // 区块管理器引用
     private ChunkManager chunkManager;
 
@@ -140,13 +144,13 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
 
         int processedCells = 0;
 
-        // 创建活跃格子的副本并按 Y 升序（底→顶）排序
+        // 复用缓冲取出活跃格子，按 Y 升序（底→顶）排序
         // 确定性顺序是泰拉瑞亚模式平整沉降的关键：无序遍历会导致流动方向随机、冒泡抽搐
-        List<Vector2Int> activeCellsCopy = new List<Vector2Int>(simulationGrid.GetActiveCells());
-        activeCellsCopy.Sort((a, b) => a.y.CompareTo(b.y));
+        simulationGrid.CopyActiveCells(activeCellsBuffer);
+        activeCellsBuffer.Sort((a, b) => a.y.CompareTo(b.y));
 
         // 遍历副本
-        foreach (var pos in activeCellsCopy) {
+        foreach (var pos in activeCellsBuffer) {
             // 检查处理预算
             if (maxProcessedCellsPerFrame > 0 && processedCells >= maxProcessedCellsPerFrame) {
                 break;
@@ -183,6 +187,9 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         // 结束模拟步骤
         simulationGrid.EndSimulationStep();
 
+        // 统一刷新本帧发生变化的液体瓦片（延迟批量 + 去重，避免模拟循环内逐格 SetTile 卡顿）
+        FlushPendingLiquidTiles();
+
         // 更新统计信息
         simulationStopwatch.Stop();
         if (enableStats) {
@@ -214,21 +221,11 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
     private void HandleLiquidVolumeUpdate(long liquidId, Vector2Int pos, float volume) {
         if (!chunkManager.CheckWorldBound(pos.x, pos.y)) return;
 
-        // 更新液体体积
-        chunkManager.SetLiquidVolume(pos, volume);
+        // 单次查找合并写入 ID 与体积（替代原先 3 次分离查找，且不置 isDirty）
+        chunkManager.SetLiquid(pos, liquidId, volume);
 
-        // 如果体积为0，清除液体ID
-        if (volume <= 0) {
-            chunkManager.SetLiquidId(pos, 0);
-        } else {
-            // 确保液体ID被正确设置
-            if (chunkManager.GetLiquidId(pos) != liquidId) {
-                chunkManager.SetLiquidId(pos, liquidId);
-            }
-        }
-
-        // 更新 Tilemap 渲染
-        UpdateLiquidTilemap(pos, liquidId, volume);
+        // 延迟到本帧模拟结束后统一刷新 Tilemap（同格多次变化只刷一次）
+        pendingLiquidTiles.Add(pos);
 
         // 标记周围区域需要更新
         simulationGrid.MarkChanged(pos);
@@ -275,14 +272,18 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
     }
 
     /// <summary>
-    /// 更新液体图层的 Tilemap
+    /// 更新液体图层的 Tilemap（读取 ChunkManager 中的最终状态）
     /// </summary>
-    private void UpdateLiquidTilemap(Vector2Int pos, long liquidId, float volume) {
+    private void UpdateLiquidTilemap(Vector2Int pos) {
         TilemapManager tilemapManager = TilemapManager.Instance;
         if (tilemapManager == null) return;
 
         Tilemap liquidTilemap = tilemapManager.GetTilemap(LayerType.Liquid);
         if (liquidTilemap == null) return;
+
+        TileData data = chunkManager.GetTileData(pos);
+        long liquidId = data.liquidId;
+        float volume = data.liquidVolume;
 
         TileBase tile = null;
         if (liquidId != 0 && volume > 0) {
@@ -300,6 +301,19 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         }
 
         liquidTilemap.SetTile(new Vector3Int(pos.x, pos.y, 0), tile);
+    }
+
+    /// <summary>
+    /// 批量刷新本帧发生变化的液体瓦片。
+    /// 模拟过程中只记录脏坐标，帧末统一 SetTile，同一格多次变化只刷新一次。
+    /// </summary>
+    private void FlushPendingLiquidTiles() {
+        if (pendingLiquidTiles.Count == 0) return;
+
+        foreach (var pos in pendingLiquidTiles) {
+            UpdateLiquidTilemap(pos);
+        }
+        pendingLiquidTiles.Clear();
     }
 
     /// <summary>
