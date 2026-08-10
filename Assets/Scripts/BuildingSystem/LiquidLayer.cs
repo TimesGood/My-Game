@@ -8,7 +8,7 @@ public class LiquidLayer : ConstructionLayer {
 
     public override void Build(Vector2Int worldCoords, TileClass item) {
         float oldVolume = chunkManager.GetLiquidVolume(worldCoords);
-        this.Build(worldCoords, item, oldVolume + 1);
+        this.Build(worldCoords, item, oldVolume + 100);
         
     }
 

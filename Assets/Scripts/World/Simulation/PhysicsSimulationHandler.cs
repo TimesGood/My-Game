@@ -289,10 +289,13 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
             TileClass tileClass = TileRegistry_.GetTile(liquidId);
             if (tileClass != null && tileClass is LiquidClass liquidClass) {
                 TileClass upTile = chunkManager.GetTileClass(LayerType.Liquid, pos + Vector2Int.up);
-                if(upTile != null)
-                    tile = liquidClass.GetTileToVolume(1);
+
+                float maxVolume = physicsConfig.GetMaxVolume(liquidId);
+                float ratio = volume / maxVolume;
+                if (upTile != null)
+                    tile = liquidClass.GetTileToVolume(maxVolume);
                 else
-                    tile = liquidClass.GetTileToVolume(volume);
+                    tile = liquidClass.GetTileToVolume(ratio);
             }
         }
 

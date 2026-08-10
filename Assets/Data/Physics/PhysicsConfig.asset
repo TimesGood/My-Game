@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ba6c22fa73d39d7409fae950bcc2b93f, type: 3}
-  m_Name: Water
+  m_Name: PhysicsConfig
   m_EditorClassIdentifier: 
   materialEntries:
   - materialName: Water
@@ -25,8 +25,8 @@ MonoBehaviour:
       isFlammable: 0
       flammability: 0
       ignitionTemperature: 0
-      minVolume: 0.0001
-      maxVolume: 1
+      minVolume: 0.001
+      maxVolume: 100
       flowSpeed: 100
       horizontalSpreadDistance: 3
   - materialName: Magma

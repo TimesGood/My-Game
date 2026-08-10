@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine;
 using static Unity.Burst.Intrinsics.X86;
+using static UnityEditor.PlayerSettings;
 using static UnityEditor.Progress;
 
 /// <summary>
@@ -17,6 +18,9 @@ public class LiquidSimulationTest
 
     // 流速控制：记录每个格子上次更新时间
     private readonly Dictionary<Vector2Int, float> lastUpdateTime = new Dictionary<Vector2Int, float>();
+
+    // 临时方向瓦片数据存储
+    private readonly Dictionary<Vector2Int, TileData> tempPosList = new Dictionary<Vector2Int, TileData>();// 临时内容缓存
 
     // 全局速度倍率
     public float GlobalSpeedMultiplier { get; set; } = 1f;
@@ -88,6 +92,14 @@ public class LiquidSimulationTest
 
         var pos = new Vector2Int(x, y);
 
+
+        // 流速控制：检查是否到达更新时间
+        if (!ShouldUpdate(pos, materialDef.flowSpeed)) {
+            // 此帧不到更新时间，放到下一帧
+            grid.MarkChanged(x, y);
+            return false;
+        }
+
         // 检查最小体积阈值
         if (curVolume < materialDef.minVolume) {
             // 体积太小，移除液体
@@ -108,13 +120,13 @@ public class LiquidSimulationTest
         if (TryFlowDown(x, y, curVolume, liquidId, materialDef)) return true;
 
         // 2. 尝试斜向扩散
-        //if (TryDiagonalFlow(x, y, curVolume, liquidId, materialDef)) return true;
+        if (TryDiagonalFlow(x, y, curVolume, liquidId, materialDef)) return true;
 
         // 3. 尝试横向扩散
         if (TrySpreadFlow(x, y, curVolume, liquidId, materialDef)) return true;
 
         // 4. 尝试向上溢出
-        //if (TryOverflow(x, y, curVolume, liquidId, materialDef)) return true;
+        if (TryOverflow(x, y, curVolume, liquidId, materialDef)) return true;
 
         return false;
     }
@@ -134,16 +146,19 @@ public class LiquidSimulationTest
 
         // 下方为空 → 转移
         if (downLiquidId == 0) {
-            float move = Mathf.Min(curVolume, MaxVerticalFlowRate);
+            float move = Mathf.Min(curVolume, MaxVerticalFlowRate * materialDef.maxVolume);
             UpdateVolume(liquidId, downPos, move);
             UpdateVolume(liquidId, new Vector2Int(x, y), curVolume - move);
+            if (lastUpdateTime.TryGetValue(new Vector2Int(x, y), out float lastTime)) {
+                lastUpdateTime[downPos] = lastTime;
+            }
             return true;
         }
 
         // 下方为同种液体 → 未满则转移
         if (downLiquidId == liquidId) {
-            if (downVolume >= 1) return false;
-            float move = Mathf.Min(curVolume, MaxVerticalFlowRate);
+            if (downVolume >= materialDef.maxVolume) return false;
+            float move = Mathf.Min(curVolume, MaxVerticalFlowRate * materialDef.maxVolume);
             UpdateVolume(liquidId, downPos, downVolume + move);
             UpdateVolume(liquidId, new Vector2Int(x, y), curVolume - move);
             return true;
@@ -166,9 +181,8 @@ public class LiquidSimulationTest
     /// <summary>
     /// 尝试斜向流动
     /// </summary>
-    private Dictionary<Vector2Int, TileData> tempPosList = new Dictionary<Vector2Int, TileData>();// 临时内容缓存
     private bool TryDiagonalFlow(int x, int y, float curVolume, long liquidId, SimulationMaterialDefinition materialDef) {
-        tempPosList.Clear();
+        
         var pos = new Vector2Int(x, y);
         var leftDiagonalPos = pos + Vector2Int.left + Vector2Int.down;
         var rightDiagonalPos = pos + Vector2Int.right + Vector2Int.down;
@@ -190,6 +204,7 @@ public class LiquidSimulationTest
             TileData v = dir.Value;
             UpdateVolume(liquidId, k, avg + v.liquidVolume);
         }
+        tempPosList.Clear();
         return true;
 
     }
@@ -198,7 +213,7 @@ public class LiquidSimulationTest
     /// 尝试横向流动
     /// </summary>
     private bool TrySpreadFlow(int x, int y, float curVolume, long liquidId, SimulationMaterialDefinition materialDef) {
-        tempPosList.Clear();
+        
         var pos = new Vector2Int(x, y);
         // 检测可用流动方向
         Vector2Int leftDir = pos + Vector2Int.left;
@@ -240,7 +255,7 @@ public class LiquidSimulationTest
             UpdateVolume(liquidId, k, avg);
             
         }
-        
+        tempPosList.Clear();
         return true;
     }
 
@@ -249,11 +264,14 @@ public class LiquidSimulationTest
 
         TileData targetData = chunkManager.GetTileData(dir);
         // 检查是否符合条件
+        if (!targetData.HasGround && !targetData.HasLiquid) return true;
         if (targetData.HasGround) return false;
 
         // 相同液体
-        if (targetData.HasLiquid && targetData.liquidId == liquidId && targetData.liquidVolume > curVolume) return false;
-
+        if (targetData.HasLiquid && targetData.liquidId == liquidId) {
+            if (curVolume > targetData.liquidVolume && curVolume - targetData.liquidVolume > materialDef.minVolume) return true;
+        }
+        
         // 不同液体
         if (targetData.HasLiquid && targetData.liquidId != liquidId) {
 
@@ -261,10 +279,9 @@ public class LiquidSimulationTest
             if (targetDef == null) return false;
             if (targetDef.density < materialDef.density) return true;
 
-            return false;
+            // return false;
         }
-
-        return true;
+        return false;
 
     }
 
@@ -277,16 +294,17 @@ public class LiquidSimulationTest
         if (targetData.HasGround) return false;
 
         // 相同液体
-        if (targetData.HasLiquid && targetData.liquidId == liquidId && targetData.liquidVolume >= materialDef.maxVolume) return false;
-
-        return true;
+        if (targetData.HasLiquid && targetData.liquidId == liquidId) {
+            if (targetData.liquidVolume < materialDef.maxVolume) return true;
+        }
+        return false;
     }
 
     /// <summary>
     /// 尝试向上溢出
     /// </summary>
     private bool TryOverflow(int x, int y, float curVolume, long liquidId, SimulationMaterialDefinition materialDef) {
-        if (curVolume <= 1f) return false;
+        if (curVolume <= materialDef.maxVolume) return false;
         var pos = new Vector2Int(x, y);
         //液体溢出
         Vector2Int upPos = pos + Vector2Int.up;
@@ -298,10 +316,10 @@ public class LiquidSimulationTest
         }
         //float upVolume = liquidHandler.liquidVolume[upPos.x, upPos.y];
         float upVolume = chunkManager.GetLiquidVolume(upPos);
-        upVolume += curVolume - 1f;
+        upVolume += curVolume - materialDef.maxVolume;
         UpdateVolume(liquidId, upPos, upVolume);
 
-        curVolume = 1f;
+        curVolume = materialDef.maxVolume;
         UpdateVolume(liquidId, pos, curVolume);
         return true;
     }

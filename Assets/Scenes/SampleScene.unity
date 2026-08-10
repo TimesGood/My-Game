@@ -1140,7 +1140,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   physicsConfig: {fileID: 11400000, guid: b750ba1bd26ec0642902a93d9c83e782, type: 2}
-  liquidSimulationMode: 2
+  liquidSimulationMode: 0
   simulationSeed: 0
   chunkSize: 64
   chunkSleepDelay: 3
