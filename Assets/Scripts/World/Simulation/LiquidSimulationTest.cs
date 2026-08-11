@@ -7,7 +7,7 @@ using static UnityEditor.PlayerSettings;
 using static UnityEditor.Progress;
 
 /// <summary>
-/// ÒºÌåÎïÀíÄ£Äâ²âÊÔ
+/// æ¶²ä½“ç‰©ç†æ¨¡æ‹Ÿæµ‹è¯•
 /// </summary>
 public class LiquidSimulationTest
 {
@@ -16,28 +16,28 @@ public class LiquidSimulationTest
     private readonly System.Random random;
     private bool IsDiffusion = false;
 
-    // Á÷ËÙ¿ØÖÆ£º¼ÇÂ¼Ã¿¸ö¸ñ×ÓÉÏ´Î¸üĞÂÊ±¼ä
+    // æµé€Ÿæ§åˆ¶ï¼šè®°å½•æ¯ä¸ªæ ¼å­ä¸Šæ¬¡æ›´æ–°æ—¶é—´
     private readonly Dictionary<Vector2Int, float> lastUpdateTime = new Dictionary<Vector2Int, float>();
 
-    // ÁÙÊ±·½ÏòÍßÆ¬Êı¾İ´æ´¢
-    private readonly Dictionary<Vector2Int, TileData> tempPosList = new Dictionary<Vector2Int, TileData>();// ÁÙÊ±ÄÚÈİ»º´æ
+    // ä¸´æ—¶æ–¹å‘ç“¦ç‰‡æ•°æ®å­˜å‚¨
+    private readonly Dictionary<Vector2Int, TileData> tempPosList = new Dictionary<Vector2Int, TileData>();// ï¿½ï¿½Ê±ï¿½ï¿½ï¿½İ»ï¿½ï¿½ï¿½
 
-    // È«¾ÖËÙ¶È±¶ÂÊ
+    // å…¨å±€é€Ÿåº¦å€ç‡
     public float GlobalSpeedMultiplier { get; set; } = 1f;
 
 
-    // ===== ¿Éµ÷²ÎÊı =====
+    // ===== å¯è°ƒå‚æ•° =====
     public float MaxVerticalFlowRate { get; set; } = 0.35f;
 
-    // ÒºÌå¸üĞÂ»Øµ÷
+    // æ¶²ä½“æ›´æ–°å›è°ƒ
     public System.Action<long, Vector2Int, float> OnUpdateVolume;
 
     /// <summary>
-    /// ´´½¨ÒºÌåÄ£ÄâÊµÀı
+    /// åˆ›å»ºæ¶²ä½“æ¨¡æ‹Ÿå®ä¾‹
     /// </summary>
-    /// <param name="chunkManager">Çø¿é¹ÜÀíÆ÷</param>
-    /// <param name="physicsConfig">ÎïÀíÅäÖÃ</param>
-    /// <param name="seed">Ëæ»úÖÖ×Ó£¨0±íÊ¾Ëæ»ú£©</param>
+    /// <param name="chunkManager">åŒºå—ç®¡ç†å™¨</param>
+    /// <param name="physicsConfig">ç‰©ç†é…ç½®</param>
+    /// <param name="seed">éšæœºç§å­ï¼ˆ0è¡¨ç¤ºéšæœºï¼‰</param>>
     public LiquidSimulationTest(ChunkManager chunkManager, MaterialPhysicsConfig physicsConfig, int seed = 0) {
         this.chunkManager = chunkManager;
         this.physicsConfig = physicsConfig;
@@ -45,39 +45,39 @@ public class LiquidSimulationTest
     }
 
     /// <summary>
-    /// Çå³ı¼ÆÊ±Æ÷»º´æ£¨ÊÀ½çÖØÖÃÊ±µ÷ÓÃ£©
+    /// æ¸…é™¤è®¡æ—¶å™¨ç¼“å­˜ï¼ˆä¸–ç•Œé‡ç½®æ—¶è°ƒç”¨ï¼‰
     /// </summary>
     public void ClearTimers() {
         lastUpdateTime.Clear();
     }
 
     /// <summary>
-    /// ¼ì²é¸ñ×ÓÊÇ·ñÓ¦¸Ã¸üĞÂ£¨»ùÓÚÁ÷ËÙ¿ØÖÆ£©
+    /// æ£€æŸ¥æ ¼å­æ˜¯å¦åº”è¯¥æ›´æ–°ï¼ˆåŸºäºæµé€Ÿæ§åˆ¶ï¼‰
     /// </summary>
     private bool ShouldUpdate(Vector2Int pos, float flowSpeed) {
         float currentTime = Time.time;
-        // Ó¦ÓÃÈ«¾ÖËÙ¶È±¶ÂÊ
+        // åº”ç”¨å…¨å±€é€Ÿåº¦å€ç‡
         float effectiveSpeed = flowSpeed * Mathf.Max(0.1f, GlobalSpeedMultiplier);
-        float updateInterval = 1f / Mathf.Max(0.1f, effectiveSpeed); // ·ÀÖ¹³ıÁã
+        float updateInterval = 1f / Mathf.Max(0.1f, effectiveSpeed); // é˜²æ­¢é™¤é›¶
 
         if (lastUpdateTime.TryGetValue(pos, out float lastTime)) {
             if (currentTime - lastTime < updateInterval) {
-                return false; // »¹Ã»µ½¸üĞÂÊ±¼ä
+                return false; // è¿˜æ²¡åˆ°æ›´æ–°æ—¶é—´
             }
         }
 
-        // ¸üĞÂÊ±¼ä´Á
+        // æ›´æ–°æ—¶é—´æˆ³
         lastUpdateTime[pos] = currentTime;
         return true;
     }
 
     /// <summary>
-    /// ´¦Àíµ¥¸öÒºÌå¸ñ×ÓµÄÎïÀí¼ÆËã
+    /// å¤„ç†å•ä¸ªæ¶²ä½“æ ¼å­çš„ç‰©ç†è®¡ç®—
     /// </summary>
-    /// <param name="x">X×ø±ê</param>
-    /// <param name="y">Y×ø±ê</param>
-    /// <param name="grid">Ä£ÄâÍø¸ñ</param>
-    /// <returns>ÊÇ·ñ·¢ÉúÁË±ä»¯</returns>
+    /// <param name="x">Xåæ ‡</param>
+    /// <param name="y">Yåæ ‡</param>
+    /// <param name="grid">æ¨¡æ‹Ÿç½‘æ ¼</param>
+    /// <returns>æ˜¯å¦å‘ç”Ÿäº†å˜åŒ–</returns>
     public bool StepCell(int x, int y, SimulationGrid grid) {
         if (!grid.InBounds(x, y)) return false;
 
@@ -93,21 +93,21 @@ public class LiquidSimulationTest
         var pos = new Vector2Int(x, y);
 
 
-        // Á÷ËÙ¿ØÖÆ£º¼ì²éÊÇ·ñµ½´ï¸üĞÂÊ±¼ä
+        // æµé€Ÿæ§åˆ¶ï¼šæ£€æŸ¥æ˜¯å¦åˆ°è¾¾æ›´æ–°æ—¶é—´
         if (!ShouldUpdate(pos, materialDef.flowSpeed)) {
-            // ´ËÖ¡²»µ½¸üĞÂÊ±¼ä£¬·Åµ½ÏÂÒ»Ö¡
-            grid.MarkChanged(x, y);
+            // æ­¤å¸§ä¸åˆ°æ›´æ–°æ—¶é—´ï¼Œæ”¾åˆ°ä¸‹ä¸€å¸§
+            grid.KeepActive(x, y);
             return false;
         }
 
-        // ¼ì²é×îĞ¡Ìå»ıãĞÖµ
+        // æ£€æŸ¥æœ€å°ä½“ç§¯é˜ˆå€¼
         if (curVolume < materialDef.minVolume) {
-            // Ìå»ıÌ«Ğ¡£¬ÒÆ³ıÒºÌå
+            // ä½“ç§¯å¤ªå°ï¼Œç§»é™¤æ¶²ä½“
             UpdateVolume(liquidId, pos, 0f);
             return true;
         }
 
-        // ÇåÀí:¸ñÄÚÓĞÊµÌåµØÃæ×èµ²
+        // æ¸…ç†:æ ¼å†…æœ‰å®ä½“åœ°é¢é˜»æŒ¡
         if (chunkManager.GetTileClass(LayerType.Foreground, x, y) != null) {
             UpdateVolume(liquidId, pos, 0f);
             return true;
@@ -116,23 +116,23 @@ public class LiquidSimulationTest
 
 
 
-        // 1. ³¢ÊÔÏòÏÂÁ÷¶¯
+        // 1. å°è¯•å‘ä¸‹æµåŠ¨
         if (TryFlowDown(x, y, curVolume, liquidId, materialDef)) return true;
 
-        // 2. ³¢ÊÔĞ±ÏòÀ©É¢
+        // 2. å°è¯•æ–œå‘æ‰©æ•£
         if (TryDiagonalFlow(x, y, curVolume, liquidId, materialDef)) return true;
 
-        // 3. ³¢ÊÔºáÏòÀ©É¢
+        // 3. å°è¯•æ¨ªå‘æ‰©æ•£
         if (TrySpreadFlow(x, y, curVolume, liquidId, materialDef)) return true;
 
-        // 4. ³¢ÊÔÏòÉÏÒç³ö
+        // 4. å°è¯•å‘ä¸Šæº¢å‡º
         if (TryOverflow(x, y, curVolume, liquidId, materialDef)) return true;
 
         return false;
     }
 
     /// <summary>
-    /// ³¢ÊÔÏòÏÂÁ÷¶¯
+    /// å°è¯•å‘ä¸‹æµåŠ¨
     /// </summary>
     private bool TryFlowDown(int x, int y, float curVolume, long liquidId, SimulationMaterialDefinition materialDef) {
         if (y <= 0) return false;
@@ -144,7 +144,7 @@ public class LiquidSimulationTest
         long downLiquidId = downData.liquidId;
         float downVolume = downData.liquidVolume;
 
-        // ÏÂ·½Îª¿Õ ¡ú ×ªÒÆ
+        // ä¸‹æ–¹ä¸ºç©º â†’ è½¬ç§»
         if (downLiquidId == 0) {
             float move = Mathf.Min(curVolume, MaxVerticalFlowRate * materialDef.maxVolume);
             UpdateVolume(liquidId, downPos, move);
@@ -155,7 +155,7 @@ public class LiquidSimulationTest
             return true;
         }
 
-        // ÏÂ·½ÎªÍ¬ÖÖÒºÌå ¡ú Î´ÂúÔò×ªÒÆ
+        // ä¸‹æ–¹ä¸ºåŒç§æ¶²ä½“ â†’ æœªæ»¡åˆ™è½¬ç§»
         if (downLiquidId == liquidId) {
             if (downVolume >= materialDef.maxVolume) return false;
             float move = Mathf.Min(curVolume, MaxVerticalFlowRate * materialDef.maxVolume);
@@ -164,22 +164,22 @@ public class LiquidSimulationTest
             return true;
         }
 
-        // ÏÂ·½ÎªÒìÖÖÒºÌå ¡ú ÃÜ¶ÈÅĞ¶¨
+        // ä¸‹æ–¹ä¸ºå¼‚ç§æ¶²ä½“ â†’ å¯†åº¦åˆ¤å®š
         var downDef = physicsConfig.GetDefinition(downLiquidId);
         if (downDef == null) return false;
 
         if (materialDef.density > downDef.density) {
-            // µ±Ç°ÃÜ¶È¸ü´ó ¡ú ³Áµ×(½»»»Á½¸ñÒºÌå)
+            // å½“å‰å¯†åº¦æ›´å¤§ â†’ æ²‰åº•(äº¤æ¢ä¸¤æ ¼æ¶²ä½“)
             UpdateVolume(downLiquidId, new Vector2Int(x, y), downVolume);
             UpdateVolume(liquidId, downPos, curVolume);
             return true;
         }
 
-        return false; // µ±Ç°ÃÜ¶È¸üĞ¡ ¡ú ¸¡ÔÚÉÏÃæ,×èµ²ÏÂÂä
+        return false; // å½“å‰å¯†åº¦æ›´å° â†’ æµ®åœ¨ä¸Šé¢,é˜»æŒ¡ä¸‹è½
     }
 
     /// <summary>
-    /// ³¢ÊÔĞ±ÏòÁ÷¶¯
+    /// å°è¯•æ–œå‘æµåŠ¨
     /// </summary>
     private bool TryDiagonalFlow(int x, int y, float curVolume, long liquidId, SimulationMaterialDefinition materialDef) {
         
@@ -198,7 +198,7 @@ public class LiquidSimulationTest
 
         UpdateVolume(liquidId, pos, avg);
 
-        // ¸üĞÂÄ¿±êÎ»ÖÃ
+        // æ›´æ–°ç›®æ ‡ä½ç½®
         foreach (var dir in tempPosList) {
             Vector2Int k = dir.Key;
             TileData v = dir.Value;
@@ -210,12 +210,12 @@ public class LiquidSimulationTest
     }
 
     /// <summary>
-    /// ³¢ÊÔºáÏòÁ÷¶¯
+    /// å°è¯•æ¨ªå‘æµåŠ¨
     /// </summary>
     private bool TrySpreadFlow(int x, int y, float curVolume, long liquidId, SimulationMaterialDefinition materialDef) {
         
         var pos = new Vector2Int(x, y);
-        // ¼ì²â¿ÉÓÃÁ÷¶¯·½Ïò
+        // æ£€æµ‹å¯ç”¨æµåŠ¨æ–¹å‘
         Vector2Int leftDir = pos + Vector2Int.left;
         Vector2Int rightDir = pos + Vector2Int.right;
         TileData leftData = chunkManager.GetTileData(leftDir);
@@ -224,7 +224,7 @@ public class LiquidSimulationTest
         if (CheckSpreadFlow(leftDir, curVolume, liquidId, materialDef)) tempPosList.Add(leftDir, leftData);
         if (tempPosList.Count == 0) return false;
 
-        // ¼ÆËãÃ¿¸ö·½ÏòµÄ·ÖÅäÁ¿
+        // è®¡ç®—æ¯ä¸ªæ–¹å‘çš„åˆ†é…é‡
         float avg = curVolume;
         foreach (var item in tempPosList) {
             Vector2Int k = item.Key;
@@ -236,9 +236,9 @@ public class LiquidSimulationTest
 
         UpdateVolume(liquidId, pos, avg);
 
-        // ¸üĞÂÄ¿±êÎ»ÖÃ
+        // æ›´æ–°ç›®æ ‡ä½ç½®
         foreach (var dir in tempPosList) {
-            // Í¬ÖÖÒºÌå»ò¿ÕÎ»ÖÃ£¬Ö±½Ó¸üĞÂ
+            // åŒç§æ¶²ä½“æˆ–ç©ºä½ç½®ï¼Œç›´æ¥æ›´æ–°
             Vector2Int k = dir.Key;
             TileData v = dir.Value;
 
@@ -263,16 +263,16 @@ public class LiquidSimulationTest
         if (!chunkManager.CheckWorldBound(dir)) return false;
 
         TileData targetData = chunkManager.GetTileData(dir);
-        // ¼ì²éÊÇ·ñ·ûºÏÌõ¼ş
+        // æ£€æŸ¥æ˜¯å¦ç¬¦åˆæ¡ä»¶
         if (!targetData.HasGround && !targetData.HasLiquid) return true;
         if (targetData.HasGround) return false;
 
-        // ÏàÍ¬ÒºÌå
+        // ç›¸åŒæ¶²ä½“
         if (targetData.HasLiquid && targetData.liquidId == liquidId) {
             if (curVolume > targetData.liquidVolume && curVolume - targetData.liquidVolume > materialDef.minVolume) return true;
         }
-        
-        // ²»Í¬ÒºÌå
+
+        // ä¸åŒæ¶²ä½“
         if (targetData.HasLiquid && targetData.liquidId != liquidId) {
 
             var targetDef = physicsConfig.GetDefinition(targetData.liquidId);
@@ -290,10 +290,10 @@ public class LiquidSimulationTest
         if (!chunkManager.CheckWorldBound(dir)) return false;
 
         TileData targetData = chunkManager.GetTileData(dir);
-        // ¼ì²éÊÇ·ñ·ûºÏÌõ¼ş
+        // æ£€æŸ¥æ˜¯å¦ç¬¦åˆæ¡ä»¶
         if (targetData.HasGround) return false;
 
-        // ÏàÍ¬ÒºÌå
+        // ç›¸åŒæ¶²ä½“
         if (targetData.HasLiquid && targetData.liquidId == liquidId) {
             if (targetData.liquidVolume < materialDef.maxVolume) return true;
         }
@@ -301,16 +301,16 @@ public class LiquidSimulationTest
     }
 
     /// <summary>
-    /// ³¢ÊÔÏòÉÏÒç³ö
+    /// å°è¯•å‘ä¸Šæº¢å‡º
     /// </summary>
     private bool TryOverflow(int x, int y, float curVolume, long liquidId, SimulationMaterialDefinition materialDef) {
         if (curVolume <= materialDef.maxVolume) return false;
         var pos = new Vector2Int(x, y);
-        //ÒºÌåÒç³ö
+        //æ¶²ä½“æº¢å‡º
         Vector2Int upPos = pos + Vector2Int.up;
         LiquidClass targetLiquid = chunkManager.GetTileClass(LayerType.Liquid, upPos.x, upPos.y) as LiquidClass;
 
-        // Èç¹ûÒç³öÄ¿±ê²»ÊÇÏàÍ¬ÒºÌå
+        // å¦‚æœæº¢å‡ºç›®æ ‡ä¸æ˜¯ç›¸åŒæ¶²ä½“
         if (targetLiquid != null && targetLiquid.blockId != liquidId) {
             return false;
         }
@@ -325,7 +325,7 @@ public class LiquidSimulationTest
     }
 
     /// <summary>
-    /// ¸üĞÂÒºÌåÌå»ı
+    /// æ›´æ–°æ¶²ä½“ä½“ç§¯
     /// </summary>
     private void UpdateVolume(long liquidId, Vector2Int pos, float volume) {
         OnUpdateVolume?.Invoke(liquidId, pos, volume);

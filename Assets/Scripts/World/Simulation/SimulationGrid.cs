@@ -113,6 +113,19 @@ public class SimulationGrid {
     }
 
     /// <summary>
+    /// 仅保活当前格子（不唤醒 3×3 邻居、不唤醒区块、不重置区块睡眠计数）。
+    /// 用于"尚未到更新时机"的格子：让它下帧继续待处理，但不扩散活跃区域，
+    /// 使静止区域能被区块休眠机制正常收回，活跃集合得以收缩。
+    /// </summary>
+    public void KeepActive(int x, int y) {
+        if (!InBounds(x, y)) return;
+
+        var pos = new Vector2Int(x, y);
+        activeCells.Add(pos);
+        nextActiveCells.Add(pos);
+    }
+
+    /// <summary>
     /// 标记区域为活跃
     /// </summary>
     /// <param name="centerX">中心X坐标</param>

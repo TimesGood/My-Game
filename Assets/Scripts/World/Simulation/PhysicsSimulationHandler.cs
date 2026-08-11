@@ -44,6 +44,11 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
     private readonly List<Vector2Int> activeCellsBuffer = new List<Vector2Int>();
     private readonly HashSet<Vector2Int> pendingLiquidTiles = new HashSet<Vector2Int>();
 
+    // Y 桶缓存：按 Y 升序处理活跃格子，替代每帧全量排序（O(n) 而非 O(n log n)）
+    private List<Vector2Int>[] yBuckets;
+    private bool[] bucketUsed;
+    private readonly List<int> usedBuckets = new List<int>();
+
     // 区块管理器引用
     private ChunkManager chunkManager;
 
@@ -107,6 +112,15 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
             chunkSleepDelay
         );
 
+        // 初始化 Y 桶缓冲（按世界高度，复用避免每帧分配）
+        if (yBuckets == null || yBuckets.Length != simulationGrid.Height) {
+            yBuckets = new List<Vector2Int>[simulationGrid.Height];
+            for (int i = 0; i < yBuckets.Length; i++) {
+                yBuckets[i] = new List<Vector2Int>();
+            }
+            bucketUsed = new bool[simulationGrid.Height];
+        }
+
         // 创建自定义液体模拟（带冷却时间的密度分层）
         liquidSimulation = new LiquidSimulationTest(chunkManager, physicsConfig, simulationSeed);
         liquidSimulation.GlobalSpeedMultiplier = globalSpeedMultiplier;
@@ -142,47 +156,58 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
             liquidSimulationPA.ClearFrameFlags();
         }
 
+        // 快照活跃格子并分发到 Y 桶（O(n)），替代全量排序（O(n log n)）
+        // 桶内顺序继承自活跃集合枚举顺序，与旧实现"仅按 Y 排序、同行无序"的语义一致
+        simulationGrid.CopyActiveCells(activeCellsBuffer);
+        for (int i = 0; i < activeCellsBuffer.Count; i++) {
+            int y = activeCellsBuffer[i].y;
+            if (!bucketUsed[y]) {
+                bucketUsed[y] = true;
+                usedBuckets.Add(y);
+            }
+            yBuckets[y].Add(activeCellsBuffer[i]);
+        }
+
+        int budget = maxProcessedCellsPerFrame > 0 ? maxProcessedCellsPerFrame : int.MaxValue;
         int processedCells = 0;
 
-        // 复用缓冲取出活跃格子，按 Y 升序（底→顶）排序
+        // 按 Y 从底到顶遍历
         // 确定性顺序是泰拉瑞亚模式平整沉降的关键：无序遍历会导致流动方向随机、冒泡抽搐
-        simulationGrid.CopyActiveCells(activeCellsBuffer);
-        activeCellsBuffer.Sort((a, b) => a.y.CompareTo(b.y));
+        for (int y = 0; y < yBuckets.Length && processedCells < budget; y++) {
+            var bucket = yBuckets[y];
+            if (bucket.Count == 0) continue;
 
-        // 遍历副本
-        foreach (var pos in activeCellsBuffer) {
-            // 检查处理预算
-            if (maxProcessedCellsPerFrame > 0 && processedCells >= maxProcessedCellsPerFrame) {
-                break;
-            }
+            foreach (var pos in bucket) {
+                if (processedCells >= budget) break;
 
-            // 处理液体
-            if (chunkManager.GetTileData(pos).HasLiquid) {
-                bool changed = false;
+                // 处理液体
+                if (chunkManager.GetTileData(pos).HasLiquid) {
+                    bool changed = false;
 
-                // 根据模拟模式选择使用哪个模拟器
-                switch (liquidSimulationMode) {
-                    case LiquidSimulationMode.Custom:
-                        changed = liquidSimulation.StepCell(pos.x, pos.y, simulationGrid);
-                        break;
-                    case LiquidSimulationMode.PixelAlchemy:
-                        changed = liquidSimulationPA.StepCell(pos.x, pos.y, simulationGrid);
-                        break;
-                }
+                    // 根据模拟模式选择使用哪个模拟器
+                    switch (liquidSimulationMode) {
+                        case LiquidSimulationMode.Custom:
+                            changed = liquidSimulation.StepCell(pos.x, pos.y, simulationGrid);
+                            break;
+                        case LiquidSimulationMode.PixelAlchemy:
+                            changed = liquidSimulationPA.StepCell(pos.x, pos.y, simulationGrid);
+                            break;
+                    }
 
-                if (changed) {
-                    processedCells++;
+                    if (changed) {
+                        processedCells++;
+                    }
                 }
             }
-
-            // 处理粉末
-            //TileData tileData = chunkManager.GetTileData(pos);
-            //if (tileData.HasGround && physicsConfig.IsPowderMaterial(tileData.groundId)) {
-            //    if (powderSimulation.StepCell(pos.x, pos.y, simulationGrid)) {
-            //        processedCells++;
-            //    }
-            //}
         }
+
+        // 复用桶：清理本次使用的桶（即使提前触发预算也要清空，避免残留旧坐标导致重复处理）
+        for (int i = 0; i < usedBuckets.Count; i++) {
+            int y = usedBuckets[i];
+            yBuckets[y].Clear();
+            bucketUsed[y] = false;
+        }
+        usedBuckets.Clear();
 
         // 结束模拟步骤
         simulationGrid.EndSimulationStep();
