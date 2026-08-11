@@ -242,12 +242,20 @@ public class LiquidSimulationTest
             Vector2Int k = dir.Key;
             TileData v = dir.Value;
 
-            if (v.liquidId != liquidId) {
+            // 不同液体
+            if (v.liquidId != 0 && v.liquidId != liquidId) {
 
                 Vector2Int upPos = k + Vector2Int.up;
-
+                
                 TileData upData = chunkManager.GetTileData(upPos);
-                UpdateVolume(v.liquidId, upPos, upData.liquidVolume + v.liquidVolume);
+
+                float upVolume = v.liquidVolume;
+                if (upData.HasLiquid && upData.liquidId == v.liquidId) {
+                    upVolume += upData.liquidVolume;
+                }
+
+                UpdateVolume(v.liquidId, upPos, upVolume);
+
                 UpdateVolume(liquidId, k, avg);
                 continue;
             }

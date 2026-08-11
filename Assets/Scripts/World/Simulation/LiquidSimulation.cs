@@ -139,7 +139,7 @@ public class LiquidSimulation {
         LiquidClass downLiquid = chunkManager.GetTileClass(LayerType.Liquid, downPos.x, downPos.y) as LiquidClass;
 
         // 如果下方是同种液体且已满，不流动
-        if (downVolume >= 1f && (downLiquid == null || downLiquid.blockId == liquidId)) return false;
+        if (downVolume >= materialDef.maxVolume && (downLiquid == null || downLiquid.blockId == liquidId)) return false;
 
         // 如果下方是不同类型的液体
         if (downLiquid != null && downLiquid.blockId != liquidId) {
@@ -341,7 +341,7 @@ public class LiquidSimulation {
 
         //return true;
 
-        if (curVolume <= 1f) return false;
+        if (curVolume <= materialDef.maxVolume) return false;
         var pos = new Vector2Int(x, y);
         //液体溢出
         Vector2Int upPos = pos + Vector2Int.up;
@@ -353,10 +353,10 @@ public class LiquidSimulation {
         }
         //float upVolume = liquidHandler.liquidVolume[upPos.x, upPos.y];
         float upVolume = chunkManager.GetLiquidVolume(upPos);
-        upVolume += curVolume - 1f;
+        upVolume += curVolume - materialDef.maxVolume;
         UpdateVolume(liquidId, upPos, upVolume);
 
-        curVolume = 1f;
+        curVolume = materialDef.maxVolume;
         UpdateVolume(liquidId, pos, curVolume);
         return true;
     }
