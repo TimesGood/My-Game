@@ -27,7 +27,7 @@ public class LiquidSimulationTest
 
 
     // ===== 可调参数 =====
-    public float MaxVerticalFlowRate { get; set; } = 0.35f;
+    public float MaxVerticalFlowRate { get; set; } = 0.10f;
 
     // 液体更新回调
     public System.Action<long, Vector2Int, float> OnUpdateVolume;

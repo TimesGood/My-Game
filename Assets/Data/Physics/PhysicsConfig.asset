@@ -25,7 +25,7 @@ MonoBehaviour:
       isFlammable: 0
       flammability: 0
       ignitionTemperature: 0
-      minVolume: 0.001
+      minVolume: 0.1
       maxVolume: 100
       flowSpeed: 100
       horizontalSpreadDistance: 3
@@ -41,7 +41,7 @@ MonoBehaviour:
       isFlammable: 0
       flammability: 0
       ignitionTemperature: 0
-      minVolume: 1
+      minVolume: 0.1
       maxVolume: 100
       flowSpeed: 50
       horizontalSpreadDistance: 3

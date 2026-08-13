@@ -436,8 +436,7 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         return $"FPS: {currentFPS:F1}\n" +
                $"模拟时间: {lastSimulationTime:F2}ms\n" +
                $"处理格子: {lastProcessedCells}\n" +
-               $"活跃格子: {lastActiveCells}\n" +
-               $"活跃区块: {simulationGrid?.ActiveChunkCount ?? 0}";
+               $"活跃格子: {lastActiveCells}";
     }
 
     /// <summary>
@@ -448,7 +447,7 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         simulationTime = lastSimulationTime;
         processedCells = lastProcessedCells;
         activeCells = lastActiveCells;
-        activeChunks = simulationGrid?.ActiveChunkCount ?? 0;
+        activeChunks = 0;
     }
 
     void OnGUI() {
@@ -473,8 +472,13 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         GUILayout.Label($"模拟时间: {lastSimulationTime:F2}ms");
         GUILayout.Label($"处理格子: {lastProcessedCells}");
         GUILayout.Label($"活跃格子: {lastActiveCells}");
-        GUILayout.Label($"活跃区块: {simulationGrid?.ActiveChunkCount ?? 0}");
 
         GUILayout.EndArea();
+    }
+
+
+    // 查看指定坐标是否活跃
+    public bool IsCellActive(Vector2Int pos) {
+        return simulationGrid.IsCellActive(pos);
     }
 }

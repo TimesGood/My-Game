@@ -114,7 +114,11 @@ namespace UnityEditor
                         
                         // 液体体积统一从 ChunkManager 读取（LiquidHandler 已停用）
                         float volume = ChunkManager.Instance.GetLiquidVolume((Vector2Int)pos);
-                        Handles.Label(new Vector3(pos.x, pos.y + 1), volume.ToString() + "->" + tileClass.name);
+                        
+                        // 液体是否静止
+                        bool isActive = PhysicsSimulationHandler.Instance.IsCellActive(new Vector2Int(pos.x, pos.y));
+
+                        Handles.Label(new Vector3(pos.x, pos.y + 1), volume.ToString() + "->" + tileClass.name + "【"+isActive+"】");
                     }
 
                 }
