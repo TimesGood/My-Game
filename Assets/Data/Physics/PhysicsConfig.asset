@@ -43,5 +43,5 @@ MonoBehaviour:
       ignitionTemperature: 0
       minVolume: 0.1
       maxVolume: 100
-      flowSpeed: 50
+      flowSpeed: 100
       horizontalSpreadDistance: 3

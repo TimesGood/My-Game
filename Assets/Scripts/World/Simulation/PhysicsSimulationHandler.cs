@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Unity.Entities.UniversalDelegates;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -40,10 +41,10 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
     private LiquidSimulationPixelAlchemy liquidSimulationPA; // PixelAlchemy液体模拟
     private PowderSimulation powderSimulation;
 
-    // 每帧活跃格子缓冲（复用避免 GC）与待刷新液体瓦片集合（延迟批量去重）
-    private readonly List<Vector2Int> activeCellsBuffer = new List<Vector2Int>();
+    // 存储待刷新液体瓦片集合
     private readonly HashSet<Vector2Int> pendingLiquidTiles = new HashSet<Vector2Int>();
 
+    // 排序桶
     // Y 桶缓存：按 Y 升序处理活跃格子，替代每帧全量排序（O(n) 而非 O(n log n)）
     private List<Vector2Int>[] yBuckets;
     private bool[] bucketUsed;
@@ -149,8 +150,7 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         simulationStopwatch.Restart();
 
         // 开始模拟步骤
-        simulationGrid.BeginSimulationStep();
-
+        HashSet<Vector2Int> activetyCells = simulationGrid.Next();
         // 如果使用 PixelAlchemy 模式，清除帧标记
         if (liquidSimulationMode == LiquidSimulationMode.PixelAlchemy) {
             liquidSimulationPA.ClearFrameFlags();
@@ -158,14 +158,12 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
 
         // 快照活跃格子并分发到 Y 桶（O(n)），替代全量排序（O(n log n)）
         // 桶内顺序继承自活跃集合枚举顺序，与旧实现"仅按 Y 排序、同行无序"的语义一致
-        simulationGrid.CopyActiveCells(activeCellsBuffer);
-        for (int i = 0; i < activeCellsBuffer.Count; i++) {
-            int y = activeCellsBuffer[i].y;
-            if (!bucketUsed[y]) {
-                bucketUsed[y] = true;
-                usedBuckets.Add(y);
+        foreach (var cell in activetyCells) {
+            if (!bucketUsed[cell.y]) {
+                bucketUsed[cell.y] = true;
+                usedBuckets.Add(cell.y);
             }
-            yBuckets[y].Add(activeCellsBuffer[i]);
+            yBuckets[cell.y].Add(cell);
         }
 
         int budget = maxProcessedCellsPerFrame > 0 ? maxProcessedCellsPerFrame : int.MaxValue;
@@ -208,9 +206,6 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
             bucketUsed[y] = false;
         }
         usedBuckets.Clear();
-
-        // 结束模拟步骤
-        simulationGrid.EndSimulationStep();
 
         // 统一刷新本帧发生变化的液体瓦片（延迟批量 + 去重，避免模拟循环内逐格 SetTile 卡顿）
         FlushPendingLiquidTiles();

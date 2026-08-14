@@ -43,21 +43,26 @@ public class SimulationGrid {
         return InBounds(pos.x, pos.y);
     }
 
-    /// <summary>
-    /// 开始新的模拟步骤
-    /// </summary>
-    public void BeginSimulationStep() {
-        // 清空下一帧缓冲
-        nextActiveCells.Clear();
-    }
+    ///// <summary>
+    ///// 开始新的模拟步骤
+    ///// </summary>
+    //public void BeginSimulationStep() {
+    //    // 清空下一帧缓冲
+    //    nextActiveCells.Clear();
+    //}
 
-    /// <summary>
-    /// 结束模拟步骤，提交下一帧的活跃集合
-    /// </summary>
-    public void EndSimulationStep() {
+    ///// <summary>
+    ///// 结束模拟步骤，提交下一帧的活跃集合
+    ///// </summary>
+    //public void EndSimulationStep() {
 
-        // 交换活跃像素缓冲
+    //    // 交换活跃像素缓冲
+    //    SwapActiveCellBuffers();
+    //}
+
+    public HashSet<Vector2Int> Next() {
         SwapActiveCellBuffers();
+        return activeCells;
     }
 
     /// <summary>
@@ -88,7 +93,7 @@ public class SimulationGrid {
         if (!InBounds(x, y)) return;
 
         var pos = new Vector2Int(x, y);
-        activeCells.Add(pos);
+        //activeCells.Add(pos);
         nextActiveCells.Add(pos);
     }
 
@@ -104,7 +109,7 @@ public class SimulationGrid {
             for (int x = centerX - safeRadius; x <= centerX + safeRadius; x++) {
                 if (InBounds(x, y)) {
                     // 同时写入当前和下一帧缓冲
-                    activeCells.Add(new Vector2Int(x, y));
+                    //activeCells.Add(new Vector2Int(x, y));
                     nextActiveCells.Add(new Vector2Int(x, y));
                 }
             }
@@ -165,5 +170,6 @@ public class SimulationGrid {
         foreach (var cell in nextActiveCells) {
             activeCells.Add(cell);
         }
+        nextActiveCells.Clear();
     }
 }
