@@ -1,12 +1,13 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+此文件为所有智能体在处理此代码库中的代码时提供指导。
 
 ## 项目概述
 
 一款使用 **Unity 2022.3.58f1c1** 构建的 2D 瓦片沙盒/生存游戏（类似泰拉瑞亚）。具有程序化生成的世界，包含采矿、建造、液体物理、动态 2D 光照、生物群落区域、植物生长以及横版卷轴玩家角色。
 
 ## 注意事项
+
 作者为Java开发出身，并未有过Unity游戏的开发经验，本项目为作者初次尝试开发 2D 沙盒生存建造类游戏，对游戏开发的并不熟悉，有些架构设计可能并不合理，可能会经常出现重构的情况，
 如果市面上有相对成熟的技术契合作者的想法， 请及时给予作者建议，合作进行改进。
 如果涉及到重构，请维护一下本文档相关内容。
@@ -48,9 +49,7 @@ Layers { Addons, Background, Ground, Liquid }
 4. `ChunkHandler` 每帧渲染相机范围内的区块
 5. `MapSaveManager` + `TilemapExporter` 保存到 `StreamingAssets/tilemap_data.bin`（MessagePack + GZip，格式版本 2）
 
-### 新地形生成架构（`Assets/Scripts/Terrains/New/`）—— "先分配、后生成"
-
-此为新架构实现，与旧 `MapGenerator` 管线**并存**，旧代码不动。
+### 地形生成架构（`Assets/Scripts/Terrains/New/`）—— "先分配、后生成"
 
 **核心理念**：将生成流程分为三个阶段：分配（Distribute）→ 生成（Generate）→ 后处理（PostProcess）。
 
@@ -136,9 +135,9 @@ Layers { Addons, Background, Ground, Liquid }
 
 几乎所有游戏数据都是 `Assets/Data/` 下的 ScriptableObject：
 - **瓦片**：`TileClass` 基类（blockId、图层、瓦片引用、光照发射、掉落物），子类包括 `AddonClass`（生长阶段）、`LiquidClass`（流动物理）、`TreeClass`（基于网格的生成）、`OreClass_New`
-- **噪声**：`NoiseConfig` 抽象基类 → `PerlinNoise`、`FBMWorleyNoise`、`MIXPerlinWorleyNoise`、`ShapeGenerator` 等（15+ 种类型），其中许多由 `Assets/Resources/Shader/` 下的 Compute Shader 支持
-- **生物群落**：`BaseBiome`
-- **地形**：`BaseTerrain`、`MapGridLayout`、`MapHorizontalLayout`
+- **噪声**：噪声工具 → `NoiseSampler`，包含多种噪声的实现，其中许多由 `Assets/Resources/Shader/` 下的 Compute Shader 支持；轮廓生成工具 → `ShapeSampler`，用于对分配的群落矩阵再次形成随机的图形轮廓，决定群落轮廓的生成。
+- **生物群落**：`BiomeDefinition` 群落基类。局部群落 → `LocalDefinition`，参与群落分配，作用与群落自身；全局群落 → `GobalDefinition`，作用于全局的地形生成逻辑
+- **地形生成逻辑**：插槽的概念，群落通过组合不同的插槽决定最终群落的生成
 - **物品**：`ItemData` → `ItemData_Buildable`
 
 ### 玩家系统
