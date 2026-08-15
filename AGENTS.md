@@ -128,6 +128,8 @@ Layers { Addons, Background, Ground, Liquid }
 
 **关键约定**：
 - 活跃格子由 `SimulationGrid` 追踪（3×3 唤醒 + 区块休眠），水面静止数帧后自动休眠
+- 每帧预算（`maxProcessedCellsPerFrame`）分配策略：**屏幕内瓦片优先**（可视范围 + `screenPriorityPadding` 外扩，相机懒加载自 `ChunkHandler.renderCamera`，回退 `Camera.main`），剩余预算再处理屏幕外瓦片；预算外的活跃格子通过 `SimulationGrid.KeepActive` **顺延到下一帧而非抛弃**，避免本该模拟的瓦片静止
+- **空闲加速**：上一帧模拟耗时（平滑值）低于 `idleTimeThresholdMs` 时，预算放大 `idleBoostMultiplier` 倍，加速追赶屏幕外积压；屏幕内外两遍遍历均按 Y 底→顶保持确定性顺序
 - 玩家放置液体走 `LiquidLayer.Build` → `PhysicsSimulationHandler.MarkForUpdate`；挖方块走 `ConstructionLayer.Destory` → `MarkAreaForUpdate`（都不再依赖已停用的 `LiquidHandler`）
 - 液体物理配置在 `Assets/Data/Physics/Water.asset`（Water 密度 30、Magma 密度 88）
 

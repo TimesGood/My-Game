@@ -90,10 +90,8 @@ public class SimulationGrid {
     /// 用于"尚未到更新时机"的格子：让它下帧继续待处理，但不扩散活跃区域，
     /// 使静止区域能被区块休眠机制正常收回，活跃集合得以收缩。
     /// </summary>
-    public void KeepActive(int x, int y) {
-        if (!InBounds(x, y)) return;
-
-        var pos = new Vector2Int(x, y);
+    public void KeepActive(Vector2Int pos) {
+        if (!InBounds(pos)) return;
         //activeCells.Add(pos);
         nextActiveCells.Add(pos);
     }

@@ -7,14 +7,6 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 /// <summary>
-/// 液体模拟模式
-/// </summary>
-public enum LiquidSimulationMode {
-    Custom,             // 自定义模式（带冷却时间的密度分层）
-    PixelAlchemy       // PixelAlchemy模式（基于粒子移动）
-}
-
-/// <summary>
 /// 物理模拟主循环，整合液体和粉末模拟
 /// 借鉴 PixelAlchemy 的系统分离和活跃区域优化设计
 /// </summary>
@@ -26,9 +18,21 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
     public int simulationSeed = 0;                     // 随机种子（0表示随机）
     public int chunkSize = 16;                         // 区块大小
     public int chunkSleepDelay = 3;                    // 区块休眠延迟帧数
-    public int maxProcessedCellsPerFrame = 10000;      // 每帧最大处理格子数
+    public int maxProcessedCellsPerFrame = 10000;      // 每帧最大处理格子数（预算内屏幕内优先）
     [Range(0.1f, 10f)]
     public float globalSpeedMultiplier = 1f;           // 全局速度倍率（影响所有材料流速）
+
+    [Header("屏幕优先模拟")]
+    [Tooltip("启用后预算内先模拟屏幕内的瓦片，剩余预算再分配给屏幕外的瓦片")]
+    public bool enableScreenPriority = true;
+    [Tooltip("屏幕优先区域额外外扩的瓦片数，避免屏幕边缘的液体/粉末静止")]
+    public int screenPriorityPadding = 16;
+
+    [Header("空闲加速模拟")]
+    [Tooltip("上一帧模拟耗时低于该毫秒数视为“空闲”，触发加速模拟追赶屏幕外积压")]
+    public float idleTimeThresholdMs = 2f;
+    [Tooltip("空闲时每帧处理预算的放大倍数（加速追赶预算外未被处理的瓦片）")]
+    public float idleBoostMultiplier = 2f;
 
     [Header("性能统计")]
     public bool enableStats = true;                    // 是否启用统计
@@ -56,6 +60,19 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
     private float lastSimulationTime;
     private int lastProcessedCells;
     private int lastActiveCells;
+    private int lastDeferredCells;                     // 本帧预算外被顺延的活跃格子数
+    private int lastScreenProcessedCells;              // 本帧屏幕内处理格子数
+    private int lastOffscreenProcessedCells;           // 本帧屏幕外处理格子数
+
+    // 屏幕优先模拟：屏幕可视范围（世界坐标轴对齐包围盒，含外扩）
+    private Camera simulationCamera;                   // 模拟相机（懒加载：优先 ChunkHandler 渲染相机，回退主相机）
+    private bool hasVisibleBounds = false;             // 是否有有效的可视范围（无相机时退化为全部视为屏幕内）
+    private int visibleMinX, visibleMaxX, visibleMinY, visibleMaxY; // 屏幕优先区域边界（含外扩）
+    private readonly Vector3[] frustumCorners = new Vector3[4];     // 复用视锥角点缓冲，避免每帧分配
+    private float smoothedSimulationTime;              // 平滑后的模拟耗时（避免预算放大/缩小来回抖动）
+
+    // 预算外未被处理的活跃格子（下帧保持活跃继续模拟，防止被静默抛弃而静止）
+    private readonly List<Vector2Int> deferredCells = new List<Vector2Int>();
 
     // FPS 统计
     private float fpsUpdateInterval = 0.5f;            // FPS更新间隔（秒）
@@ -138,9 +155,21 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
 
     /// <summary>
     /// 执行单个模拟步骤
+    /// 预算分配策略（按优先级）：
+    /// 1. 屏幕内的瓦片优先处理（保证玩家可见区域的液体/粉末始终流动）
+    /// 2. 屏幕外的瓦片使用剩余预算处理
+    /// 3. 预算外的瓦片不抛弃：保持活跃状态顺延到下一帧继续模拟
+    /// 4. 上一帧模拟耗时低于阈值（空闲）时放大预算，加速追赶屏幕外积压
     /// </summary>
     private void SimulationStep() {
         simulationStopwatch.Restart();
+
+        // 更新屏幕可视范围（屏幕内优先模拟）
+        if (enableScreenPriority) {
+            UpdateVisibleBounds();
+        } else {
+            hasVisibleBounds = false; // 关闭屏幕优先时全部视为屏幕内，退化为旧行为
+        }
 
         // 开始模拟步骤
         HashSet<Vector2Int> activetyCells = simulationGrid.Next();
@@ -156,26 +185,66 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         }
 
         int budget = maxProcessedCellsPerFrame > 0 ? maxProcessedCellsPerFrame : int.MaxValue;
-        int processedCells = 0;
 
-        // 按 Y 从底到顶遍历
+
+        int processedCells = 0;
+        int screenProcessed = 0;
+        int offscreenProcessed = 0;
+        deferredCells.Clear();
+
+        // 第一遍：屏幕内的瓦片优先（按 Y 底→顶，保持确定性顺序）
         // 确定性顺序是泰拉瑞亚模式平整沉降的关键：无序遍历会导致流动方向随机、冒泡抽搐
-        for (int y = 0; y < yBuckets.Length && processedCells < budget; y++) {
+        for (int y = 0; y < yBuckets.Length; y++) {
             var bucket = yBuckets[y];
             if (bucket.Count == 0) continue;
 
             foreach (var pos in bucket) {
-                if (processedCells >= budget) break;
+                if (!IsOnScreen(pos)) continue;
 
-                // 处理液体
-                if (chunkManager.GetTileData(pos).HasLiquid) {
-                    bool changed = liquidSimulation.StepCell(pos.x, pos.y, simulationGrid);
-
-                    if (changed) {
-                        processedCells++;
+                if (processedCells < budget) {
+                    // 处理液体
+                    TileData tileData = chunkManager.GetTileData(pos);
+                    if (tileData.HasLiquid) {
+                        bool changed = liquidSimulation.StepCell(pos, tileData, simulationGrid);
+                        if (changed) {
+                            processedCells++;
+                            screenProcessed++;
+                        }
                     }
+                } else {
+                    // 预算耗尽，顺延到下一帧（保持活跃，防止被休眠而静止）
+                    deferredCells.Add(pos);
                 }
             }
+        }
+
+        // 第二遍：屏幕外的瓦片（使用剩余预算）
+        for (int y = 0; y < yBuckets.Length; y++) {
+            var bucket = yBuckets[y];
+            if (bucket.Count == 0) continue;
+
+            foreach (var pos in bucket) {
+                if (IsOnScreen(pos)) continue;
+
+                if (processedCells < budget) {
+                    // 处理液体
+                    TileData tileData = chunkManager.GetTileData(pos);
+                    if (tileData.HasLiquid) {
+                        bool changed = liquidSimulation.StepCell(pos, tileData, simulationGrid);
+                        if (changed) {
+                            processedCells++;
+                            offscreenProcessed++;
+                        }
+                    }
+                } else {
+                    deferredCells.Add(pos);
+                }
+            }
+        }
+
+        // 预算外的活跃格子保持活跃：下帧继续模拟，而不是被静默抛弃导致瓦片静止
+        for (int i = 0; i < deferredCells.Count; i++) {
+            simulationGrid.KeepActive(deferredCells[i]);
         }
 
         // 复用桶：清理本次使用的桶（即使提前触发预算也要清空，避免残留旧坐标导致重复处理）
@@ -191,11 +260,73 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
 
         // 更新统计信息
         simulationStopwatch.Stop();
+        // 模拟耗时与平滑值在统计开关关闭时也更新，保证"空闲加速"反馈回路始终生效
+        lastSimulationTime = (float)simulationStopwatch.Elapsed.TotalMilliseconds;
+        smoothedSimulationTime = Mathf.Lerp(smoothedSimulationTime, lastSimulationTime, 0.2f);
         if (enableStats) {
-            lastSimulationTime = (float)simulationStopwatch.Elapsed.TotalMilliseconds;
             lastProcessedCells = processedCells;
             lastActiveCells = simulationGrid.ActiveCellCount;
+            lastDeferredCells = deferredCells.Count;
+            lastScreenProcessedCells = screenProcessed;
+            lastOffscreenProcessedCells = offscreenProcessed;
         }
+    }
+
+    /// <summary>
+    /// 更新屏幕可视范围（世界坐标轴对齐包围盒，含外扩）
+    /// 用于"屏幕内优先模拟"：优先处理玩家可见区域的瓦片
+    /// </summary>
+    private void UpdateVisibleBounds() {
+        // 懒加载相机：优先使用 ChunkHandler 的渲染相机，回退主相机
+        if (simulationCamera == null) {
+            if (ChunkHandler.Instance != null && ChunkHandler.Instance.renderCamera != null) {
+                simulationCamera = ChunkHandler.Instance.renderCamera;
+            } else {
+                simulationCamera = Camera.main;
+            }
+        }
+
+        if (simulationCamera == null) {
+            // 无相机（如编辑模式/纯逻辑场景）：退化为全部视为屏幕内
+            hasVisibleBounds = false;
+            return;
+        }
+
+        // 复用缓冲计算视锥角点（避免每帧分配数组）
+        simulationCamera.CalculateFrustumCorners(
+            new Rect(0, 0, 1, 1),
+            simulationCamera.farClipPlane,
+            Camera.MonoOrStereoscopicEye.Mono,
+            frustumCorners);
+
+        Matrix4x4 camMatrix = simulationCamera.transform.localToWorldMatrix;
+        float minX = float.MaxValue, maxX = float.MinValue;
+        float minY = float.MaxValue, maxY = float.MinValue;
+        for (int i = 0; i < 4; i++) {
+            Vector3 corner = camMatrix.MultiplyPoint(frustumCorners[i]);
+            minX = Mathf.Min(minX, corner.x);
+            maxX = Mathf.Max(maxX, corner.x);
+            minY = Mathf.Min(minY, corner.y);
+            maxY = Mathf.Max(maxY, corner.y);
+        }
+
+        // 外扩 padding 个瓦片，避免屏幕边缘的瓦片因被划为"屏幕外"而模拟滞后
+        int padding = Mathf.Max(0, screenPriorityPadding);
+        visibleMinX = Mathf.FloorToInt(minX) - padding;
+        visibleMaxX = Mathf.CeilToInt(maxX) + padding;
+        visibleMinY = Mathf.FloorToInt(minY) - padding;
+        visibleMaxY = Mathf.CeilToInt(maxY) + padding;
+        hasVisibleBounds = true;
+    }
+
+    /// <summary>
+    /// 判断瓦片是否位于屏幕优先区域（屏幕可视范围 + 外扩）
+    /// 无相机或关闭屏幕优先时全部视为屏幕内
+    /// </summary>
+    private bool IsOnScreen(Vector2Int pos) {
+        if (!hasVisibleBounds) return true;
+        return pos.x >= visibleMinX && pos.x <= visibleMaxX &&
+               pos.y >= visibleMinY && pos.y <= visibleMaxY;
     }
 
     /// <summary>
@@ -391,10 +522,15 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
     public string GetStatsString() {
         if (!enableStats) return "统计已禁用";
 
+        string priorityInfo = enableScreenPriority
+            ? $"屏幕内: {lastScreenProcessedCells}  屏幕外: {lastOffscreenProcessedCells}\n"
+            : "";
         return $"FPS: {currentFPS:F1}\n" +
                $"模拟时间: {lastSimulationTime:F2}ms\n" +
                $"处理格子: {lastProcessedCells}\n" +
-               $"活跃格子: {lastActiveCells}";
+               $"活跃格子: {lastActiveCells}\n" +
+               $"{priorityInfo}" +
+               $"顺延格子: {lastDeferredCells}";
     }
 
     /// <summary>
@@ -430,6 +566,7 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         GUILayout.Label($"模拟时间: {lastSimulationTime:F2}ms");
         GUILayout.Label($"处理格子: {lastProcessedCells}");
         GUILayout.Label($"活跃格子: {lastActiveCells}");
+        GUILayout.Label($"顺延格子: {lastDeferredCells}");
 
         GUILayout.EndArea();
     }
