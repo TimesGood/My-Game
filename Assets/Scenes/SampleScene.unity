@@ -1144,7 +1144,7 @@ MonoBehaviour:
   simulationSeed: 0
   chunkSize: 64
   chunkSleepDelay: 3
-  maxProcessedCellsPerFrame: 10000
+  maxProcessedCellsPerFrame: 1000
   globalSpeedMultiplier: 0.5
   enableStats: 1
   openSimulation: 1

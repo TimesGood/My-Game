@@ -23,7 +23,6 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
     public MaterialPhysicsConfig physicsConfig;
 
     [Header("模拟设置")]
-    public LiquidSimulationMode liquidSimulationMode = LiquidSimulationMode.Custom; // 液体模拟模式
     public int simulationSeed = 0;                     // 随机种子（0表示随机）
     public int chunkSize = 16;                         // 区块大小
     public int chunkSleepDelay = 3;                    // 区块休眠延迟帧数
@@ -37,9 +36,8 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
 
     // 模拟组件
     private SimulationGrid simulationGrid;
-    private LiquidSimulationTest liquidSimulation;           // 自定义液体模拟
-    private LiquidSimulationPixelAlchemy liquidSimulationPA; // PixelAlchemy液体模拟
-    private PowderSimulation powderSimulation;
+    private LiquidSimulation liquidSimulation;         // 液体模拟
+    private PowderSimulation powderSimulation;         // 沙砾模拟
 
     // 存储待刷新液体瓦片集合
     private readonly HashSet<Vector2Int> pendingLiquidTiles = new HashSet<Vector2Int>();
@@ -123,13 +121,9 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         }
 
         // 创建自定义液体模拟（带冷却时间的密度分层）
-        liquidSimulation = new LiquidSimulationTest(chunkManager, physicsConfig, simulationSeed);
+        liquidSimulation = new LiquidSimulation(chunkManager, physicsConfig, simulationSeed);
         liquidSimulation.GlobalSpeedMultiplier = globalSpeedMultiplier;
         liquidSimulation.OnUpdateVolume += HandleLiquidVolumeUpdate;
-
-        // 创建 PixelAlchemy 风格的液体模拟（基于粒子移动）
-        liquidSimulationPA = new LiquidSimulationPixelAlchemy(chunkManager, physicsConfig, simulationSeed);
-        liquidSimulationPA.OnUpdateVolume += HandleLiquidVolumeUpdate;
 
         //// 创建粉末模拟
         powderSimulation = new PowderSimulation(chunkManager, physicsConfig, simulationSeed);
@@ -140,7 +134,6 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
         //simulationGrid.ActivateAll();
 
         isInitialized = true;
-        UnityEngine.Debug.Log($"[PhysicsSimulationHandler] 物理模拟系统初始化完成，当前液体模拟模式: {liquidSimulationMode}");
     }
 
     /// <summary>
@@ -151,10 +144,6 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
 
         // 开始模拟步骤
         HashSet<Vector2Int> activetyCells = simulationGrid.Next();
-        // 如果使用 PixelAlchemy 模式，清除帧标记
-        if (liquidSimulationMode == LiquidSimulationMode.PixelAlchemy) {
-            liquidSimulationPA.ClearFrameFlags();
-        }
 
         // 快照活跃格子并分发到 Y 桶（O(n)），替代全量排序（O(n log n)）
         // 桶内顺序继承自活跃集合枚举顺序，与旧实现"仅按 Y 排序、同行无序"的语义一致
@@ -180,17 +169,7 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
 
                 // 处理液体
                 if (chunkManager.GetTileData(pos).HasLiquid) {
-                    bool changed = false;
-
-                    // 根据模拟模式选择使用哪个模拟器
-                    switch (liquidSimulationMode) {
-                        case LiquidSimulationMode.Custom:
-                            changed = liquidSimulation.StepCell(pos.x, pos.y, simulationGrid);
-                            break;
-                        case LiquidSimulationMode.PixelAlchemy:
-                            changed = liquidSimulationPA.StepCell(pos.x, pos.y, simulationGrid);
-                            break;
-                    }
+                    bool changed = liquidSimulation.StepCell(pos.x, pos.y, simulationGrid);
 
                     if (changed) {
                         processedCells++;
@@ -386,22 +365,6 @@ public class PhysicsSimulationHandler : Singleton<PhysicsSimulationHandler> {
     /// </summary>
     public void SetSimulationEnabled(bool enabled) {
         isSimulationEnabled = enabled;
-    }
-
-    /// <summary>
-    /// 设置液体模拟模式
-    /// </summary>
-    /// <param name="mode">模拟模式</param>
-    public void SetLiquidSimulationMode(LiquidSimulationMode mode) {
-        liquidSimulationMode = mode;
-        UnityEngine.Debug.Log($"[PhysicsSimulationHandler] 液体模拟模式切换为: {mode}");
-    }
-
-    /// <summary>
-    /// 获取当前液体模拟模式
-    /// </summary>
-    public LiquidSimulationMode GetLiquidSimulationMode() {
-        return liquidSimulationMode;
     }
 
     /// <summary>
